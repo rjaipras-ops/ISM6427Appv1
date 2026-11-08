@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toured — Homes reviewed by people who walked through</title>
+  <meta name="description" content="Search homes for sale and read reviews from buyers who certify they toured the home in person." />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="Toured home">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M4 15 16 5l12 10v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" fill="var(--brand)"/><path d="m11 18 3.5 3.5L21 15" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Toured</span>
+    </a>
+    <nav class="mainnav" aria-label="Primary">
+      <a href="#/" class="is-active">Buy</a>
+      <a href="#/saved">Saved homes</a>
+      <a href="#/my-reviews">My tour reviews</a>
+    </nav>
+    <div class="account" id="account"></div>
+  </header>
+
+  <!-- Search + filter bar (Realtor.com-style) -->
+  <section class="searchbar" aria-label="Search and filters">
+    <form class="searchbox" id="searchForm" role="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Address, neighborhood, city or ZIP" autocomplete="off" aria-label="Location search" list="placeList" />
+      <datalist id="placeList"></datalist>
+    </form>
+
+    <div class="filterbar" id="filterbar">
+      <div class="dd" data-dd="status">
+        <button class="pill" type="button" aria-expanded="false"><span data-label="status">For sale</span><i class="caret"></i></button>
+        <div class="dd-panel" role="dialog" aria-label="Listing status">
+          <h4>Listing status</h4>
+          <label class="check"><input type="checkbox" name="statusActive" checked /> Active</label>
+          <label class="check"><input type="checkbox" name="statusContingent" checked /> Under contract / contingent</label>
+          <label class="check"><input type="checkbox" name="statusPending" /> Pending</label>
+        </div>
+      </div>
+
+      <div class="dd" data-dd="price">
+        <button class="pill" type="button" aria-expanded="false"><span data-label="price">Price</span><i class="caret"></i></button>
+        <div class="dd-panel" role="dialog" aria-label="Price">
+          <h4>Price range</h4>
+          <div class="range-row">
+            <select name="priceMin" aria-label="Minimum price"></select>
+            <span>–</span>
+            <select name="priceMax" aria-label="Maximum price"></select>
+          </div>
+          <canvas class="histogram" id="priceHist" width="280" height="56" aria-hidden="true"></canvas>
+        </div>
+      </div>
+
+      <div class="dd" data-dd="beds">
+        <button class="pill" type="button" aria-expanded="false"><span data-label="beds">Beds &amp; baths</span><i class="caret"></i></button>
+        <div class="dd-panel" role="dialog" aria-label="Bedrooms and bathrooms">
+          <h4>Bedrooms</h4>
+          <div class="seg" data-seg="bedsMin"></div>
+          <h4>Bathrooms</h4>
+          <div class="seg" data-seg="bathsMin"></div>
+        </div>
+      </div>
+
+      <div class="dd" data-dd="type">
+        <button class="pill" type="button" aria-expanded="false"><span data-label="type">Home type</span><i class="caret"></i></button>
+        <div class="dd-panel" role="dialog" aria-label="Home type">
+          <h4>Home type</h4>
+          <div class="type-grid" id="typeGrid"></div>
+        </div>
+      </div>
+
+      <button class="pill pill-strong" type="button" id="moreBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        Filters <span class="count-badge" id="moreCount" hidden></span>
+      </button>
+
+      <label class="toggle-pill" title="Only show homes with verified-tour reviews">
+        <input type="checkbox" name="reviewedOnly" />
+        <span><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M10 1.5 12.6 7l5.9.6-4.4 4 1.3 5.9L10 14.6l-5.4 2.9 1.3-5.9-4.4-4L7.4 7z" fill="currentColor"/></svg> Has tour reviews</span>
+      </label>
+
+      <button class="linkbtn" type="button" id="resetBtn">Reset</button>
+    </div>
+    <div class="chips" id="chips" aria-live="polite"></div>
+  </section>
+
+  <main id="view-search" class="results-layout">
+    <section class="map-wrap" aria-label="Map">
+      <div id="map"></div>
+      <label class="map-toggle"><input type="checkbox" id="boundsToggle" /> Search as I move the map</label>
+    </section>
+    <section class="list-wrap" aria-label="Results">
+      <div class="list-head">
+        <div>
+          <h1 class="list-title" id="listTitle">Tampa Bay homes for sale</h1>
+          <p class="muted" id="resultCount"></p>
+        </div>
+        <label class="sort">Sort
+          <select id="sort">
+            <option value="relevant">Recommended</option>
+            <option value="newest">Newest listings</option>
+            <option value="priceAsc">Price (low to high)</option>
+            <option value="priceDesc">Price (high to low)</option>
+            <option value="ppsf">Price per sq ft</option>
+            <option value="sqft">Largest home</option>
+            <option value="lot">Largest lot</option>
+            <option value="rating">Top tour rating</option>
+            <option value="reviews">Most tour reviews</option>
+          </select>
+        </label>
+      </div>
+      <div class="cards" id="cards"></div>
+      <div class="empty" id="empty" hidden>
+        <h2>No homes match these filters</h2>
+        <p>Try widening the price range or removing a feature.</p>
+        <button class="btn" type="button" data-action="reset">Clear all filters</button>
+      </div>
+      <footer class="sitefoot">
+        <p>Listing facts (price, address, beds, baths, size, type, listing office) retrieved Nov 8, 2026 from public listing data. Fields marked <span class="est">est.</span> are placeholders until an MLS/IDX feed is connected. Reviews are self-certified by signed-in users and are not verified by the listing broker.</p>
+      </footer>
+    </section>
+    <button class="mobile-map-btn" id="mobileMapBtn" type="button">Map</button>
+  </main>
+
+  <!-- Saved / my reviews -->
+  <main id="view-saved" class="page" hidden></main>
+  <main id="view-myreviews" class="page" hidden></main>
+
+  <!-- Listing detail -->
+  <main id="view-detail" class="detail" hidden></main>
+
+  <!-- More filters drawer -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="drawer-scrim" data-close></div>
+    <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <header class="drawer-head">
+        <h2 id="drawerTitle">Filters</h2>
+        <button class="iconbtn" type="button" data-close aria-label="Close filters">✕</button>
+      </header>
+      <form class="drawer-body" id="moreForm">
+        <fieldset>
+          <legend>Home size (sq ft)</legend>
+          <div class="range-row"><select name="sqftMin"></select><span>–</span><select name="sqftMax"></select></div>
+        </fieldset>
+        <fieldset>
+          <legend>Lot size</legend>
+          <div class="range-row"><select name="lotMin"></select><span>–</span><select name="lotMax"></select></div>
+        </fieldset>
+        <fieldset>
+          <legend>Home age (year built)</legend>
+          <div class="range-row"><input type="number" name="yearMin" placeholder="No min" min="1900" max="2026" /><span>–</span><input type="number" name="yearMax" placeholder="No max" min="1900" max="2026" /></div>
+        </fieldset>
+        <fieldset>
+          <legend>Max HOA fee / month</legend>
+          <select name="hoaMax">
+            <option value="">Any</option><option value="0">No HOA</option><option value="100">$100</option><option value="200">$200</option><option value="300">$300</option><option value="500">$500</option><option value="750">$750</option>
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend>Days on Toured</legend>
+          <div class="seg" data-seg="domMax"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Stories</legend>
+          <div class="seg" data-seg="stories"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Garage spaces</legend>
+          <div class="seg" data-seg="garageMin"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Listing type</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" name="openHouse" /> Open house this week</label>
+            <label class="check"><input type="checkbox" name="priceReduced" /> Price reduced</label>
+            <label class="check"><input type="checkbox" name="newConstruction" /> New construction</label>
+            <label class="check"><input type="checkbox" name="foreclosure" /> Foreclosures</label>
+            <label class="check"><input type="checkbox" name="virtualTour" /> 3D / virtual tour</label>
+            <label class="check"><input type="checkbox" name="hideSenior" /> Hide 55+ communities</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Features</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" name="pool" /> Swimming pool</label>
+            <label class="check"><input type="checkbox" name="waterfront" /> Waterfront</label>
+            <label class="check"><input type="checkbox" name="view" /> View</label>
+            <label class="check"><input type="checkbox" name="fireplace" /> Fireplace</label>
+            <label class="check"><input type="checkbox" name="centralAir" /> Central air</label>
+            <label class="check"><input type="checkbox" name="basement" /> Basement</label>
+            <label class="check"><input type="checkbox" name="gated" /> Gated community</label>
+            <label class="check"><input type="checkbox" name="solar" /> Solar panels</label>
+            <label class="check"><input type="checkbox" name="ev" /> EV charging</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Tour reviews</legend>
+          <label class="field-inline">Minimum tour rating
+            <select name="minRating"><option value="">Any</option><option value="3">3+ stars</option><option value="4">4+ stars</option><option value="4.5">4.5+ stars</option></select>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Keywords</legend>
+          <input type="text" name="keyword" placeholder="e.g. bungalow, gated, Bayshore" />
+        </fieldset>
+      </form>
+      <footer class="drawer-foot">
+        <button class="linkbtn" type="button" id="drawerReset">Reset all</button>
+        <button class="btn" type="button" data-close id="drawerApply">See homes</button>
+      </footer>
+    </aside>
+  </div>
+
+  <!-- Auth modal (placeholder; swap for real auth) -->
+  <dialog class="modal" id="authModal" aria-labelledby="authTitle">
+    <form method="dialog" class="modal-body" id="authForm">
+      <h2 id="authTitle">Sign in to review homes you've toured</h2>
+      <p class="muted">Demo sign-in only — stored in this browser. Real authentication plugs in at <code>js/store.js</code>.</p>
+      <label class="field">Name shown on reviews<input name="displayName" required maxlength="40" autocomplete="nickname" /></label>
+      <label class="field">Email<input name="email" type="email" required autocomplete="email" /></label>
+      <div class="modal-actions">
+        <button class="linkbtn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn" value="ok">Continue</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Review modal -->
+  <dialog class="modal modal-wide" id="reviewModal" aria-labelledby="reviewTitle">
+    <form method="dialog" class="modal-body" id="reviewForm"></form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
