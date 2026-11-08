@@ -1,0 +1,11 @@
+{
+  "source": "Firecrawl Alexandria provider zillow-com/properties/search (public for-sale listing facts)",
+  "retrieved": "2026-11-08",
+  "columns": ["source_id", "price", "address", "beds", "baths", "sqft", "home_type", "lat", "lng", "listing_office"],
+  "files": {
+    "rows-broward.jsonl": "Broward",
+    "rows-palm-beach.jsonl": "Palm Beach",
+    "rows-st-lucie.jsonl": "St. Lucie"
+  },
+  "notes": "Rows in Martin County (Stuart, Palm City, Jensen Beach) and rows missing price, size or listing office were dropped. County is assigned from the city (Parkland is Broward even when returned by the Palm Beach search)."
+}

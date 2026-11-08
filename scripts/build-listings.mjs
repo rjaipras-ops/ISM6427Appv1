@@ -1,4 +1,4 @@
-// Turns the raw Firecrawl pull (data/raw/*.json) into the app's listing file
+// Turns the raw Firecrawl pull (data/raw/manifest.json + *.jsonl) into the app's listing file
 // (data/listings.json), using RESO Data Dictionary field names so a real
 // MLS/IDX feed can replace it later without changing the front end.
 //
@@ -11,7 +11,7 @@
 //
 // Usage: node scripts/build-listings.mjs
 
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,6 +36,7 @@ const TYPE_MAP = {
   CONDO: "Condo",
   TOWNHOUSE: "Townhouse",
   MULTI_FAMILY: "Multi-Family",
+  APARTMENT: "Multi-Family",
   MANUFACTURED: "Mobile/Manufactured",
   LOT: "Land",
 };
@@ -60,30 +61,48 @@ function parseAddress(full) {
   };
 }
 
-const NEIGHBORHOODS = {
-  "33602": "Downtown / Channel District", "33603": "Seminole Heights", "33604": "Sulphur Springs",
-  "33605": "Ybor City", "33606": "Hyde Park / Davis Islands", "33607": "West Tampa",
-  "33609": "SoHo / Palma Ceia", "33610": "East Tampa", "33611": "Ballast Point",
-  "33612": "University Area", "33613": "North Tampa", "33615": "Town 'n' Country",
-  "33616": "Port Tampa", "33617": "Temple Terrace", "33618": "Carrollwood",
-  "33619": "Palm River", "33624": "Northdale", "33625": "Citrus Park", "33626": "Westchase",
-  "33629": "Beach Park / Bayshore", "33635": "Countryway", "33637": "Temple Terrace East",
-  "33647": "New Tampa", "33549": "Lutz", "33556": "Odessa", "33578": "Riverview",
-  "33702": "St. Petersburg North",
+// City -> county. Anything not listed falls back to the file's county.
+const CITY_COUNTY = {
+  Parkland: "Broward", "Coral Springs": "Broward", "Deerfield Beach": "Broward", "Coconut Creek": "Broward",
+  "Lighthouse Point": "Broward", "Hillsboro Beach": "Broward", "Pompano Beach": "Broward",
 };
 
-const WATER_ZIPS = new Set(["33606", "33611", "33629", "33616", "33602", "33556", "33626"]);
+// ZIP -> area / neighborhood label shown on cards (falls back to the city).
+const AREAS = {
+  "33301": "Downtown Fort Lauderdale / Las Olas", "33304": "Victoria Park", "33305": "Coral Ridge",
+  "33306": "Coral Ridge Isles", "33308": "Imperial Point / Bay Colony", "33316": "Harbor Beach / Rio Vista",
+  "33062": "Pompano Beach (east of US-1)", "33019": "Hollywood Beach", "33009": "Hallandale Beach",
+  "33432": "East Boca / Royal Palm Yacht", "33486": "Boca Square / Camino Gardens", "33496": "West Boca (country clubs)",
+  "33498": "West Boca", "33428": "West Boca", "33433": "Boca Del Mar", "33480": "Palm Beach Island",
+  "33401": "El Cid / Downtown WPB", "33460": "Lake Worth Beach", "33444": "Delray Beach (east)",
+  "33445": "Delray Beach", "33446": "West Delray", "33484": "Kings Point / West Delray", "33437": "West Boynton",
+  "33436": "Boynton Beach", "33426": "Boynton Beach", "33435": "Boynton Beach (coastal)",
+  "33410": "PGA / Palm Beach Gardens", "33418": "Palm Beach Gardens", "33477": "Jupiter Island / Juno",
+  "33458": "Jupiter", "33469": "Tequesta", "33414": "Wellington", "33470": "The Acreage / Loxahatchee",
+  "34949": "Hutchinson Island", "34952": "PSL East / St. Lucie River", "34953": "PSL Southwest",
+  "34983": "PSL North", "34984": "PSL Central", "34986": "St. Lucie West", "34987": "Tradition / Southern Grove",
+  "34981": "Fort Pierce South", "34982": "Fort Pierce", "34951": "Lakewood Park", "34947": "Fort Pierce West",
+};
+
+// ZIPs with lots of canal / Intracoastal / ocean frontage.
+const WATER_ZIPS = new Set(["33301", "33304", "33305", "33306", "33308", "33316", "33062", "33064", "33019", "33009",
+  "33432", "33480", "33401", "33460", "33444", "33435", "33410", "33477", "33458", "33469", "33408", "34949", "34952", "34982"]);
+// ZIPs with large 55+ / active-adult communities.
+const SENIOR_ZIPS = new Set(["33484", "33446", "33437", "33436", "33433", "33496", "33321", "33069", "33319", "33063", "33442", "33066", "34952", "34986"]);
+// ZIPs heavy with golf / country-club communities.
+const GOLF_ZIPS = new Set(["33496", "33498", "33433", "33446", "33437", "33418", "33410", "33411", "33414", "34986", "34987", "33326", "33071"]);
 
 function enrich(l) {
   const r = rng(l.ListingId);
   const pick = (arr) => arr[Math.floor(r() * arr.length)];
   const isCondo = l.PropertyType === "Condo";
+  const coastal = WATER_ZIPS.has(l.PostalCode);
   const isTown = l.PropertyType === "Townhouse";
   const luxury = l.ListPrice > 1_000_000;
 
   const yearBuilt = l.ListPrice > 1_500_000 && r() < 0.5
     ? 2018 + Math.floor(r() * 8)
-    : 1925 + Math.floor(r() * 100);
+    : (l.County === "St. Lucie" ? 1975 : 1950) + Math.floor(r() * (l.County === "St. Lucie" ? 51 : 76));
   const newConstruction = yearBuilt >= 2025;
   const stories = isCondo ? 1 : l.LivingArea > 2600 ? (r() < 0.75 ? 2 : 1) : r() < 0.25 ? 2 : 1;
   const lot = isCondo ? 0 : isTown ? 1500 + Math.floor(r() * 1500)
@@ -95,7 +114,8 @@ function enrich(l) {
   const status = statusRoll < 0.08 ? "Pending" : statusRoll < 0.15 ? "Active Under Contract" : "Active";
   const reduced = r() < 0.3 && dom > 14;
   const origPrice = reduced ? Math.round((l.ListPrice * (1.03 + r() * 0.07)) / 1000) * 1000 : l.ListPrice;
-  const waterfront = WATER_ZIPS.has(l.PostalCode) && r() < (luxury ? 0.55 : 0.18);
+  const waterfront = coastal && r() < (luxury ? 0.6 : 0.22);
+  const floodZone = waterfront || (coastal && r() < 0.5) ? pick(["AE", "AE", "VE", "AH"]) : r() < 0.12 ? "AH" : "X";
 
   const today = new Date("2026-11-08T12:00:00Z");
   const listed = new Date(today.getTime() - dom * 86400000);
@@ -108,12 +128,17 @@ function enrich(l) {
   const features = {
     PoolPrivateYN: !isCondo && r() < (luxury ? 0.7 : 0.3),
     WaterfrontYN: waterfront,
-    View: waterfront ? pick(["Water", "Bay", "Lake", "Canal"]) : r() < 0.1 ? "City" : null,
+    View: waterfront ? pick(["Intracoastal", "Ocean", "Canal", "Lake"]) : r() < 0.12 ? pick(["Golf course", "Lake", "Preserve"]) : null,
     FireplaceYN: r() < (luxury ? 0.5 : 0.12),
     CentralAir: r() < 0.97,
     GarageSpaces: isCondo ? (r() < 0.6 ? 1 : 0) : isTown ? 1 + Math.floor(r() * 2) : r() < 0.15 ? 0 : 1 + Math.floor(r() * (luxury ? 3 : 2.4)),
-    Basement: false, // practically nonexistent in Tampa; kept so the filter exists
-    SeniorCommunityYN: r() < 0.04,
+    Basement: false, // essentially nonexistent in South Florida
+    SeniorCommunityYN: SENIOR_ZIPS.has(l.PostalCode) ? r() < 0.4 : r() < 0.03,
+    ImpactWindows: r() < 0.55,
+    BoatDock: waterfront && !isCondo && r() < 0.7,
+    OceanAccess: waterfront && r() < 0.6,
+    GolfCommunity: GOLF_ZIPS.has(l.PostalCode) ? r() < 0.5 : r() < 0.06,
+    FloodZone: floodZone,
     Foreclosure: !luxury && r() < 0.04,
     VirtualTour: r() < 0.35,
     GatedCommunity: r() < 0.18,
@@ -122,7 +147,7 @@ function enrich(l) {
   };
 
   const style = pick(isCondo ? ["Contemporary", "High-rise", "Mid-rise"]
-    : ["Ranch", "Bungalow", "Mediterranean", "Craftsman", "Contemporary", "Colonial", "Florida Vernacular", "Mid-century"]);
+    : ["Ranch", "Mediterranean", "Key West", "Contemporary", "Mid-century Modern", "Spanish Revival", "Florida Vernacular", "Coastal"]);
 
   const highlights = [
     features.PoolPrivateYN && "private pool",
@@ -133,10 +158,13 @@ function enrich(l) {
     features.GatedCommunity && "gated community",
     lot > 12000 && "an oversized lot",
     features.SolarPanels && "solar panels",
+    features.ImpactWindows && "impact windows",
+    features.BoatDock && "a private boat dock",
+    features.GolfCommunity && "golf community living",
   ].filter(Boolean);
 
   const description =
-    `${style} ${l.PropertyType.toLowerCase()} in ${l.Neighborhood} with ${l.BedroomsTotal} bedrooms, ` +
+    `${style} ${l.PropertyType.toLowerCase()} in ${l.Neighborhood} (${l.County} County) with ${l.BedroomsTotal} bedrooms, ` +
     `${l.BathroomsTotalInteger} baths and ${l.LivingArea.toLocaleString("en-US")} sq ft` +
     (highlights.length ? `, featuring ${highlights.slice(0, 3).join(", ")}.` : ".") +
     " (Placeholder description — the MLS PublicRemarks field will replace this.)";
@@ -160,20 +188,26 @@ function enrich(l) {
   };
 }
 
-const files = readdirSync(rawDir).filter((f) => f.endsWith(".json")).sort();
+const manifest = JSON.parse(readFileSync(join(rawDir, "manifest.json"), "utf8"));
+const idx = Object.fromEntries(manifest.columns.map((c, i) => [c, i]));
+const CITY_FIX = { "Port Saint Lucie": "Port St. Lucie", "Port St Lucie": "Port St. Lucie", "Pt Saint Lucie": "Port St. Lucie",
+  "Lauderdale By The Sea": "Lauderdale-By-The-Sea", Hallandale: "Hallandale Beach" };
 const byId = new Map();
-for (const f of files) {
-  const raw = JSON.parse(readFileSync(join(rawDir, f), "utf8"));
-  const idx = Object.fromEntries(raw.columns.map((c, i) => [c, i]));
-  for (const row of raw.rows) {
+for (const [file, fileCounty] of Object.entries(manifest.files)) {
+  const lines = readFileSync(join(rawDir, file), "utf8").split("\n").filter((x) => x.trim());
+  for (const line of lines) {
+    const row = JSON.parse(line);
     const g = (c) => row[idx[c]];
     if (!g("price") || !g("sqft") || !g("listing_office")) continue; // skip incomplete rows
     const addr = parseAddress(g("address"));
+    addr.City = CITY_FIX[addr.City] || addr.City;
+    addr.UnparsedAddress = `${addr.StreetAddress}, ${addr.City}, ${addr.StateOrProvince} ${addr.PostalCode}`;
     const base = {
       ListingId: g("source_id"),
       ListPrice: g("price"),
       ...addr,
-      Neighborhood: NEIGHBORHOODS[addr.PostalCode] || addr.City,
+      County: CITY_COUNTY[addr.City] || fileCounty,
+      Neighborhood: AREAS[addr.PostalCode] || addr.City,
       BedroomsTotal: g("beds"),
       BathroomsTotalInteger: g("baths"),
       LivingArea: g("sqft"),
@@ -181,8 +215,8 @@ for (const f of files) {
       Latitude: g("lat"),
       Longitude: g("lng"),
       ListOfficeName: g("listing_office"),
-      SourceUrl: g("source_url"),
-      SourceRetrieved: raw.retrieved,
+      SourceUrl: `https://www.zillow.com/homedetails/${g("source_id")}_zpid/`,
+      SourceRetrieved: manifest.retrieved,
     };
     base.PricePerSqFt = Math.round(base.ListPrice / base.LivingArea);
     byId.set(base.ListingId, { ...base, demo: enrich(base) });
@@ -192,7 +226,8 @@ for (const f of files) {
 const listings = [...byId.values()].sort((a, b) => a.ListPrice - b.ListPrice);
 const out = {
   generated: new Date().toISOString(),
-  market: "Tampa Bay, FL",
+  market: "Broward, Palm Beach & St. Lucie counties, FL",
+  counties: ["Broward", "Palm Beach", "St. Lucie"],
   note: "Top-level fields come from public listing data pulled via Firecrawl. Fields under `demo` are generated placeholders until an MLS/IDX feed is connected.",
   count: listings.length,
   listings,

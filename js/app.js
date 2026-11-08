@@ -4,6 +4,7 @@ import {
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney,
 } from "./filters.js";
 import { houseSVG, typeIcon } from "./art.js";
+import { SITE } from "./config.js";
 
 /* ---------------- helpers ---------------- */
 const $ = (s, el = document) => el.querySelector(s);
@@ -48,6 +49,7 @@ async function init() {
   S.listings = await store.loadListings();
   S.listings.forEach((l) => S.byId.set(l.ListingId, l));
   buildControls();
+  $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)} · ${esc(SITE.phone)} · Lic. ${esc(SITE.licenseNo)}. ${esc(SITE.mlsDisclaimer)}`;
   initMap();
   renderAccount();
   store.onAuthChange((u) => { S.user = u; renderAccount(); route(); });
@@ -80,7 +82,7 @@ function buildControls() {
     `<label><input type="checkbox" name="type" value="${t}" />${typeIcon(t)}${t}</label>`).join("");
 
   const places = new Set();
-  S.listings.forEach((l) => { places.add(l.Neighborhood); places.add(l.City); places.add(l.PostalCode); });
+  S.listings.forEach((l) => { places.add(l.Neighborhood); places.add(l.City); places.add(l.PostalCode); places.add(l.County + " County"); });
   $("#placeList").innerHTML = [...places].sort().map((p) => `<option value="${esc(p)}">`).join("");
 
   drawHistogram();
@@ -115,6 +117,7 @@ function syncControls() {
   $("#sort").value = f.sort;
   for (const el of $$("#filterbar [name], #moreForm [name]")) {
     if (el.name === "type") el.checked = f.types.includes(el.value);
+    else if (el.name === "county") el.checked = f.counties.includes(el.value);
     else if (el.type === "checkbox") el.checked = !!f[el.name];
     else el.value = f[el.name] ?? "";
   }
@@ -128,6 +131,7 @@ function syncControls() {
   setPill("price", pr ? `${f.priceMin != null ? shortMoney(f.priceMin) : "Any"} – ${f.priceMax != null ? shortMoney(f.priceMax) : "Any"}` : "Price", pr);
   const bb = f.bedsMin != null || f.bathsMin != null;
   setPill("beds", bb ? [f.bedsMin != null && `${f.bedsMin}+ bd`, f.bathsMin != null && `${f.bathsMin}+ ba`].filter(Boolean).join(", ") : "Beds & baths", bb);
+  setPill("county", f.counties.length ? (f.counties.length === 1 ? f.counties[0] : `${f.counties.length} counties`) : "County", f.counties.length > 0);
   setPill("type", f.types.length ? (f.types.length === 1 ? f.types[0] : `Home type (${f.types.length})`) : "Home type", f.types.length > 0);
   const st = !(f.statusActive && f.statusContingent && !f.statusPending);
   setPill("status", st ? (f.statusPending ? "Incl. pending" : "Status (custom)") : "For sale", st);
@@ -169,6 +173,7 @@ function wireEvents() {
     const el = e.target;
     if (!el.name) return;
     if (el.name === "type") return setFilters({ types: $$("[name=type]:checked").map((i) => i.value) });
+    if (el.name === "county") return setFilters({ counties: $$("[name=county]:checked").map((i) => i.value) });
     if (el.type === "checkbox") return setFilters({ [el.name]: el.checked });
     if (el.name === "keyword") return setFilters({ keyword: el.value.trim() });
     const v = el.value === "" ? null : Number(el.value);
@@ -285,7 +290,7 @@ function initMap() {
     $("#map").innerHTML = `<p class="muted" style="padding:20px">Map unavailable.</p>`;
     map = null; return;
   }
-  map = L.map("map", { zoomControl: true, preferCanvas: false }).setView([27.98, -82.5], 11);
+  map = L.map("map", { zoomControl: true, preferCanvas: false }).setView(SITE.mapCenter, SITE.mapZoom);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
     subdomains: "abcd", maxZoom: 19,
@@ -370,7 +375,8 @@ function renderResults({ fitMap = false } = {}) {
   $("#empty").hidden = rows.length > 0;
   const reviewed = rows.filter((l) => S.summaries[l.ListingId]).length;
   $("#resultCount").textContent = `${rows.length} home${rows.length === 1 ? "" : "s"}${reviewed ? ` · ${reviewed} with verified-tour reviews` : ""}`;
-  $("#listTitle").textContent = S.f.q ? `${titleCase(S.f.q)} homes for sale` : "Tampa Bay homes for sale";
+  $("#listTitle").textContent = S.f.q ? `${titleCase(S.f.q)} homes for sale`
+    : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "South Florida homes for sale";
   $("#chips").innerHTML = chipsFor(S.f).map((c) =>
     `<button class="chip" type="button" data-clear='${esc(JSON.stringify(c.clear))}' aria-label="Remove filter ${esc(c.label)}">${esc(c.label)} <b>✕</b></button>`).join("");
   renderMarkers(rows, fitMap);
@@ -394,7 +400,7 @@ function route() {
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
   show("view-search");
-  document.title = "Toured — Homes reviewed by people who walked through";
+  document.title = "Toured — South Florida homes reviewed by people who walked through";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
   firstSearchRender = false;
   setTimeout(() => map?.invalidateSize(), 0);
@@ -420,13 +426,16 @@ function renderDetail(l) {
     ["Garage", (d.GarageSpaces ? `${d.GarageSpaces} space${d.GarageSpaces > 1 ? "s" : ""}` : "None") + " " + est],
     ["Stories", d.StoriesTotal + " " + est],
     ["Days listed", d.DaysOnMarket + " " + est],
+    ["County", l.County],
+    ["Flood zone", d.FloodZone + (d.FloodZone === "X" ? " (minimal risk)" : " (flood insurance likely required)") + " " + est],
     ["Est. annual tax", fmt$(d.TaxAnnualAmount) + " " + est],
     ["Style", d.ArchitecturalStyle + " " + est],
   ];
   const features = [
     d.PoolPrivateYN && "Private pool", d.WaterfrontYN && "Waterfront", d.View && `${d.View} view`,
     d.FireplaceYN && "Fireplace", d.CentralAir && "Central air", d.GatedCommunity && "Gated community",
-    d.SolarPanels && "Solar panels", d.EVCharging && "EV charging", d.VirtualTour && "Virtual tour available",
+    d.SolarPanels && "Solar panels", d.ImpactWindows && "Impact windows & doors",
+    d.BoatDock && "Private boat dock", d.OceanAccess && "Ocean access", d.GolfCommunity && "Golf community", d.EVCharging && "EV charging", d.VirtualTour && "Virtual tour available",
     d.NewConstructionYN && "New construction", d.SeniorCommunityYN && "55+ community",
   ].filter(Boolean);
 
@@ -448,7 +457,7 @@ function renderDetail(l) {
         <p class="d-addr">${esc(l.UnparsedAddress)}</p>
         <div class="status-line">
           <span><span class="dot ${statusDot}"></span> ${d.StandardStatus} ${est}</span>
-          <span>·</span><span>${esc(l.Neighborhood)}</span>
+          <span>·</span><span>${esc(l.Neighborhood)}</span><span>·</span><span>${esc(l.County)} County</span>
           ${s ? `<span>·</span><a href="#reviews" class="rating-mini" style="text-decoration:none;color:inherit"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">(${s.count} verified tour${s.count > 1 ? "s" : ""})</span></a>` : ""}
         </div>
         ${d.OpenHouse ? `<div class="cta-review" style="background:#fff;border:1.5px solid var(--line)"><p><b>Open house</b> · ${weekday(d.OpenHouse.date)}, ${fmtTime(d.OpenHouse.start)}–${fmtTime(addHours(d.OpenHouse.start, d.OpenHouse.durationHrs))} ${est}</p><span class="muted">Tour it, then come back to review it</span></div>` : ""}
@@ -477,13 +486,14 @@ function renderDetail(l) {
           <div class="mini-map" id="miniMap"></div>
         </section>
         <section class="section" style="border:0">
-          <p class="muted" style="font-size:13px">Listed by <b>${esc(l.ListOfficeName)}</b>. Listing facts retrieved ${fmtDate(l.SourceRetrieved)} from public listing data (<a href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">source</a>). Fields marked ${est} are placeholders. Toured is not affiliated with the listing broker; tour reviews are user opinions.</p>
+          <p class="muted" style="font-size:13px">Listed by <b>${esc(l.ListOfficeName)}</b>. Listing facts retrieved ${fmtDate(l.SourceRetrieved)} from public listing data (<a href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">source</a>). Fields marked ${est} are placeholders. Tour reviews are user opinions and are not verified by the listing broker.</p>
+          <p class="muted" style="font-size:12px">${esc(SITE.mlsDisclaimer)}</p>
         </section>
       </div>
       <aside>
         <div class="side-card">
-          <h3>Interested in this home?</h3>
-          <p class="muted" style="font-size:14px">Request a showing — after you tour, you'll be able to leave a verified review.</p>
+          <h3>Tour this home with ${esc(SITE.agentName)}</h3>
+          <p class="muted" style="font-size:14px">${esc(SITE.brokerage)} · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a><br>After you tour, come back and leave a verified review.</p>
           <button class="btn" type="button" id="reqTour">Request a tour</button>
           <button class="btn btn-ghost" type="button" style="margin-top:8px" id="sideReview">${mine ? "View your review" : "I toured this home"}</button>
         </div>
@@ -493,7 +503,11 @@ function renderDetail(l) {
 
   $("#writeReview")?.addEventListener("click", () => requireAuth(() => openReviewForm(l)));
   $("#sideReview").addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
-  $("#reqTour").addEventListener("click", () => toast("Tour requests will connect to an agent / showing service."));
+  $("#reqTour").addEventListener("click", () => {
+    const subj = encodeURIComponent(`Tour request: ${l.UnparsedAddress}`);
+    const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).\n\nThanks!`);
+    location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
+  });
   $("#reviewList").addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
     if (h) { if (store.markHelpful(h.dataset.helpful)) { renderDetail(l); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
@@ -560,10 +574,12 @@ function renderCalc(l) {
     const r = st.rate / 100 / 12, n = st.years * 12;
     const pi = r ? (loan * r) / (1 - (1 + r) ** -n) : loan / n;
     const tax = l.demo.TaxAnnualAmount / 12;
-    const ins = (l.ListPrice * 0.009) / 12; // FL homeowners insurance is high
+    // South Florida wind/homeowners insurance runs high; impact windows earn a discount.
+    const ins = (l.ListPrice * (l.demo.ImpactWindows ? 0.011 : 0.014)) / 12;
+    const flood = l.demo.FloodZone === "X" ? 0 : (l.ListPrice * 0.003) / 12;
     const hoa = l.demo.AssociationFee;
-    const total = pi + tax + ins + hoa;
-    const parts = [["Principal & interest", pi, "#0b6e63"], ["Property tax", tax, "#5aa6c9"], ["Home insurance", ins, "#f2a516"], ["HOA", hoa, "#e8563f"]].filter((p) => p[1] > 0);
+    const total = pi + tax + ins + flood + hoa;
+    const parts = [["Principal & interest", pi, "#0b6e63"], ["Property tax", tax, "#5aa6c9"], ["Home insurance", ins, "#f2a516"], ["Flood insurance", flood, "#7a5af5"], ["HOA", hoa, "#e8563f"]].filter((p) => p[1] > 0);
     $(".total", el).textContent = fmt$(total) + "/mo";
     $(".bar", el).innerHTML = parts.map(([, v, c]) => `<span style="width:${(v / total) * 100}%;background:${c}"></span>`).join("");
     $(".legend", el).innerHTML = parts.map(([k, v, c]) => `<span><i style="background:${c}"></i>${k}: ${fmt$(v)}</span>`).join("");

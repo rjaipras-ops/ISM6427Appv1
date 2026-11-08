@@ -5,6 +5,7 @@ export const SQFT_STEPS = [0, 750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 350
 export const LOT_STEPS = [0, 2000, 4500, 6500, 8000, 10890, 21780, 43560, 87120];
 export const LOT_LABELS = { 2000: "2,000 sqft", 4500: "4,500 sqft", 6500: "6,500 sqft", 8000: "8,000 sqft", 10890: "¼ acre", 21780: "½ acre", 43560: "1 acre", 87120: "2 acres" };
 
+export const COUNTIES = ["Broward", "Palm Beach", "St. Lucie"];
 export const HOME_TYPES = ["Single Family", "Condo", "Townhouse", "Multi-Family", "Mobile/Manufactured", "Land"];
 
 export const SEGMENTS = {
@@ -19,12 +20,13 @@ const BOOL_KEYS = [
   "statusActive", "statusContingent", "statusPending", "reviewedOnly",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev",
+  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone",
 ];
 const NUM_KEYS = ["priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating"];
 
 export function defaults() {
   return {
-    q: "", keyword: "", sort: "relevant", types: [], stories: "",
+    q: "", keyword: "", sort: "relevant", types: [], counties: [], stories: "",
     priceMin: null, priceMax: null, bedsMin: null, bathsMin: null,
     sqftMin: null, sqftMax: null, lotMin: null, lotMax: null, yearMin: null, yearMax: null,
     hoaMax: null, domMax: null, garageMin: null, minRating: null,
@@ -33,6 +35,7 @@ export function defaults() {
     foreclosure: false, virtualTour: false, hideSenior: false,
     pool: false, waterfront: false, view: false, fireplace: false, centralAir: false,
     basement: false, gated: false, solar: false, ev: false,
+    impactWindows: false, boatDock: false, oceanAccess: false, golf: false, noFloodZone: false,
     bounds: null,
   };
 }
@@ -42,6 +45,7 @@ export const DRAWER_KEYS = [
   "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "stories", "garageMin",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev", "minRating", "keyword",
+  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone",
 ];
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
@@ -54,7 +58,7 @@ export function matches(l, f, summary) {
   if (status === "Pending" && !f.statusPending) return false;
 
   if (f.q) {
-    const hay = norm(`${l.UnparsedAddress} ${l.Neighborhood} ${l.PostalCode}`);
+    const hay = norm(`${l.UnparsedAddress} ${l.Neighborhood} ${l.PostalCode} ${l.County} county`);
     if (!norm(f.q).split(" ").every((t) => hay.includes(t))) return false;
   }
   if (f.priceMin != null && l.ListPrice < f.priceMin) return false;
@@ -62,6 +66,7 @@ export function matches(l, f, summary) {
   if (f.bedsMin != null && l.BedroomsTotal < f.bedsMin) return false;
   if (f.bathsMin != null && l.BathroomsTotalInteger < f.bathsMin) return false;
   if (f.types.length && !f.types.includes(l.PropertyType)) return false;
+  if (f.counties.length && !f.counties.includes(l.County)) return false;
   if (f.sqftMin != null && l.LivingArea < f.sqftMin) return false;
   if (f.sqftMax != null && l.LivingArea > f.sqftMax) return false;
   if (f.lotMin != null && d.LotSizeSquareFeet < f.lotMin) return false;
@@ -90,6 +95,11 @@ export function matches(l, f, summary) {
   if (f.gated && !d.GatedCommunity) return false;
   if (f.solar && !d.SolarPanels) return false;
   if (f.ev && !d.EVCharging) return false;
+  if (f.impactWindows && !d.ImpactWindows) return false;
+  if (f.boatDock && !d.BoatDock) return false;
+  if (f.oceanAccess && !d.OceanAccess) return false;
+  if (f.golf && !d.GolfCommunity) return false;
+  if (f.noFloodZone && d.FloodZone !== "X") return false;
 
   if (f.reviewedOnly && !summary) return false;
   if (f.minRating != null && (!summary || summary.avg < f.minRating)) return false;
@@ -133,7 +143,7 @@ export function toQuery(f) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(f)) {
     if (k === "bounds") continue;
-    if (k === "types") { if (v.length) p.set("types", v.join("|")); continue; }
+    if (k === "types" || k === "counties") { if (v.length) p.set(k, v.join("|")); continue; }
     if (v === d[k] || v === "" || v == null) continue;
     p.set(k, typeof v === "boolean" ? (v ? "1" : "0") : String(v));
   }
@@ -145,6 +155,7 @@ export function fromQuery(qs) {
   const p = new URLSearchParams(qs);
   for (const [k, v] of p) {
     if (k === "types") f.types = v.split("|").filter((t) => HOME_TYPES.includes(t));
+    else if (k === "counties") f.counties = v.split("|").filter((t) => COUNTIES.includes(t));
     else if (BOOL_KEYS.includes(k)) f[k] = v === "1";
     else if (NUM_KEYS.includes(k)) { const n = Number(v); if (Number.isFinite(n)) f[k] = n; }
     else if (k in f) f[k] = v;
@@ -164,6 +175,7 @@ export function chipsFor(f) {
     add(`${f.priceMin != null ? money(f.priceMin) : "Any"} – ${f.priceMax != null ? money(f.priceMax) : "Any"}`, { priceMin: null, priceMax: null });
   if (f.bedsMin != null) add(`${f.bedsMin}+ beds`, { bedsMin: null });
   if (f.bathsMin != null) add(`${f.bathsMin}+ baths`, { bathsMin: null });
+  for (const c of f.counties) add(`${c} County`, { counties: f.counties.filter((x) => x !== c) });
   for (const t of f.types) add(t, { types: f.types.filter((x) => x !== t) });
   if (f.statusPending) add("Incl. pending", { statusPending: false });
   if (!f.statusContingent) add("No contingent", { statusContingent: true });
@@ -182,6 +194,7 @@ export function chipsFor(f) {
     foreclosure: "Foreclosure", virtualTour: "Virtual tour", hideSenior: "No 55+",
     pool: "Pool", waterfront: "Waterfront", view: "View", fireplace: "Fireplace", centralAir: "Central air",
     basement: "Basement", gated: "Gated", solar: "Solar", ev: "EV charging", reviewedOnly: "Has tour reviews",
+    impactWindows: "Impact windows", boatDock: "Boat dock", oceanAccess: "Ocean access", golf: "Golf community", noFloodZone: "Outside flood zone",
   };
   for (const [k, label] of Object.entries(flags)) if (f[k]) add(label, { [k]: false });
   if (f.minRating != null) add(`${f.minRating}+ ★ tours`, { minRating: null });

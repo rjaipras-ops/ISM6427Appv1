@@ -10,7 +10,7 @@
 
 const KEYS = {
   user: "toured.user",
-  reviews: "toured.reviews",
+  reviews: "toured.reviews.sfl", // bumped when sample data changed
   saved: "toured.saved",
   helpful: "toured.helpful",
 };
@@ -34,7 +34,8 @@ export const REVIEW_TAGS = [
   "Looks like the photos", "Smaller than expected", "Bigger than expected", "Great natural light",
   "Needs updating", "Recently renovated", "Strong odors", "Signs of water damage", "Busy street",
   "Quiet street", "Great yard", "Low ceilings", "Storage galore", "Parking is tight",
-  "Friendly neighbors", "Flood-zone concerns",
+  "Friendly neighbors", "Flood-zone concerns", "Impact windows", "Older roof", "Special assessment risk",
+  "Boat-friendly canal",
 ];
 
 const read = (k, fallback) => {
@@ -75,51 +76,51 @@ export async function signOut() {
 // They render with a "Sample" flag and should be deleted once real reviews exist.
 const SAMPLE_REVIEWS = [
   {
-    listingId: "45095582", displayName: "Marisol P.", daysAgo: 6, tourType: "open_house", tourDaysAgo: 9,
+    listingId: "43101364", displayName: "Marisol P.", daysAgo: 6, tourType: "open_house", tourDaysAgo: 9,
     ratings: { overall: 5, condition: 5, matchesListing: 4, layout: 5, neighborhood: 5, noise: 3 },
-    title: "Gorgeous kitchen, Cass St traffic is real",
-    body: "The renovation is legit — solid-wood cabinets, new roof per the disclosure binder, and the back bedroom gets amazing afternoon light. You do hear Cass Street from the front rooms during rush hour.",
-    pros: "Kitchen, light, walkable to Armature Works", cons: "Road noise in front bedroom",
+    title: "Renovated Victoria Park gem, but Sunrise Blvd noise",
+    body: "Kitchen and baths are fully redone and the roof is 2022 per the disclosure. Impact windows throughout, which keep the noise down, but you still hear Sunrise traffic in the front bedroom at rush hour.",
+    pros: "Renovation, walk to Las Olas, impact windows", cons: "Traffic noise in front bedroom",
     tags: ["Recently renovated", "Great natural light", "Busy street"],
   },
   {
-    listingId: "45095582", displayName: "Devin K.", daysAgo: 3, tourType: "private_showing", tourDaysAgo: 4,
+    listingId: "43101364", displayName: "Devin K.", daysAgo: 3, tourType: "private_showing", tourDaysAgo: 4,
     ratings: { overall: 4, condition: 4, matchesListing: 4, layout: 4, neighborhood: 5, noise: 3 },
-    title: "Photos are accurate, yard is smaller",
-    body: "Wide-angle photos make the backyard look bigger than it is. Inside matched the listing well. Agent said the HVAC is 3 years old.",
-    pros: "Move-in ready", cons: "Small yard, one-car garage",
+    title: "Photos are accurate, yard is tight",
+    body: "Wide-angle photos make the backyard look bigger than it is. No room for a pool. Inside matched the listing well and the AC is about 3 years old.",
+    pros: "Move-in ready", cons: "Small yard, street parking only",
     tags: ["Looks like the photos", "Parking is tight"],
   },
   {
-    listingId: "44903711", displayName: "Andre W.", daysAgo: 12, tourType: "open_house", tourDaysAgo: 13,
-    ratings: { overall: 4, condition: 3, matchesListing: 4, layout: 5, neighborhood: 5, noise: 5 },
-    title: "Huge lot on a quiet Carrollwood street",
-    body: "Big, quiet lot with mature oaks. Bathrooms are original and will need work. Layout flows great for entertaining.",
-    pros: "Lot size, layout, quiet", cons: "Dated bathrooms",
-    tags: ["Quiet street", "Great yard", "Needs updating"],
+    listingId: "46499454", displayName: "Andre W.", daysAgo: 12, tourType: "open_house", tourDaysAgo: 13,
+    ratings: { overall: 4, condition: 4, matchesListing: 5, layout: 5, neighborhood: 5, noise: 5 },
+    title: "Quiet West Boca cul-de-sac, ask about club dues",
+    body: "Lovely lake view and a very quiet street. Layout flows great for entertaining. Make sure you get the mandatory club membership and capital contribution numbers before you write an offer.",
+    pros: "Lake view, layout, quiet", cons: "Mandatory club costs",
+    tags: ["Quiet street", "Looks like the photos"],
   },
   {
-    listingId: "64635767", displayName: "Priya S.", daysAgo: 20, tourType: "private_showing", tourDaysAgo: 22,
-    ratings: { overall: 3, condition: 3, matchesListing: 2, layout: 3, neighborhood: 4, noise: 3 },
-    title: "Listing photos are generous",
-    body: "Unit is fine but noticeably darker than the photos suggest — they were clearly brightened. Ask about the special assessment; the HOA mentioned one is coming for the roof.",
-    pros: "Location near SoHo", cons: "Darker than photos, possible special assessment",
-    tags: ["Smaller than expected"],
+    listingId: "43209846", displayName: "Priya S.", daysAgo: 20, tourType: "private_showing", tourDaysAgo: 22,
+    ratings: { overall: 3, condition: 2, matchesListing: 2, layout: 3, neighborhood: 4, noise: 3 },
+    title: "Great beach location, ask about the assessment",
+    body: "Steps to the beach, but the unit is darker and more dated than the photos suggest. The building is mid-way through its milestone inspection and concrete restoration, and a special assessment was mentioned. Get the SIRS report and the latest condo minutes.",
+    pros: "Beach access, price", cons: "Dated unit, likely special assessment",
+    tags: ["Needs updating", "Smaller than expected"],
   },
   {
-    listingId: "45093980", displayName: "Tom R.", daysAgo: 2, tourType: "open_house", tourDaysAgo: 2,
+    listingId: "47835617", displayName: "Tom R.", daysAgo: 2, tourType: "open_house", tourDaysAgo: 2,
     ratings: { overall: 5, condition: 4, matchesListing: 5, layout: 4, neighborhood: 4, noise: 4 },
-    title: "Classic Seminole Heights bungalow",
-    body: "Original heart-pine floors and a deep front porch. Exactly like the photos. Kitchen is small but functional.",
-    pros: "Character, porch, location", cons: "Small kitchen",
-    tags: ["Looks like the photos", "Friendly neighbors"],
+    title: "Solid PSL pool home, exactly like the photos",
+    body: "Clean, newer roof and the pool cage is in good shape. Exactly what the listing shows. On city water and sewer, which isn't true for every PSL lot, so worth confirming on others.",
+    pros: "Pool, condition, city water/sewer", cons: "Kitchen is builder-grade",
+    tags: ["Looks like the photos", "Great yard"],
   },
   {
-    listingId: "44905441", displayName: "Jasmine L.", daysAgo: 30, tourType: "open_house", tourDaysAgo: 31,
+    listingId: "43004143", displayName: "Jasmine L.", daysAgo: 30, tourType: "open_house", tourDaysAgo: 31,
     ratings: { overall: 2, condition: 2, matchesListing: 3, layout: 3, neighborhood: 3, noise: 4 },
     title: "Musty smell, check for water intrusion",
-    body: "Strong musty odor in the back bedroom and staining on the ceiling near the AC closet. Might be fine after inspection, but go in with eyes open.",
-    pros: "Quiet street, lake access", cons: "Odor, possible leak",
+    body: "Strong musty odor in the second bedroom and staining on the ceiling near the AC closet. Might be fine after inspection, but go in with eyes open and ask the association about recent leaks.",
+    pros: "Price, quiet building", cons: "Odor, possible leak",
     tags: ["Strong odors", "Signs of water damage", "Quiet street"],
   },
 ];
@@ -210,7 +211,7 @@ export async function addReview(input, { listing, user }) {
     tour: { date: input.tourDate, type: input.tourType },
     certification: {
       certified: true,
-      method: "self", // later: "agent_confirmed" | "showing_service" (ShowingTime) | "geo_checkin"
+      method: "self", // later: "agent_confirmed" | "showing_service" (e.g. ShowingTime) | "geo_checkin"
       certifiedAt: now,
       statement: `I certify that I personally toured ${listing.UnparsedAddress} on ${input.tourDate}.`,
     },
