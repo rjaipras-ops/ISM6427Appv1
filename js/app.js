@@ -474,7 +474,7 @@ function renderDetail(l) {
       <button class="save-btn" style="position:static" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>
     </div>
     <div class="gallery">
-      <div>${houseSVG(l)}<span class="gallery-note">Illustration · listing photos load from the MLS feed</span></div>
+      <div>${houseSVG(l)}<a class="photos-link" href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">View listing photos on Zillow ↗</a></div>
       <div>${houseSVG(l, { variant: 1, label: "Illustration" })}</div>
       <div>${houseSVG(l, { variant: 2, label: "Illustration" })}</div>
     </div>

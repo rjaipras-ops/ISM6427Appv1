@@ -446,3 +446,12 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .records-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .records-links a { text-decoration: none; }
 @media (max-width: 860px) { .tax-compare { grid-template-columns: 1fr; } }
+
+/* Outbound link to the listing's photos (shown until the IDX feed supplies them) */
+.photos-link {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  background: rgba(27, 34, 40, .85); color: #fff; text-decoration: none; font-weight: 600;
+  padding: 12px 20px; border-radius: 999px; box-shadow: var(--shadow-lg); white-space: nowrap;
+}
+.photos-link:hover { background: var(--ink); }
+.photos-link:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
