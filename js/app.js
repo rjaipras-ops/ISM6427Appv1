@@ -5,6 +5,7 @@ import {
 } from "./filters.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
+import { satelliteThumb, satelliteMap } from "./imagery.js";
 
 /* ---------------- helpers ---------------- */
 const $ = (s, el = document) => el.querySelector(s);
@@ -314,7 +315,7 @@ function fitToResults() {
   map.invalidateSize();
   if (S.results.length) map.fitBounds(L.latLngBounds(S.results.map((l) => [l.Latitude, l.Longitude])), { padding: [40, 40], maxZoom: 14 });
 }
-let map, markerLayer, markers = new Map(), miniMap;
+let map, markerLayer, markers = new Map(), galleryMaps = [];
 function initMap() {
   if (!window.L) { // map library failed to load: keep search usable without it
     $("#map").innerHTML = `<p class="muted" style="padding:20px">Map unavailable.</p>`;
@@ -381,7 +382,7 @@ function cardHTML(l, { compact = false } = {}) {
     ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>`
     : `<span class="no-reviews">No tour reviews yet</span>`;
   return `<a class="card" href="#/home/${l.ListingId}" data-id="${l.ListingId}">
-    <div class="card-media">${houseSVG(l)}<div class="badges">${badgesFor(l)}</div>
+    <div class="card-media">${satelliteThumb(l, { fallback: houseSVG(l) })}<div class="badges">${badgesFor(l)}</div>
       ${compact ? "" : `<button class="save-btn" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>`}
     </div>
     <div class="card-body">
@@ -474,9 +475,11 @@ function renderDetail(l) {
       <button class="save-btn" style="position:static" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>
     </div>
     <div class="gallery">
-      <div>${houseSVG(l)}<a class="photos-link" href="${esc(photoGalleryUrl(l))}" target="_blank" rel="noopener noreferrer">View photos ↗</a></div>
-      <div>${houseSVG(l, { variant: 1, label: "Illustration" })}</div>
-      <div>${houseSVG(l, { variant: 2, label: "Illustration" })}</div>
+      <div><div class="gal-map" id="galMain" role="img" aria-label="Satellite view of the property${l.Parcel?.Shape ? " with the county parcel boundary outlined" : ""}"></div>
+        <a class="photos-link" href="${esc(photoGalleryUrl(l))}" target="_blank" rel="noopener noreferrer">View photos ↗</a>
+        <span class="gal-label">${l.Parcel?.Shape ? "Satellite · parcel boundary from county records" : "Satellite view"}</span></div>
+      <div><div class="gal-map" id="galWide" role="img" aria-label="Satellite view of the neighborhood"></div><span class="gal-label">Neighborhood</span></div>
+      <div><div class="gal-map" id="galStreet" role="img" aria-label="Street map"></div><span class="gal-label">Map</span></div>
     </div>
     <div class="detail-grid">
       <div>
@@ -511,10 +514,6 @@ function renderDetail(l) {
           <div class="keyfacts">${keyFacts.map(([k, v]) => `<div class="kf"><div><small>${k}</small><strong>${v}</strong></div></div>`).join("")}</div>
         </section>
         ${features.length ? `<section class="section"><h2>Features ${est}</h2><ul class="feature-list">${features.map((x) => `<li>${x}</li>`).join("")}</ul></section>` : ""}
-        <section class="section">
-          <h2>Location</h2>
-          <div class="mini-map" id="miniMap"></div>
-        </section>
         <section class="section" style="border:0">
           <p class="muted" style="font-size:13px">Listed by <b>${esc(l.ListOfficeName)}</b>. Listing facts retrieved ${fmtDate(l.SourceRetrieved)} from public listing data (<a href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">source</a>). Fields marked ${est} are placeholders. Tour reviews are user opinions and are not verified by the listing broker.</p>
           <p class="muted" style="font-size:12px">${esc(SITE.mlsDisclaimer)}</p>
@@ -547,10 +546,16 @@ function renderDetail(l) {
   renderCalc(l);
 
   if (!window.L) return;
-  if (miniMap) miniMap.remove();
-  miniMap = L.map("miniMap", { scrollWheelZoom: false }).setView([l.Latitude, l.Longitude], 15);
-  addBasemap(miniMap);
-  L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(miniMap);
+  galleryMaps.forEach((m) => m.remove());
+  galleryMaps = [
+    satelliteMap("galMain", l),
+    satelliteMap("galWide", l, { zoom: 17, interactive: false }),
+  ];
+  const street = L.map("galStreet", { zoomControl: false, scrollWheelZoom: false, dragging: false, doubleClickZoom: false, touchZoom: false, keyboard: false })
+    .setView([l.Latitude, l.Longitude], 15);
+  addBasemap(street);
+  L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(street);
+  galleryMaps.push(street);
 }
 // Opens the listing straight into Zillow's full-screen photo viewer
 // (?mmlb=g,0) instead of the listing page. Photos stay hosted on Zillow.

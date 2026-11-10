@@ -192,7 +192,7 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .card:hover, .card.is-hot { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .card:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--line-2); }
-.card-media svg { width: 100%; height: 100%; display: block; }
+.card-media > svg, .sat-fallback > svg { width: 100%; height: 100%; display: block; }
 .badges { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 56px); }
 .badge {
   font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
@@ -264,7 +264,7 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .gallery { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 6px; border-radius: var(--radius); overflow: hidden; height: 400px; }
 .gallery > div { position: relative; background: var(--line-2); }
 .gallery > div:first-child { grid-row: span 2; }
-.gallery svg { width: 100%; height: 100%; display: block; }
+.gallery > div > svg { width: 100%; height: 100%; display: block; }
 .gallery-note {
   position: absolute; bottom: 10px; left: 10px; background: rgba(27,34,40,.78); color: #fff;
   font-size: 12px; padding: 4px 10px; border-radius: 999px;
@@ -455,3 +455,28 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 }
 .photos-link:hover { background: var(--ink); }
 .photos-link:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* Satellite imagery (cards) */
+.sat { position: absolute; inset: 0; overflow: hidden; background: #2b3a33; }
+.sat img, .sat-outline, .sat-fallback { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sat img { object-fit: cover; display: block; }
+.sat-fallback { opacity: 0; }
+.sat-failed img, .sat-failed .sat-outline, .sat-failed .sat-credit { display: none; }
+.sat-failed .sat-fallback { opacity: 1; }
+.sat-outline polygon { fill: rgba(255, 216, 77, .1); stroke: #ffd84d; stroke-width: 3; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sat-pin { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--accent); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.sat-credit { position: absolute; right: 6px; bottom: 4px; font-size: 9px; color: rgba(255,255,255,.85); text-shadow: 0 1px 2px rgba(0,0,0,.8); pointer-events: none; }
+
+/* Listing page gallery maps */
+.gal-map { position: absolute; inset: 0; background: #2b3a33; }
+.gallery > div { overflow: hidden; }
+.gal-label {
+  position: absolute; right: 10px; top: 10px; z-index: 500; background: rgba(27,34,40,.78); color: #fff;
+  font-size: 12px; padding: 4px 10px; border-radius: 999px; pointer-events: none;
+}
+.gallery .photos-link { z-index: 600; top: auto; bottom: 28px; transform: translateX(-50%); }
+
+@media (max-width: 860px) {
+  .cta-review { flex-direction: column; align-items: stretch; text-align: center; }
+  .gallery .leaflet-control-attribution { font-size: 9px; }
+}

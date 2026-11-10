@@ -45,9 +45,27 @@ node scripts/build-listings.mjs && node scripts/fetch-parcels.mjs && node script
 
 The layer only indexes parcel ID, owner and county, so lookups go by each listing's coordinates (address searches time out).
 
+## Property pictures
+
+Until the IDX feed supplies listing photos, every home shows **real aerial imagery** with the **county parcel boundary** outlined in yellow:
+
+- **Search cards:** a static satellite image from Esri's World Imagery export service, with the outline drawn on top. Condo units without their own outline get a pin instead.
+- **Listing page:** an interactive satellite close-up with the outline, a wider neighborhood view and a street map. The **View photos ↗** button opens the listing's photos in Zillow's photo viewer (a plain link; nothing is copied or embedded).
+- Outlines come from the Florida DOR parcel layer. `scripts/fetch-parcel-shapes.mjs` saves them to `data/parcels/shapes.json`, and the build keeps an outline only if the listing's location falls inside it (306 of 307 do).
+
+**Esri imagery terms.** The imagery and street-map tiles are Esri ArcGIS Online basemaps. They require the attribution shown on the maps and images ("Imagery © Esri, Maxar, Earthstar Geographics…"). Non-commercial use needs no account. **Commercial use, which a brokerage site is, requires an ArcGIS account.** Esri's ArcGIS Location Platform has a free tier. Sign up, create an API key, and follow Esri's instructions to switch the basemap URLs in `js/imagery.js` and `js/app.js` (`addBasemap`) to authenticated ones. Check that your expected traffic fits the free tier, and review Esri's current terms.
+
+Street View isn't included: Google Street View requires a Google Maps API key with billing enabled.
+
+Refresh outlines with:
+
+```bash
+node scripts/fetch-parcel-shapes.mjs && node scripts/build-listings.mjs
+```
+
 ## Map
 
-Leaflet is bundled in `vendor/leaflet/`. Tiles come from Esri's World Street Map (free, attribution required, no key), with OpenStreetMap as an automatic fallback. CARTO tiles were removed because they now require an API key.
+Leaflet is bundled in `vendor/leaflet/`. Tiles come from Esri's World Street Map (attribution required; see the Esri terms note above for commercial use), with OpenStreetMap as an automatic fallback. CARTO tiles were removed because they now require an API key.
 
 ## Data: what's real and what's placeholder
 

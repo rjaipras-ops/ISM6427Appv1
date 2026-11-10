@@ -259,6 +259,24 @@ const taxLinks = (county, p, l) => ({
 })[county];
 
 let parcelFile = null;
+let shapes = {};
+try { shapes = JSON.parse(readFileSync(join(root, "data", "parcels", "shapes.json"), "utf8")); } catch { /* run fetch-parcel-shapes.mjs */ }
+// Keep an outline only if the listing's location falls inside it (or within ~60 m),
+// so a mismatched parcel never gets drawn around the wrong building.
+function shapeFits(rings, lng, lat) {
+  const inside = (ring) => {
+    let c = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i], [xj, yj] = ring[j];
+      if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  if (rings.some(inside)) return true;
+  const pts = rings.flat();
+  const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length, cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
+  return Math.hypot((cx - lng) * 99000, (cy - lat) * 111000) < 60;
+}
 try { parcelFile = JSON.parse(readFileSync(join(root, "data", "parcels", "parcels.json"), "utf8")); } catch { /* not fetched yet */ }
 let matched = 0;
 for (const l of listings) {
@@ -290,6 +308,7 @@ for (const l of listings) {
     // so a buyer's bill is based on roughly the purchase price.
     EstTaxNewBuyer: Math.round((l.ListPrice * 0.85 * (rate.school + rate.other)) / 1000),
     Links: taxLinks(l.County, p, l),
+    Shape: shapes[l.ListingId] && shapeFits(shapes[l.ListingId], l.Longitude, l.Latitude) ? shapes[l.ListingId] : null,
   };
   // Real values replace generated placeholders so filters use them.
   if (p.ACT_YR_BLT > 1800) { l.demo.YearBuilt = p.ACT_YR_BLT; l.demo.NewConstructionYN = p.ACT_YR_BLT >= 2025; }
