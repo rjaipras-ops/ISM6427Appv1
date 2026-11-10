@@ -474,7 +474,7 @@ function renderDetail(l) {
       <button class="save-btn" style="position:static" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>
     </div>
     <div class="gallery">
-      <div>${houseSVG(l)}<a class="photos-link" href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">View listing photos on Zillow ↗</a></div>
+      <div>${houseSVG(l)}<a class="photos-link" href="${esc(photoGalleryUrl(l))}" target="_blank" rel="noopener noreferrer">View photos ↗</a></div>
       <div>${houseSVG(l, { variant: 1, label: "Illustration" })}</div>
       <div>${houseSVG(l, { variant: 2, label: "Illustration" })}</div>
     </div>
@@ -552,6 +552,10 @@ function renderDetail(l) {
   addBasemap(miniMap);
   L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(miniMap);
 }
+// Opens the listing straight into Zillow's full-screen photo viewer
+// (?mmlb=g,0) instead of the listing page. Photos stay hosted on Zillow.
+const photoGalleryUrl = (l) => `${l.SourceUrl}?mmlb=g,0`;
+
 /* ---------------- public records (FL Dept. of Revenue parcel data) ---------------- */
 const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 function saleText(sale) {
