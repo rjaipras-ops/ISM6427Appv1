@@ -214,7 +214,7 @@ function wireEvents() {
   $("#mobileMapBtn").addEventListener("click", () => {
     const on = $("#view-search").classList.toggle("show-map");
     $("#mobileMapBtn").textContent = on ? "List" : "Map";
-    setTimeout(() => map?.invalidateSize(), 50);
+    setTimeout(() => { map?.invalidateSize(); if (on && needsFit) fitToResults(); }, 50);
   });
 
   // Cards: save button + hover sync with map
@@ -260,6 +260,7 @@ function observeSearchbar() {
   new ResizeObserver(() => {
     document.documentElement.style.setProperty("--searchbar-h", sb.offsetHeight + "px");
     map?.invalidateSize();
+    if (needsFit) fitToResults();
   }).observe(sb);
 }
 
@@ -284,6 +285,35 @@ function renderAccount() {
 }
 
 /* ---------------- map ---------------- */
+// Basemap: Esri World Street Map (free with attribution, no key). If its tiles
+// keep failing, fall back to OpenStreetMap's standard tiles.
+// (CARTO's basemaps were dropped: they now require an API key.)
+function addBasemap(m) {
+  const esri = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+    attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS',
+    maxZoom: 19,
+  }).addTo(m);
+  let errors = 0;
+  esri.on("tileerror", () => {
+    if (++errors !== 6) return;
+    m.removeLayer(esri);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(m);
+  });
+}
+// Fit the map to the current results. Skipped while the map is hidden (phones),
+// because Leaflet can't size a hidden map; it runs again when the map is shown.
+let needsFit = false;
+function fitToResults() {
+  if (!map) return;
+  const el = $("#map");
+  if (!el.offsetWidth || !el.offsetHeight) { needsFit = true; return; }
+  needsFit = false;
+  map.invalidateSize();
+  if (S.results.length) map.fitBounds(L.latLngBounds(S.results.map((l) => [l.Latitude, l.Longitude])), { padding: [40, 40], maxZoom: 14 });
+}
 let map, markerLayer, markers = new Map(), miniMap;
 function initMap() {
   if (!window.L) { // map library failed to load: keep search usable without it
@@ -291,10 +321,7 @@ function initMap() {
     map = null; return;
   }
   map = L.map("map", { zoomControl: true, preferCanvas: false }).setView(SITE.mapCenter, SITE.mapZoom);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: "abcd", maxZoom: 19,
-  }).addTo(map);
+  addBasemap(map);
   markerLayer = L.layerGroup().addTo(map);
   const zoomClass = () => $("#map").classList.toggle("zoomed-out", map.getZoom() < 12);
   map.on("zoomend", zoomClass); zoomClass();
@@ -325,7 +352,7 @@ function renderMarkers(rows, fit) {
     m.addTo(markerLayer);
     markers.set(l.ListingId, m);
   }
-  if (fit && rows.length) map.fitBounds(L.latLngBounds(rows.map((l) => [l.Latitude, l.Longitude])), { padding: [40, 40], maxZoom: 14 });
+  if (fit && rows.length) fitToResults();
 }
 function hot(id, scroll = false) {
   $$(".pin.is-hot, .card.is-hot").forEach((e) => e.classList.remove("is-hot"));
@@ -415,12 +442,14 @@ function renderDetail(l) {
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
   document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | Toured`;
   const est = `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
+  const pr = `<span class="est est-pr" title="From the county property appraiser's tax roll (FL Dept. of Revenue)">public record</span>`;
+  const fromPR = (k) => (d._fromParcel || []).includes(k);
   const statusDot = d.StandardStatus === "Active" ? "" : "pending";
 
   const keyFacts = [
     ["Property type", l.PropertyType],
-    ["Year built", d.YearBuilt + " " + est],
-    ["Lot size", d.LotSizeSquareFeet ? `${fmtN(d.LotSizeSquareFeet)} sqft ${est}` : "—"],
+    ["Year built", d.YearBuilt + " " + (fromPR("YearBuilt") ? pr : est)],
+    ["Lot size", d.LotSizeSquareFeet ? `${fmtN(d.LotSizeSquareFeet)} sqft ${fromPR("LotSizeSquareFeet") ? pr : est}` : "—"],
     ["Price / sqft", fmt$(l.PricePerSqFt)],
     ["HOA", (d.AssociationFee ? `${fmt$(d.AssociationFee)}/mo` : "None") + " " + est],
     ["Garage", (d.GarageSpaces ? `${d.GarageSpaces} space${d.GarageSpaces > 1 ? "s" : ""}` : "None") + " " + est],
@@ -428,7 +457,7 @@ function renderDetail(l) {
     ["Days listed", d.DaysOnMarket + " " + est],
     ["County", l.County],
     ["Flood zone", d.FloodZone + (d.FloodZone === "X" ? " (minimal risk)" : " (flood insurance likely required)") + " " + est],
-    ["Est. annual tax", fmt$(d.TaxAnnualAmount) + " " + est],
+    ["Est. tax after purchase", fmt$(d.TaxAnnualAmount) + "/yr " + est],
     ["Style", d.ArchitecturalStyle + " " + est],
   ];
   const features = [
@@ -476,6 +505,7 @@ function renderDetail(l) {
           <h2>About this home</h2>
           <p>${esc(d.PublicRemarks)}</p>
         </section>
+        ${publicRecordsHTML(l)}
         <section class="section">
           <h2>Key facts</h2>
           <div class="keyfacts">${keyFacts.map(([k, v]) => `<div class="kf"><div><small>${k}</small><strong>${v}</strong></div></div>`).join("")}</div>
@@ -519,10 +549,49 @@ function renderDetail(l) {
   if (!window.L) return;
   if (miniMap) miniMap.remove();
   miniMap = L.map("miniMap", { scrollWheelZoom: false }).setView([l.Latitude, l.Longitude], 15);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-    attribution: "&copy; OpenStreetMap &copy; CARTO", subdomains: "abcd", maxZoom: 19,
-  }).addTo(miniMap);
+  addBasemap(miniMap);
   L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(miniMap);
+}
+/* ---------------- public records (FL Dept. of Revenue parcel data) ---------------- */
+const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function saleText(sale) {
+  if (!sale) return "—";
+  return `${fmt$(sale.price)} · ${sale.month ? MONTHS[sale.month] + " " : ""}${sale.year}${sale.qualified ? "" : ` <span class="muted" style="font-size:12px">(non-arm's-length)</span>`}`;
+}
+function publicRecordsHTML(l) {
+  const p = l.Parcel;
+  if (!p) {
+    return `<section class="section"><h2>Public records &amp; taxes</h2>
+      <p class="muted">We couldn't match this listing to a county parcel record automatically. Search the ${esc(l.County)} County property appraiser by address.</p></section>`;
+  }
+  const listVsJust = p.JustValue ? Math.round(((l.ListPrice - p.JustValue) / p.JustValue) * 100) : null;
+  const rows = [
+    ["Owner of record", esc(p.Owner || "—")],
+    ["Parcel ID", `<span style="font-variant-numeric:tabular-nums">${esc(p.ParcelId)}</span>`],
+    ["Land use", esc(p.LandUse)],
+    ["Market (just) value", `${fmt$(p.JustValue)}${listVsJust != null ? ` <span class="muted" style="font-size:12px">· list price is ${Math.abs(listVsJust)}% ${listVsJust >= 0 ? "above" : "below"}</span>` : ""}`],
+    ["Assessed value", fmt$(p.AssessedValue)],
+    ["Taxable value", fmt$(p.TaxableValueNonSchool)],
+    ["Land value", fmt$(p.LandValue)],
+    ["Homestead exemption", p.Homestead ? "Yes" : "No"],
+    ["Year built (actual / effective)", `${p.YearBuilt || "—"} / ${p.EffectiveYearBuilt || "—"}`],
+    ["Living area (county)", p.LivingAreaSqFt ? `${fmtN(p.LivingAreaSqFt)} sqft <span class="muted" style="font-size:12px">· listing says ${fmtN(l.LivingArea)}</span>` : "—"],
+    ["Last sale", saleText(p.LastSale)],
+    ["Prior sale", saleText(p.PriorSale)],
+  ];
+  return `<section class="section" id="records">
+    <h2>Public records &amp; taxes</h2>
+    <div class="records-grid">${rows.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
+    <div class="tax-compare">
+      <div><small>Est. tax, current owner</small><b>${fmt$(p.EstTaxCurrentOwner)}/yr</b><span class="muted">${p.Homestead ? "Includes homestead savings" : "No homestead exemption"}</span></div>
+      <div><small>Est. tax after you buy</small><b>${fmt$(p.EstTaxNewBuyer)}/yr</b><span class="muted">Reassessed near the purchase price</span></div>
+    </div>
+    <div class="records-links">
+      <a class="btn" href="${esc(p.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>
+      <a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${esc(l.County)} property appraiser ↗</a>
+    </div>
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address.${l.County === "Palm Beach" ? ` On the Palm Beach Tax Collector site, search parcel <b>${esc(p.ParcelId)}</b>.` : ""} Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.</p>
+  </section>`;
 }
 const fmtTime = (hm) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`; };
 const addHours = (hm, n) => { const [h, m] = hm.split(":").map(Number); return `${h + n}:${String(m).padStart(2, "0")}`; };

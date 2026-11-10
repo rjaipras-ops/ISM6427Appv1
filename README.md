@@ -16,11 +16,38 @@ Static site with no build step. Netlify serves the repo root (`netlify.toml`).
 | `data/raw/` | Raw listing pull (Firecrawl, Nov 8 2026), one `.jsonl` file per county plus `manifest.json` |
 | `data/listings.json` | App data built from the raw pull |
 | `scripts/build-listings.mjs` | Rebuilds `data/listings.json` from `data/raw/` (`node scripts/build-listings.mjs`) |
+| `scripts/fetch-parcels.mjs` | Looks up each listing's county parcel record (owner, values, sales, year built) from the Florida DOR statewide parcel layer and saves `data/parcels/parcels.json` |
+| `vendor/leaflet/` | Leaflet 1.9.4 map library, bundled so the map doesn't depend on a CDN |
 | `db/schema.sql` | Postgres/Supabase schema: users, listings, tours (certifications), reviews, saved homes and searches |
 
 ## Filters
 
 County (Broward / Palm Beach / St. Lucie), location (address, neighborhood, city, ZIP), price, beds, baths, home type, listing status (active / contingent / pending), home size, lot size, year built, max HOA, days listed, stories, garage spaces, open house, price reduced, new construction, foreclosure, virtual tour, hide 55+, pool, waterfront, ocean access, boat dock, impact windows, golf community, outside flood zone, view, fireplace, gated, solar, EV charging, keyword. Toured-only filters: **has tour reviews** and **minimum tour rating**. Also "search as I move the map" and nine sort orders.
+
+## Public records and taxes
+
+Each listing page has a **Public records & taxes** section built from the Florida Department of Revenue statewide parcel layer (no API key):
+
+```
+https://services9.arcgis.com/Gh9awoU677aKree0/arcgis/rest/services/Florida_Statewide_Cadastral/FeatureServer/0
+```
+
+- **Shown:** owner of record, parcel ID, land use, market (just) value, assessed and taxable value, land value, homestead exemption, actual/effective year built, county living area, lot size, last two sales (price, month, year, arm's-length or not).
+- **Not stored or shown:** the owner's mailing address.
+- **Taxes:** an estimated bill for the current owner (from taxable value) and for a buyer (the assessment resets near the purchase price). Both use approximate county millage. The **Tax bills & payment status** button opens the tax collector's record. For Broward and St. Lucie it goes straight to the parcel's bill history (paid, unpaid, tax certificates). For Palm Beach it opens the tax collector's site, and the page shows the parcel ID to search.
+- Real year built and lot size replace the generated placeholders, so those filters use county data.
+
+Refresh with:
+
+```bash
+node scripts/build-listings.mjs && node scripts/fetch-parcels.mjs && node scripts/build-listings.mjs
+```
+
+The layer only indexes parcel ID, owner and county, so lookups go by each listing's coordinates (address searches time out).
+
+## Map
+
+Leaflet is bundled in `vendor/leaflet/`. Tiles come from Esri's World Street Map (free, attribution required, no key), with OpenStreetMap as an automatic fallback. CARTO tiles were removed because they now require an API key.
 
 ## Data: what's real and what's placeholder
 

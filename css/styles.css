@@ -432,3 +432,17 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 
 /* Visually-hidden inputs need a positioned ancestor, or they escape scroll containers */
 .toggle-pill, .type-grid label, .star-input, .tag-pick { position: relative; }
+
+/* Public records */
+.est-pr { color: var(--verified); border-color: #b9e0c8; }
+.records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px 20px; }
+.records-grid small { display: block; color: var(--ink-3); font-size: 12px; }
+.records-grid div > div { font-weight: 600; }
+.tax-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.tax-compare > div { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; display: grid; gap: 2px; }
+.tax-compare small { color: var(--ink-3); font-size: 12px; }
+.tax-compare b { font-size: 20px; }
+.tax-compare .muted { font-size: 12px; }
+.records-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.records-links a { text-decoration: none; }
+@media (max-width: 860px) { .tax-compare { grid-template-columns: 1fr; } }
