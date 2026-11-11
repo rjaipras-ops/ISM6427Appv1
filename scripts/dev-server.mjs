@@ -12,6 +12,7 @@ import listing from "../netlify/functions/idx-listing.mjs";
 import status from "../netlify/functions/idx-sync-status.mjs";
 import sync from "../netlify/functions/idx-sync.mjs";
 import parcel from "../netlify/functions/idx-parcel.mjs";
+import propertyLookup from "../netlify/functions/property-lookup.mjs";
 import scheduled from "../netlify/functions/idx-sync-scheduled.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -26,6 +27,7 @@ const routes = [
   [/^\/api\/idx\/parcel\/([\w-]+)$/, parcel, (m) => ({ key: m[1] })],
   [/^\/api\/idx\/sync-status$/, status],
   [/^\/api\/idx\/sync$/, sync],
+  [/^\/api\/property\/lookup$/, propertyLookup],
 ];
 
 createServer(async (req, res) => {

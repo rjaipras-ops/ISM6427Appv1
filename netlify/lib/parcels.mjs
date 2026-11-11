@@ -14,8 +14,11 @@ export const PARCEL_FIELDS = [
   "PARCEL_ID", "CO_NO", "ALT_KEY", "ASMNT_YR", "DOR_UC", "JV", "AV_SD", "AV_NSD", "TV_SD", "TV_NSD", "JV_HMSTD",
   "LND_VAL", "LND_SQFOOT", "ACT_YR_BLT", "EFF_YR_BLT", "TOT_LVG_AR", "NO_RES_UNT",
   "SALE_PRC1", "SALE_YR1", "SALE_MO1", "QUAL_CD1", "SALE_PRC2", "SALE_YR2", "SALE_MO2", "QUAL_CD2",
-  "OWN_NAME", "PHY_ADDR1", "PHY_CITY", "PHY_ZIPCD",
+  "OWN_NAME", "PHY_ADDR1", "PHY_ADDR2", "PHY_CITY", "PHY_ZIPCD",
 ];
+
+/** Situs address incl. unit. Broward keeps condo unit numbers in PHY_ADDR2 ("#702"). */
+export const fullSitus = (p) => `${String(p.PHY_ADDR1 || "").trim()} ${String(p.PHY_ADDR2 || "").trim()}`.trim();
 
 export const DOR_USE = {
   "000": "Vacant residential", "001": "Single family", "002": "Mobile home", "003": "Multi-family (10+ units)",
@@ -86,7 +89,7 @@ export function toParcel(listing, p, { shape = null, includeOwner = true } = {})
     AssessmentYear: p.ASMNT_YR,
     LandUse: DOR_USE[p.DOR_UC] || `DOR code ${p.DOR_UC}`,
     Owner: includeOwner ? (p.OWN_NAME || "").trim() || null : null,
-    SitusAddress: (p.PHY_ADDR1 || "").trim(),
+    SitusAddress: fullSitus(p),
     JustValue: p.JV,
     AssessedValue: p.AV_SD,
     TaxableValueSchool: p.TV_SD,
@@ -102,7 +105,7 @@ export function toParcel(listing, p, { shape = null, includeOwner = true } = {})
     EstTaxCurrentOwner: Math.round((p.TV_SD * rate.school + p.TV_NSD * rate.other) / 1000),
     // A sale resets the assessed value to market (Save Our Homes cap is lost),
     // so a buyer's bill is based on roughly the purchase price.
-    EstTaxNewBuyer: Math.round((listing.ListPrice * 0.85 * (rate.school + rate.other)) / 1000),
+    EstTaxNewBuyer: listing.ListPrice ? Math.round((listing.ListPrice * 0.85 * (rate.school + rate.other)) / 1000) : null,
     Links: countyLinks(listing.County, p),
     Shape: shape && shapeFits(shape, listing.Longitude, listing.Latitude) ? shape : null,
   };
@@ -138,7 +141,7 @@ export function pickParcel(l, rows) {
   if (unit) {
     const u = unit.replace(/^0+/, "");
     const hit = cands.filter((r) => {
-      const toks = norm(r.PHY_ADDR1).split(" ");
+      const toks = norm(fullSitus(r)).split(" ");
       const last = toks[toks.length - 1].replace(/^0+/, "");
       return last === u || toks.slice(-2).join("").replace(/^0+/, "") === u;
     });
@@ -147,8 +150,8 @@ export function pickParcel(l, rows) {
   }
   const uniq = new Map(cands.map((r) => [r.PARCEL_ID, r]));
   if (uniq.size === 1) return { status: "matched", parcel: [...uniq.values()][0] };
-  const sorted = [...uniq.values()].sort((a, b) => norm(a.PHY_ADDR1).length - norm(b.PHY_ADDR1).length);
-  if (norm(sorted[0].PHY_ADDR1).length < norm(sorted[1].PHY_ADDR1).length) return { status: "matched", parcel: sorted[0] };
+  const sorted = [...uniq.values()].sort((a, b) => norm(fullSitus(a)).length - norm(fullSitus(b)).length);
+  if (norm(fullSitus(sorted[0])).length < norm(fullSitus(sorted[1])).length) return { status: "matched", parcel: sorted[0] };
   return { status: "ambiguous", candidates: uniq.size };
 }
 
@@ -167,16 +170,25 @@ async function layerQuery(params) {
   }
 }
 
-/** Parcels at a point (or, as a fallback, in a ~25 m box around it). */
-export async function parcelsAt(lng, lat, { box = false } = {}) {
+/**
+ * Parcels at a point (or, as a fallback, in a ~25 m box around it).
+ * With { geometry: true } each row also gets `_rings` (outline in [lng, lat]), saving a second request.
+ */
+export async function parcelsAt(lng, lat, { box = false, geometry: withGeometry = false } = {}) {
   const geometry = box
     ? { geometry: [lng - 0.00025, lat - 0.00025, lng + 0.00025, lat + 0.00025].join(","), geometryType: "esriGeometryEnvelope" }
     : { geometry: `${lng},${lat}`, geometryType: "esriGeometryPoint" };
   const j = await layerQuery({
     ...geometry, inSR: "4326", spatialRel: "esriSpatialRelIntersects",
-    outFields: PARCEL_FIELDS.join(","), returnGeometry: "false", resultRecordCount: "2000",
+    outFields: PARCEL_FIELDS.join(","), resultRecordCount: "2000",
+    ...(withGeometry
+      ? { returnGeometry: "true", outSR: "4326", geometryPrecision: "6", maxAllowableOffset: "0.000004" }
+      : { returnGeometry: "false" }),
   });
-  return j.features.map((f) => f.attributes);
+  const round = (n) => Math.round(n * 1e6) / 1e6;
+  return j.features.map((f) => (withGeometry && f.geometry?.rings?.length
+    ? { ...f.attributes, _rings: f.geometry.rings.map((ring) => ring.map(([x, y]) => [round(x), round(y)])) }
+    : f.attributes));
 }
 
 /** Outline rings ([[lng, lat], ...]) for one parcel, by county number + parcel ID. */

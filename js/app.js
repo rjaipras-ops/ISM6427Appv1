@@ -778,14 +778,180 @@ function handleGone(l) {
 // Your Flexmls IDX Lite search, embedded (BeachesMLS-provided; compliance handled by Flexmls).
 function renderMlsSearch() {
   const el = $("#view-mlssearch");
-  if (el.dataset.ready) return; // keep the iframe (and the user's search) when coming back
+  if (el.dataset.ready) return; // keep the iframe (and the visitor's search) when coming back
   el.dataset.ready = "1";
   el.innerHTML = `<h1>MLS Search</h1>
-    <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}.</p>
-    <div class="idx-frame-wrap">
-      <iframe src="${esc(SITE.idxLiteUrl)}" title="BeachesMLS listing search (Flexmls IDX)" loading="lazy"></iframe>
+    <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Found a home you like? Paste its address in the Toured panel to see tour reviews, taxes and public records.</p>
+    <div class="mls-layout">
+      <div class="idx-frame-wrap">
+        <iframe src="${esc(SITE.idxLiteUrl)}" title="BeachesMLS listing search (Flexmls IDX)" loading="lazy"></iframe>
+      </div>
+      <aside class="toured-panel" aria-label="Toured home lookup">
+        <form class="tp-form" id="tpForm" role="search">
+          <label class="tp-label" for="tpAddr">Looking at a home?</label>
+          <p class="tp-help">Copy its address from the MLS search and paste it here.</p>
+          <div class="searchbox tp-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input id="tpAddr" type="search" placeholder="e.g. 1020 SE 9th Ave, Fort Lauderdale" autocomplete="off" required>
+          </div>
+          <button class="btn tp-go" type="submit">Look up on Toured</button>
+        </form>
+        <div class="tp-result" id="tpResult" aria-live="polite"></div>
+      </aside>
     </div>
     <p class="muted" style="font-size:13px;margin-top:10px">Search not loading? <a href="${esc(SITE.idxLiteUrl)}" target="_blank" rel="noopener noreferrer">Open MLS search in a new tab ↗</a></p>`;
+  $("#tpForm").addEventListener("submit", (e) => { e.preventDefault(); panelLookup($("#tpAddr").value); });
+  $("#tpResult").addEventListener("click", panelClick);
+  $("#tpResult").addEventListener("change", (e) => {
+    if (e.target.id === "tpUnit" && e.target.value) panelLookup(e.target.dataset.address, e.target.value);
+  });
+  renderPanelHome();
+}
+
+/* ---------- Toured panel (MLS Search page) ---------- */
+const panel = { property: null, seq: 0 };
+const normAddr = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\b(STREET|ST|AVENUE|AVE|ROAD|RD|DRIVE|DR|LANE|LN|COURT|CT|CIRCLE|CIR|BOULEVARD|BLVD|TERRACE|TER|PLACE|PL|WAY|TRAIL|TRL)\b/g, "").replace(/\b(\d+)(ST|ND|RD|TH)\b/g, "$1").replace(/\s+/g, " ").trim();
+
+// Homes with reviews (listings and looked-up properties), newest activity first.
+function reviewedHomes() {
+  const seen = new Map();
+  for (const r of store.getAllReviews()) {
+    const e = seen.get(r.listingId) || { key: r.listingId, address: r.address || S.byId.get(r.listingId)?.UnparsedAddress, last: r.createdAt };
+    if (r.createdAt > e.last) e.last = r.createdAt;
+    seen.set(r.listingId, e);
+  }
+  return [...seen.values()].filter((e) => e.address).sort((a, b) => b.last.localeCompare(a.last)).slice(0, 8);
+}
+
+function renderPanelHome() {
+  panel.property = null;
+  const homes = reviewedHomes();
+  $("#tpResult").innerHTML = homes.length ? `
+    <h3 class="tp-h">Homes with tour reviews</h3>
+    <ul class="tp-list">${homes.map((h) => {
+      const s = S.summaries[h.key] || store.getReviewSummaries()[h.key];
+      return `<li><button type="button" class="tp-home" data-key="${esc(h.key)}" data-address="${esc(h.address)}">
+        <span class="tp-home-addr">${esc(h.address)}</span>
+        ${s ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>` : ""}
+      </button></li>`;
+    }).join("")}</ul>` : `<p class="muted tp-empty">Tour reviews, property taxes, sale history and county records for any home in Broward, Palm Beach and St. Lucie counties.</p>`;
+}
+
+async function panelLookup(address, parcelKey = "") {
+  address = String(address || "").trim();
+  if (!address) return;
+  const my = ++panel.seq;
+  const out = $("#tpResult");
+  out.innerHTML = `<p class="tp-status"><span class="tp-spinner" aria-hidden="true"></span> Looking up ${esc(address)}…</p>`;
+  let r;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    r = await store.lookupProperty(address, parcelKey);
+    if (r.status !== "slow") break;
+    if (my === panel.seq) out.innerHTML = `<p class="tp-status"><span class="tp-spinner" aria-hidden="true"></span> County records are slow right now. Still trying…</p>`;
+  }
+  if (my !== panel.seq) return; // a newer lookup started
+  if (r.status === "matched") return renderPanelProperty(r.property);
+  if (r.status === "choose_unit") {
+    out.innerHTML = `<div class="tp-card">
+      <p class="tp-addr">${esc(r.address)}</p>
+      <label class="field">Which unit?
+        <select id="tpUnit" data-address="${esc(address)}">
+          <option value="">Choose a unit (${r.units.length})</option>
+          ${r.units.map((u) => `<option value="${esc(u.key)}">${esc(u.address)}</option>`).join("")}
+        </select>
+      </label>
+      <button type="button" class="linkbtn" data-tp="clear">← Look up another home</button>
+    </div>`;
+    return;
+  }
+  out.innerHTML = `<div class="tp-card"><p>${esc(r.message || "Lookup is temporarily unavailable. Please try again.")}</p>
+    <button type="button" class="linkbtn" data-tp="clear">← Back</button></div>`;
+}
+
+function panelListing(p) {
+  // A listing-shaped object so the shared review form, reviews and imagery work for any home.
+  return {
+    ListingId: p.key, UnparsedAddress: p.address, StreetAddress: p.street, PostalCode: p.postalCode,
+    County: p.county, Latitude: p.lat, Longitude: p.lng, Parcel: p.parcel, ListPrice: null,
+    onReviewChange: () => renderPanelProperty(p),
+  };
+}
+
+function renderPanelProperty(p) {
+  panel.property = p;
+  S.summaries = store.getReviewSummaries();
+  const l = panelListing(p);
+  const pc = p.parcel || {};
+  const reviews = store.getReviews(p.key);
+  const s = S.summaries[p.key];
+  const mine = S.user && reviews.find((r) => r.userId === S.user.id);
+  const reviewsOff = SITE.reviewsDisabled.includes(p.key);
+  // Is this home also in Toured's own listing data? Link to its full page.
+  const match = S.listings.find((x) => normAddr(x.StreetAddress) === normAddr(p.street) && String(x.PostalCode) === String(p.postalCode));
+  const facts = [
+    ["Land use", esc(pc.LandUse || "—")],
+    ["Year built", pc.YearBuilt || "—"],
+    ["Living area (county)", pc.LivingAreaSqFt ? `${fmtN(pc.LivingAreaSqFt)} sqft` : "—"],
+    ["Lot size", pc.LotSqFt ? `${fmtN(pc.LotSqFt)} sqft` : "—"],
+    ["Market (just) value", pc.JustValue ? fmt$(pc.JustValue) : "—"],
+    ["Taxable value", pc.TaxableValueNonSchool ? fmt$(pc.TaxableValueNonSchool) : "—"],
+    ["Homestead", pc.Homestead ? "Yes" : "No"],
+    ["Est. tax (current owner)", pc.EstTaxCurrentOwner ? `${fmt$(pc.EstTaxCurrentOwner)}/yr` : "—"],
+    ["Last sale", saleText(pc.LastSale)],
+    ["Prior sale", saleText(pc.PriorSale)],
+  ];
+  $("#tpResult").innerHTML = `<div class="tp-card">
+    <div class="tp-media">${satelliteThumb(l, { fallback: houseSVG({ ...l, PropertyType: /condo|co-op/i.test(pc.LandUse || "") ? "Condo" : "Single Family", demo: {} }) })}</div>
+    <p class="tp-addr">${esc(p.address)}</p>
+    <p class="muted tp-sub">${esc(p.county)} County · Parcel ${esc(pc.ParcelId || "—")}${p.building ? " · building record (add a unit # for a specific unit)" : ""}</p>
+    ${match ? `<a class="btn btn-ghost tp-full" href="#/home/${esc(match.ListingId)}" target="_blank" rel="noopener">See the full Toured listing ↗</a>` : ""}
+
+    <h3 class="tp-h">Tour reviews</h3>
+    ${reviewsOff ? `<p class="muted">Reviews are turned off for this home at the seller's request.</p>` : `
+      ${s ? `<div class="tp-score"><b>${s.avg.toFixed(1)}</b> ${stars(s.avg)} <span class="muted">${s.count} verified tour${s.count > 1 ? "s" : ""}</span></div>` : `<p class="muted">No tour reviews yet.</p>`}
+      ${mine ? "" : `<button class="btn" type="button" data-tp="review">Toured it? Write a review</button>`}
+      <div class="tp-reviews">${reviews.slice(0, 3).map(reviewHTML).join("")}</div>
+      ${reviews.length > 3 ? `<p class="muted" style="font-size:13px">+ ${reviews.length - 3} more review${reviews.length - 3 > 1 ? "s" : ""}</p>` : ""}`}
+
+    <h3 class="tp-h">Public records &amp; taxes</h3>
+    <p class="not-mls">County tax-roll data (Florida Department of Revenue) · not from BeachesMLS</p>
+    <div class="tp-facts">${facts.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
+    <div class="tp-links">
+      ${pc.Links?.bill ? `<a class="btn" href="${esc(pc.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${pc.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(pc.Links.appraiser)}" target="_blank" rel="noopener noreferrer">Owner &amp; full property record ↗</a>` : ""}
+    </div>
+    ${p.county === "Palm Beach" ? `<p class="muted" style="font-size:12px">On the Palm Beach Tax Collector site, search parcel <b>${esc(pc.ParcelId || "")}</b>.</p>` : ""}
+
+    <div class="tp-agent">
+      <p><b>Want to see it in person?</b><br>${esc(SITE.agentName)}, ${esc(SITE.brokerage)} · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a></p>
+      <button class="btn" type="button" data-tp="tour">Request a tour</button>
+    </div>
+    <button type="button" class="linkbtn" data-tp="clear">← Look up another home</button>
+  </div>`;
+}
+
+function panelClick(e) {
+  const home = e.target.closest(".tp-home");
+  if (home) {
+    const l = S.byId.get(home.dataset.key);
+    if (l) { window.open(`#/home/${l.ListingId}`, "_blank", "noopener"); return; }
+    $("#tpAddr").value = home.dataset.address;
+    panelLookup(home.dataset.address, home.dataset.key);
+    return;
+  }
+  const act = e.target.closest("[data-tp]")?.dataset.tp;
+  const p = panel.property;
+  if (act === "clear") { $("#tpAddr").value = ""; renderPanelHome(); $("#tpAddr").focus(); }
+  if (act === "review" && p) requireAuth(() => openReviewForm(panelListing(p)));
+  if (act === "tour" && p) {
+    const subj = encodeURIComponent(`Tour request: ${p.address}`);
+    const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI found ${p.address} in your MLS search and I'd like to tour it.\n\nThanks!`);
+    location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
+  }
+  const h = e.target.closest("[data-helpful]");
+  if (h && p) { if (store.markHelpful(h.dataset.helpful)) { renderPanelProperty(p); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
+  const del = e.target.closest("[data-delete]");
+  if (del && p && confirm("Delete your review?")) store.deleteReview(del.dataset.delete, S.user).then(() => { renderPanelProperty(p); toast("Review deleted"); });
 }
 // Demo listings only: opens the listing straight into Zillow's full-screen photo viewer
 // (?mmlb=g,0) instead of the listing page. Photos stay hosted on Zillow.
@@ -917,7 +1083,7 @@ function openReviewForm(l) {
   const form = $("#reviewForm");
   const today = new Date().toISOString().slice(0, 10);
   const minDate = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
-  if (S.user && store.getReviews(l.ListingId).some((r) => r.userId === S.user.id)) { toast("You've already reviewed this home."); renderDetail(l); return; }
+  if (S.user && store.getReviews(l.ListingId).some((r) => r.userId === S.user.id)) { toast("You've already reviewed this home."); (l.onReviewChange || renderDetail)(l); return; }
   form.innerHTML = `
     <h2 id="reviewTitle">Review your tour</h2>
     <p class="muted">${esc(l.UnparsedAddress)}</p>
@@ -964,8 +1130,8 @@ function openReviewForm(l) {
       await store.addReview(input, { listing: l, user: S.user });
       $("#reviewModal").close();
       S.summaries = store.getReviewSummaries();
-      renderDetail(l);
-      $("#reviewList").scrollIntoView({ behavior: "smooth" });
+      if (l.onReviewChange) l.onReviewChange(l);
+      else { renderDetail(l); $("#reviewList").scrollIntoView({ behavior: "smooth" }); }
       toast("Review posted — thanks for helping other buyers");
     } catch (err) {
       $("#reviewErr").innerHTML = (err.errors || [err.message]).map(esc).join("<br>");

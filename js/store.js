@@ -154,6 +154,8 @@ export function getReviews(listingId) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+export function getAllReviews() { return allReviews().slice(); }
+
 export function getReviewsByUser(userId) {
   return allReviews().filter((r) => r.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -205,6 +207,7 @@ export async function addReview(input, { listing, user }) {
   const review = {
     id: uid(),
     listingId: listing.ListingId,
+    address: listing.UnparsedAddress || null, // lets reviews of any home (not just listings) be listed
     userId: user.id,
     displayName: user.displayName,
     createdAt: now,
@@ -332,4 +335,22 @@ export async function getSyncStatus() {
     const res = await fetch("/api/idx/sync-status", { cache: "no-store" });
     return res.ok ? await res.json() : null;
   } catch { return null; }
+}
+
+/**
+ * Public records for any home in Broward, Palm Beach or St. Lucie by address.
+ * Returns { status: "matched", property } | { status: "choose_unit", units } | { status, message }.
+ * parcelKey ("P-<county#>-<parcel id>") picks a unit from a previous "choose_unit" answer.
+ */
+export async function lookupProperty(address, parcelKey = "") {
+  const q = new URLSearchParams({ address });
+  if (parcelKey) q.set("parcel", parcelKey);
+  try {
+    const res = await fetch(`/api/property/lookup?${q}`);
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("json")) return { status: "error", message: "Home lookup needs the site's API (npm run dev locally, or the deployed Netlify site)." };
+    return await res.json();
+  } catch {
+    return { status: "error", message: "Lookup is temporarily unavailable. Please try again." };
+  }
 }
