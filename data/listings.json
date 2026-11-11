@@ -1,5 +1,5 @@
 {
- "generated": "2026-11-10T01:57:52.158Z",
+ "generated": "2026-11-11T01:48:02.587Z",
  "market": "Broward, Palm Beach & St. Lucie counties, FL",
  "counties": [
   "Broward",
@@ -95,7 +95,7 @@
     "EstTaxNewBuyer": 841,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=119%20WISTERIA%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/30000"
     },
     "Shape": [
      [
@@ -260,7 +260,7 @@
     "EstTaxNewBuyer": 1108,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424622070146310"
     },
     "Shape": [
      [
@@ -507,7 +507,7 @@
     "EstTaxNewBuyer": 1123,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424314010091380"
     },
     "Shape": [
      [
@@ -628,7 +628,7 @@
     "EstTaxNewBuyer": 1205,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424623060083460"
     },
     "Shape": [
      [
@@ -950,7 +950,7 @@
     "EstTaxNewBuyer": 1631,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3224%20SCARLET%20TANAGER%20CT",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/155391"
     },
     "Shape": [
      [
@@ -1124,7 +1124,7 @@
     "EstTaxNewBuyer": 2215,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=173%20MEDITERRANEAN%20BLVD%20N",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/170991"
     },
     "Shape": [
      [
@@ -1665,7 +1665,7 @@
     "EstTaxNewBuyer": 2782,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=82%20MEDITERRANEAN%20BLVD%20E",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/177700"
     },
     "Shape": [
      [
@@ -1779,7 +1779,7 @@
     "EstTaxNewBuyer": 2988,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1%20CORTEZ%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/184994"
     },
     "Shape": [
      [
@@ -2009,7 +2009,7 @@
     "EstTaxNewBuyer": 3089,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6656%20PICANTE%20CIR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/138099"
     },
     "Shape": [
      [
@@ -2131,7 +2131,7 @@
     "EstTaxNewBuyer": 3091,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2%20S%20GRANADA%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/182879"
     },
     "Shape": [
      [
@@ -2241,7 +2241,7 @@
     "EstTaxNewBuyer": 3091,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=7100%20SALERNO%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/2873"
     },
     "Shape": [
      [
@@ -2407,7 +2407,7 @@
     "EstTaxNewBuyer": 3245,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=8515%20WEDELIA%20CT",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/128915"
     },
     "Shape": [
      [
@@ -2580,7 +2580,7 @@
     "EstTaxNewBuyer": 3211,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424623440021010"
     },
     "Shape": [
      [
@@ -2711,7 +2711,7 @@
     "EstTaxNewBuyer": 3211,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424526281112010"
     },
     "Shape": [
      [
@@ -2851,7 +2851,7 @@
     "EstTaxNewBuyer": 3374,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414425030000170"
     },
     "Shape": [
      [
@@ -3005,7 +3005,7 @@
     "EstTaxNewBuyer": 3374,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424516080000320"
     },
     "Shape": [
      [
@@ -3179,7 +3179,7 @@
     "EstTaxNewBuyer": 3777,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6736%20TULIPAN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/138156"
     },
     "Shape": [
      [
@@ -3292,7 +3292,7 @@
     "EstTaxNewBuyer": 3615,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=74434317110014040"
     },
     "Shape": [
      [
@@ -3465,7 +3465,7 @@
     "EstTaxNewBuyer": 3856,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424616210040030"
     },
     "Shape": [
      [
@@ -4014,7 +4014,7 @@
     "EstTaxNewBuyer": 3927,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424427080001700"
     },
     "Shape": [
      [
@@ -4290,7 +4290,7 @@
     "EstTaxNewBuyer": 4207,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2478%20SE%20PINELAND%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/161433"
     },
     "Shape": [
      [
@@ -4525,7 +4525,7 @@
     "EstTaxNewBuyer": 4292,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=8395%20DELPHINIUM%20CT",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/129202"
     },
     "Shape": [
      [
@@ -4691,7 +4691,7 @@
     "EstTaxNewBuyer": 4293,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=154%20SE%20SONETO%20CT",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/43227"
     },
     "Shape": [
      [
@@ -4805,7 +4805,7 @@
     "EstTaxNewBuyer": 4430,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=272%20SW%20GLENWOOD%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/67877"
     },
     "Shape": [
      [
@@ -4914,7 +4914,7 @@
     "EstTaxNewBuyer": 4161,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424730050042010"
     },
     "Shape": [
      [
@@ -5024,7 +5024,7 @@
     "EstTaxNewBuyer": 4550,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=205%20SANDIA%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/42752"
     },
     "Shape": [
      [
@@ -5134,7 +5134,7 @@
     "EstTaxNewBuyer": 4584,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=831%20SE%20CARNIVAL%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/45009"
     },
     "Shape": [
      [
@@ -5244,7 +5244,7 @@
     "EstTaxNewBuyer": 4619,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=554%20NW%20SAGAMORE%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/77656"
     },
     "Shape": [
      [
@@ -5354,7 +5354,7 @@
     "EstTaxNewBuyer": 4634,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1725%20SE%20BERKSHIRE%20BLVD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/98967"
     },
     "Shape": [
      [
@@ -5472,7 +5472,7 @@
     "EstTaxNewBuyer": 4634,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=166%20SW%20RAY%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/47474"
     },
     "Shape": [
      [
@@ -5582,7 +5582,7 @@
     "EstTaxNewBuyer": 4636,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=629%20SW%20RAY%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/80730"
     },
     "Shape": [
      [
@@ -5747,7 +5747,7 @@
     "EstTaxNewBuyer": 4418,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424705171760020"
     },
     "Shape": [
      [
@@ -6285,7 +6285,7 @@
     "EstTaxNewBuyer": 4722,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6397%20PETERSON%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/13676"
     },
     "Shape": [
      [
@@ -6451,7 +6451,7 @@
     "EstTaxNewBuyer": 4790,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3438%20SW%20SAN%20GIORGIO%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/63829"
     },
     "Shape": [
      [
@@ -6731,7 +6731,7 @@
     "EstTaxNewBuyer": 4893,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=211%20SE%20SIMS%20CIR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/95750"
     },
     "Shape": [
      [
@@ -6841,7 +6841,7 @@
     "EstTaxNewBuyer": 4978,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=441%20SW%20TODD%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/47155"
     },
     "Shape": [
      [
@@ -6955,7 +6955,7 @@
     "EstTaxNewBuyer": 5063,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1054%20TRINIDAD%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/28558"
     },
     "Shape": [
      [
@@ -7069,7 +7069,7 @@
     "EstTaxNewBuyer": 4739,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424515040020040"
     },
     "Shape": [
      [
@@ -7239,7 +7239,7 @@
     "EstTaxNewBuyer": 4803,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424515040040060"
     },
     "Shape": [
      [
@@ -7354,7 +7354,7 @@
     "EstTaxNewBuyer": 5134,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2701%20SE%20HOWELL%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/100923"
     },
     "Shape": [
      [
@@ -7480,7 +7480,7 @@
     "EstTaxNewBuyer": 5134,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2522%20SE%20MARIPOSA%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/83154"
     },
     "Shape": [
      [
@@ -7595,7 +7595,7 @@
     "EstTaxNewBuyer": 5134,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2007%20SW%20MARBLEHEAD%20WAY",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/154345"
     },
     "Shape": [
      [
@@ -7705,7 +7705,7 @@
     "EstTaxNewBuyer": 4819,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=74434319020010220"
     },
     "Shape": [
      [
@@ -7822,7 +7822,7 @@
     "EstTaxNewBuyer": 4820,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434717240102180"
     },
     "Shape": [
      [
@@ -8290,7 +8290,7 @@
     "EstTaxNewBuyer": 4820,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424516010000800"
     },
     "Shape": [
      [
@@ -8408,7 +8408,7 @@
     "EstTaxNewBuyer": 5151,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1275%20NW%20BENTLEY%20CIR%20A",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/135323"
     },
     "Shape": [
      [
@@ -8518,7 +8518,7 @@
     "EstTaxNewBuyer": 5151,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1010%20SE%20EUCLID%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/45151"
     },
     "Shape": [
      [
@@ -8628,7 +8628,7 @@
     "EstTaxNewBuyer": 5237,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=33%20MEDITERRANEAN%20BLVD%20N",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/199845"
     },
     "Shape": [
      [
@@ -8738,7 +8738,7 @@
     "EstTaxNewBuyer": 5409,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=461%20SW%20BYRON%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/79921"
     },
     "Shape": [
      [
@@ -8852,7 +8852,7 @@
     "EstTaxNewBuyer": 5409,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3150%20DAME%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/32769"
     },
     "Shape": [
      [
@@ -8966,7 +8966,7 @@
     "EstTaxNewBuyer": 5460,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=256%20SW%20CHRISTMAS%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/65865"
     },
     "Shape": [
      [
@@ -9132,7 +9132,7 @@
     "EstTaxNewBuyer": 5477,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6101%20BALSAM%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/38632"
     },
     "Shape": [
      [
@@ -9242,7 +9242,7 @@
     "EstTaxNewBuyer": 5493,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=254%20SW%20STARFISH%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/59765"
     },
     "Shape": [
      [
@@ -9575,7 +9575,7 @@
     "EstTaxNewBuyer": 5221,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=08434517180002517"
     },
     "Shape": [
      [
@@ -9741,7 +9741,7 @@
     "EstTaxNewBuyer": 5580,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=501%20NW%20HAVEN%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/76798"
     },
     "Shape": [
      [
@@ -9871,7 +9871,7 @@
     "EstTaxNewBuyer": 5580,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=209%20W%20ARBOR%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/41719"
     },
     "Shape": [
      [
@@ -10172,7 +10172,7 @@
     "EstTaxNewBuyer": 5752,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=179%20SE%20SONETO%20CT",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/43255"
     },
     "Shape": [
      [
@@ -10286,7 +10286,7 @@
     "EstTaxNewBuyer": 5836,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=4472%20SW%20PALEY%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/90229"
     },
     "Shape": [
      [
@@ -10400,7 +10400,7 @@
     "EstTaxNewBuyer": 5922,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1874%20SW%20CAPEHART%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/49865"
     },
     "Shape": [
      [
@@ -10510,7 +10510,7 @@
     "EstTaxNewBuyer": 5924,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1686%20SW%20HARBOUR%20ISLES%20CIR%20102",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/138868"
     },
     "Shape": [
      [
@@ -10743,7 +10743,7 @@
     "EstTaxNewBuyer": 6009,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=7907%20WINTER%20GARDEN%20PKWY",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/1273"
     },
     "Shape": [
      [
@@ -10853,7 +10853,7 @@
     "EstTaxNewBuyer": 6010,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1918%20SE%20CHELTENHAM%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/55212"
     },
     "Shape": [
      [
@@ -10963,7 +10963,7 @@
     "EstTaxNewBuyer": 6010,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=261%20SW%20PARISH%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/60890"
     },
     "Shape": [
      [
@@ -11077,7 +11077,7 @@
     "EstTaxNewBuyer": 6078,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2397%20SW%20LEJUNE%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/57497"
     },
     "Shape": [
      [
@@ -11199,7 +11199,7 @@
     "EstTaxNewBuyer": 6095,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1654%20SE%20FALLON%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/58280"
     },
     "Shape": [
      [
@@ -11309,7 +11309,7 @@
     "EstTaxNewBuyer": 5767,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424411190110030"
     },
     "Shape": [
      [
@@ -11479,7 +11479,7 @@
     "EstTaxNewBuyer": 6179,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1101%20SE%20PURITAN%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/44784"
     },
     "Shape": [
      [
@@ -11780,7 +11780,7 @@
     "EstTaxNewBuyer": 6250,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2305%20SW%20FERN%20CIR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/47837"
     },
     "Shape": [
      [
@@ -11894,7 +11894,7 @@
     "EstTaxNewBuyer": 6267,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1525%20SE%20HOLIDAY%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/111818"
     },
     "Shape": [
      [
@@ -12026,7 +12026,7 @@
     "EstTaxNewBuyer": 6267,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1575%20SW%20FRESNO%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/61642"
     },
     "Shape": [
      [
@@ -12140,7 +12140,7 @@
     "EstTaxNewBuyer": 6310,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6005%20BALSAM%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/38626"
     },
     "Shape": [
      [
@@ -12314,7 +12314,7 @@
     "EstTaxNewBuyer": 6336,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3005%20SE%20WAKE%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/95893"
     },
     "Shape": [
      [
@@ -12432,7 +12432,7 @@
     "EstTaxNewBuyer": 6351,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5219%20ENTERTAINMENT%20WAY",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/171482"
     },
     "Shape": [
      [
@@ -12542,7 +12542,7 @@
     "EstTaxNewBuyer": 6351,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2361%20SW%20HALISSEE%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/92096"
     },
     "Shape": [
      [
@@ -12652,7 +12652,7 @@
     "EstTaxNewBuyer": 6403,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=601%20SW%20CURTIS%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/80092"
     },
     "Shape": [
      [
@@ -12774,7 +12774,7 @@
     "EstTaxNewBuyer": 6437,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2429%20SE%20BETTY%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/136226"
     },
     "Shape": [
      [
@@ -12884,7 +12884,7 @@
     "EstTaxNewBuyer": 6439,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=371%20SW%20FELDMAN%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/73913"
     },
     "Shape": [
      [
@@ -12998,7 +12998,7 @@
     "EstTaxNewBuyer": 6439,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1044%20SW%20PAYNE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/144273"
     },
     "Shape": [
      [
@@ -13112,7 +13112,7 @@
     "EstTaxNewBuyer": 6105,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=08434521200100020"
     },
     "Shape": [
      [
@@ -13226,7 +13226,7 @@
     "EstTaxNewBuyer": 6609,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5917%20EASTWOOD%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/3128"
     },
     "Shape": [
      [
@@ -13336,7 +13336,7 @@
     "EstTaxNewBuyer": 6610,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1885%20SW%20MORELIA%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/53318"
     },
     "Shape": [
      [
@@ -13502,7 +13502,7 @@
     "EstTaxNewBuyer": 6610,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=981%20SE%20LANSDOWNE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/54167"
     },
     "Shape": [
      [
@@ -13616,7 +13616,7 @@
     "EstTaxNewBuyer": 6695,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=12248%20SW%20RIMINI%20WAY",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/189841"
     },
     "Shape": [
      [
@@ -13734,7 +13734,7 @@
     "EstTaxNewBuyer": 6695,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2400%20S%20OCEAN%20DR%207665",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/34882"
     },
     "Shape": [
      [
@@ -14018,7 +14018,7 @@
     "EstTaxNewBuyer": 6782,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2728%20SERENITY%20CIR%20S",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/132257"
     },
     "Shape": [
      [
@@ -14140,7 +14140,7 @@
     "EstTaxNewBuyer": 6799,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1502%20SW%20HERDER%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/55964"
     },
     "Shape": [
      [
@@ -14258,7 +14258,7 @@
     "EstTaxNewBuyer": 6825,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=215%20SE%20VOLTAIR%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/58874"
     },
     "Shape": [
      [
@@ -14424,7 +14424,7 @@
     "EstTaxNewBuyer": 6851,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=11065%20NW%20PONDSIDE%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/197571"
     },
     "Shape": [
      [
@@ -14644,7 +14644,7 @@
     "EstTaxNewBuyer": 6868,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=381%20NE%20SURFSIDE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/153444"
     },
     "Shape": [
      [
@@ -14754,7 +14754,7 @@
     "EstTaxNewBuyer": 6426,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=18424415390001080"
     },
     "Shape": [
      [
@@ -14864,7 +14864,7 @@
     "EstTaxNewBuyer": 6868,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3637%20SW%20BONWOLD%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/70483"
     },
     "Shape": [
      [
@@ -15034,7 +15034,7 @@
     "EstTaxNewBuyer": 7126,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1218%20SW%20MELROSE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/64593"
     },
     "Shape": [
      [
@@ -15148,7 +15148,7 @@
     "EstTaxNewBuyer": 7143,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2306%20CANOE%20CREEK%20LN",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/39881"
     },
     "Shape": [
      [
@@ -15258,7 +15258,7 @@
     "EstTaxNewBuyer": 7194,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5906%20PAPAYA%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/38665"
     },
     "Shape": [
      [
@@ -15482,7 +15482,7 @@
     "EstTaxNewBuyer": 7210,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=973%20SW%20BIANCA%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/64103"
     },
     "Shape": [
      [
@@ -15597,7 +15597,7 @@
     "EstTaxNewBuyer": 7210,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=7332%20MARSH%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/132758"
     },
     "Shape": [
      [
@@ -15707,7 +15707,7 @@
     "EstTaxNewBuyer": 7210,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2901%20SW%20PIERSON%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/101640"
     },
     "Shape": [
      [
@@ -15951,7 +15951,7 @@
     "EstTaxNewBuyer": 7211,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=233%20SW%20FERNLEAF%20TRL",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/143701"
     },
     "Shape": [
      [
@@ -16061,7 +16061,7 @@
     "EstTaxNewBuyer": 6828,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=52424210050080020"
     },
     "Shape": [
      [
@@ -16195,7 +16195,7 @@
     "EstTaxNewBuyer": 6828,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434707040120010"
     },
     "Shape": [
      [
@@ -16317,7 +16317,7 @@
     "EstTaxNewBuyer": 7366,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2202%20SE%20LEITHGOW%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/82465"
     },
     "Shape": [
      [
@@ -16447,7 +16447,7 @@
     "EstTaxNewBuyer": 7426,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=134%20NW%20HEATHER%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/79530"
     },
     "Shape": [
      [
@@ -16557,7 +16557,7 @@
     "EstTaxNewBuyer": 7553,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5112%20MYRTLE%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/37396"
     },
     "Shape": [
      [
@@ -16781,7 +16781,7 @@
     "EstTaxNewBuyer": 7555,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=501%20SW%20FIFER%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/74077"
     },
     "Shape": [
      [
@@ -16955,7 +16955,7 @@
     "EstTaxNewBuyer": 7709,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2355%20SW%20NEAL%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/92021"
     },
     "Shape": [
      [
@@ -17083,7 +17083,7 @@
     "EstTaxNewBuyer": 7709,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1579%20SW%20FRESNO%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/401569"
     },
     "Shape": [
      [
@@ -17193,7 +17193,7 @@
     "EstTaxNewBuyer": 7725,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5593%20NW%20WESLEY%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/104913"
     },
     "Shape": [
      [
@@ -17469,7 +17469,7 @@
     "EstTaxNewBuyer": 7881,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=639%20SW%20BRADSHAW%20CIR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/91285"
     },
     "Shape": [
      [
@@ -17595,7 +17595,7 @@
     "EstTaxNewBuyer": 7896,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=219%20SW%20HOLDEN%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/60933"
     },
     "Shape": [
      [
@@ -17819,7 +17819,7 @@
     "EstTaxNewBuyer": 7470,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424102080000772"
     },
     "Shape": [
      [
@@ -18039,7 +18039,7 @@
     "EstTaxNewBuyer": 8068,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1934%20SE%20TICKRIDGE%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/112821"
     },
     "Shape": [
      [
@@ -18516,7 +18516,7 @@
     "EstTaxNewBuyer": 8154,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2742%20SW%20SLADE%20PL",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/101534"
     },
     "Shape": [
      [
@@ -18808,7 +18808,7 @@
     "EstTaxNewBuyer": 8224,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=707%20SE%20KARRIGAN%20TER",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/45388"
     },
     "Shape": [
      [
@@ -19036,7 +19036,7 @@
     "EstTaxNewBuyer": 7870,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=38434421150460190"
     },
     "Shape": [
      [
@@ -19365,7 +19365,7 @@
     "EstTaxNewBuyer": 7952,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30434116050021010"
     },
     "Shape": [
      [
@@ -19727,7 +19727,7 @@
     "EstTaxNewBuyer": 8016,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424723186000050"
     },
     "Shape": null
    }
@@ -19818,7 +19818,7 @@
     "EstTaxNewBuyer": 8568,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=3652%20SW%20STERRICKER%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/70587"
     },
     "Shape": [
      [
@@ -20038,7 +20038,7 @@
     "EstTaxNewBuyer": 8031,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=74424320150000140"
     },
     "Shape": [
      [
@@ -20148,7 +20148,7 @@
     "EstTaxNewBuyer": 8583,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=11650%20SW%20ROWENA%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/164346"
     },
     "Shape": [
      [
@@ -20618,7 +20618,7 @@
     "EstTaxNewBuyer": 8032,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73414403170030360"
     },
     "Shape": [
      [
@@ -20748,7 +20748,7 @@
     "EstTaxNewBuyer": 8032,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=74424319040000120"
     },
     "Shape": [
      [
@@ -20976,7 +20976,7 @@
     "EstTaxNewBuyer": 8177,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00404214000005790"
     },
     "Shape": [
      [
@@ -21086,7 +21086,7 @@
     "EstTaxNewBuyer": 8755,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=10753%20SW%20CREMONA%20WAY",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/186379"
     },
     "Shape": [
      [
@@ -21196,7 +21196,7 @@
     "EstTaxNewBuyer": 8808,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=13348%20SW%20RIVER%20ROCK%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/188397"
     },
     "Shape": [
      [
@@ -21415,7 +21415,7 @@
     "EstTaxNewBuyer": 8273,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=26434515150022020"
     },
     "Shape": [
      [
@@ -21633,7 +21633,7 @@
     "EstTaxNewBuyer": 8843,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5508%20DEER%20RUN%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/4948"
     },
     "Shape": [
      [
@@ -21743,7 +21743,7 @@
     "EstTaxNewBuyer": 8911,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=6801%20NW%20CLOVERDALE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/197878"
     },
     "Shape": [
      [
@@ -21863,7 +21863,7 @@
     "EstTaxNewBuyer": 8927,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5010%20ABACA%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/3827"
     },
     "Shape": [
      [
@@ -22093,7 +22093,7 @@
     "EstTaxNewBuyer": 8434,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424603080000570"
     },
     "Shape": [
      [
@@ -22203,7 +22203,7 @@
     "EstTaxNewBuyer": 9014,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=340%20SW%20FILM%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/93423"
     },
     "Shape": [
      [
@@ -22313,7 +22313,7 @@
     "EstTaxNewBuyer": 8498,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424513190000850"
     },
     "Shape": [
      [
@@ -22613,7 +22613,7 @@
     "EstTaxNewBuyer": 8635,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424411190010020"
     },
     "Shape": [
      [
@@ -22723,7 +22723,7 @@
     "EstTaxNewBuyer": 8675,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=72414326090020070"
     },
     "Shape": [
      [
@@ -22833,7 +22833,7 @@
     "EstTaxNewBuyer": 8754,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00404328050001260"
     },
     "Shape": [
      [
@@ -23069,7 +23069,7 @@
     "EstTaxNewBuyer": 8834,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424432110020220"
     },
     "Shape": [
      [
@@ -23187,7 +23187,7 @@
     "EstTaxNewBuyer": 8834,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=36434220031270051"
     },
     "Shape": [
      [
@@ -23407,7 +23407,7 @@
     "EstTaxNewBuyer": 8836,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424725030120080"
     },
     "Shape": [
      [
@@ -23517,7 +23517,7 @@
     "EstTaxNewBuyer": 9444,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1202%20SW%20SAN%20ESTEBAN%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/154722"
     },
     "Shape": [
      [
@@ -23635,7 +23635,7 @@
     "EstTaxNewBuyer": 9598,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=9400%20BRIARCLIFF%20TRCE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/154081"
     },
     "Shape": [
      [
@@ -23750,7 +23750,7 @@
     "EstTaxNewBuyer": 8995,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73414410010200150"
     },
     "Shape": [
      [
@@ -23864,7 +23864,7 @@
     "EstTaxNewBuyer": 8996,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=38434434050000201"
     },
     "Shape": [
      [
@@ -23978,7 +23978,7 @@
     "EstTaxNewBuyer": 9615,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2152%20SW%20BIRD%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/84909"
     },
     "Shape": [
      [
@@ -24214,7 +24214,7 @@
     "EstTaxNewBuyer": 9077,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414713090010010"
     },
     "Shape": [
      [
@@ -24324,7 +24324,7 @@
     "EstTaxNewBuyer": 9077,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424535100000280"
     },
     "Shape": [
      [
@@ -24454,7 +24454,7 @@
     "EstTaxNewBuyer": 9701,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=180%20NE%20SURFSIDE%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/78406"
     },
     "Shape": [
      [
@@ -24569,7 +24569,7 @@
     "EstTaxNewBuyer": 9785,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=4588%20SW%20ATHENA%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/90200"
     },
     "Shape": [
      [
@@ -25054,7 +25054,7 @@
     "EstTaxNewBuyer": 9941,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=5207%20FEATHER%20CREEK%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/4663"
     },
     "Shape": [
      [
@@ -25164,7 +25164,7 @@
     "EstTaxNewBuyer": 9462,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73414404010300060"
     },
     "Shape": [
      [
@@ -25388,7 +25388,7 @@
     "EstTaxNewBuyer": 9477,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434717040050090"
     },
     "Shape": [
      [
@@ -25510,7 +25510,7 @@
     "EstTaxNewBuyer": 10214,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=197%20TUMBLIN%20KLING%20RD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/33601"
     },
     "Shape": [
      [
@@ -25676,7 +25676,7 @@
     "EstTaxNewBuyer": 10285,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=1389%20SW%20BAYSHORE%20BLVD",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/80726"
     },
     "Shape": [
      [
@@ -25913,7 +25913,7 @@
     "EstTaxNewBuyer": 9639,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424702310000080"
     },
     "Shape": [
      [
@@ -26259,7 +26259,7 @@
     "EstTaxNewBuyer": 9944,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424101110020020"
     },
     "Shape": [
      [
@@ -26495,7 +26495,7 @@
     "EstTaxNewBuyer": 10033,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424735150070010"
     },
     "Shape": [
      [
@@ -26829,7 +26829,7 @@
     "EstTaxNewBuyer": 10041,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414311000001270"
     },
     "Shape": [
      [
@@ -26939,7 +26939,7 @@
     "EstTaxNewBuyer": 10193,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414701320030140"
     },
     "Shape": [
      [
@@ -27501,7 +27501,7 @@
     "EstTaxNewBuyer": 10442,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414723120000540"
     },
     "Shape": [
      [
@@ -27616,7 +27616,7 @@
     "EstTaxNewBuyer": 11487,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=10647%20SW%20VINEYARD%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/195492"
     },
     "Shape": [
      [
@@ -27900,7 +27900,7 @@
     "EstTaxNewBuyer": 10844,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424115010190010"
     },
     "Shape": [
      [
@@ -28015,7 +28015,7 @@
     "EstTaxNewBuyer": 10988,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414310000001800"
     },
     "Shape": [
      [
@@ -28125,7 +28125,7 @@
     "EstTaxNewBuyer": 11005,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=08434517010000140"
     },
     "Shape": [
      [
@@ -28248,7 +28248,7 @@
     "EstTaxNewBuyer": 11213,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=38434421150950100"
     },
     "Shape": [
      [
@@ -28472,7 +28472,7 @@
     "EstTaxNewBuyer": 11229,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414725180070060"
     },
     "Shape": [
      [
@@ -28582,7 +28582,7 @@
     "EstTaxNewBuyer": 11244,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73414402030060150"
     },
     "Shape": [
      [
@@ -28696,7 +28696,7 @@
     "EstTaxNewBuyer": 11246,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424504160001330"
     },
     "Shape": [
      [
@@ -29103,7 +29103,7 @@
     "EstTaxNewBuyer": 11647,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414113000007200"
     },
     "Shape": [
      [
@@ -29391,7 +29391,7 @@
     "EstTaxNewBuyer": 12033,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=38434415070007930"
     },
     "Shape": [
      [
@@ -29556,7 +29556,7 @@
     "EstTaxNewBuyer": 12860,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=2900%20N%20HIGHWAY%20A1A%20%203-A",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/141870"
     },
     "Shape": [
      [
@@ -29682,7 +29682,7 @@
     "EstTaxNewBuyer": 12047,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=72414315090091030"
     },
     "Shape": [
      [
@@ -30012,7 +30012,7 @@
     "EstTaxNewBuyer": 12049,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434632390230050"
     },
     "Shape": [
      [
@@ -30126,7 +30126,7 @@
     "EstTaxNewBuyer": 12878,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=446%20S%20NARANJA%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/42413"
     },
     "Shape": [
      [
@@ -30244,7 +30244,7 @@
     "EstTaxNewBuyer": 12193,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=60424025060150170"
     },
     "Shape": [
      [
@@ -30359,7 +30359,7 @@
     "EstTaxNewBuyer": 12675,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=60424025250000090"
     },
     "Shape": [
      [
@@ -30596,7 +30596,7 @@
     "EstTaxNewBuyer": 13734,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=13604%20SW%20VERMILLION%20CIR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/199430"
     },
     "Shape": [
      [
@@ -30820,7 +30820,7 @@
     "EstTaxNewBuyer": 12852,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414219000004180"
     },
     "Shape": [
      [
@@ -30930,7 +30930,7 @@
     "EstTaxNewBuyer": 13994,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=9323%20SW%20Pinnacle%20PL",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/195520"
     },
     "Shape": [
      [
@@ -31040,7 +31040,7 @@
     "EstTaxNewBuyer": 13994,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=298%20SW%20STATLER%20AVE",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/67840"
     },
     "Shape": [
      [
@@ -31280,7 +31280,7 @@
     "EstTaxNewBuyer": 13334,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424103060000130"
     },
     "Shape": [
      [
@@ -31508,7 +31508,7 @@
     "EstTaxNewBuyer": 13639,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424636030080160"
     },
     "Shape": [
      [
@@ -31626,7 +31626,7 @@
     "EstTaxNewBuyer": 14057,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414229000008110"
     },
     "Shape": [
      [
@@ -31854,7 +31854,7 @@
     "EstTaxNewBuyer": 14378,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=68434216020170120"
     },
     "Shape": [
      [
@@ -31968,7 +31968,7 @@
     "EstTaxNewBuyer": 14457,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414727060000260"
     },
     "Shape": [
      [
@@ -32086,7 +32086,7 @@
     "EstTaxNewBuyer": 14458,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424706110000640"
     },
     "Shape": [
      [
@@ -32322,7 +32322,7 @@
     "EstTaxNewBuyer": 15985,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424725270680031"
     },
     "Shape": [
      [
@@ -32603,7 +32603,7 @@
     "EstTaxNewBuyer": 16868,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414723130170400"
     },
     "Shape": [
      [
@@ -32717,7 +32717,7 @@
     "EstTaxNewBuyer": 17270,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424033050000650"
     },
     "Shape": [
      [
@@ -32937,7 +32937,7 @@
     "EstTaxNewBuyer": 17591,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=60424025060160250"
     },
     "Shape": [
      [
@@ -33047,7 +33047,7 @@
     "EstTaxNewBuyer": 17591,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424724040040100"
     },
     "Shape": [
      [
@@ -33275,7 +33275,7 @@
     "EstTaxNewBuyer": 17672,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00404309000003480"
     },
     "Shape": [
      [
@@ -33389,7 +33389,7 @@
     "EstTaxNewBuyer": 19316,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=8309%20S%20INDIAN%20RIVER%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/115820"
     },
     "Shape": [
      [
@@ -33875,7 +33875,7 @@
     "EstTaxNewBuyer": 19262,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=36434220011160180"
     },
     "Shape": [
      [
@@ -34269,7 +34269,7 @@
     "EstTaxNewBuyer": 19276,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424711030002010"
     },
     "Shape": [
      [
@@ -34451,7 +34451,7 @@
     "EstTaxNewBuyer": 20804,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424725270710160"
     },
     "Shape": [
      [
@@ -34928,7 +34928,7 @@
     "EstTaxNewBuyer": 20885,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=60424026010003660"
     },
     "Shape": [
      [
@@ -35156,7 +35156,7 @@
     "EstTaxNewBuyer": 21286,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424629020000300"
     },
     "Shape": [
      [
@@ -35380,7 +35380,7 @@
     "EstTaxNewBuyer": 22411,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424629020000500"
     },
     "Shape": [
      [
@@ -35741,7 +35741,7 @@
     "EstTaxNewBuyer": 24017,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434728080011003"
     },
     "Shape": [
      [
@@ -36270,7 +36270,7 @@
     "EstTaxNewBuyer": 25592,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=12434608210030140"
     },
     "Shape": [
      [
@@ -36507,7 +36507,7 @@
     "EstTaxNewBuyer": 26909,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424027140000140"
     },
     "Shape": [
      [
@@ -36626,7 +36626,7 @@
     "EstTaxNewBuyer": 27294,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434632400110440"
     },
     "Shape": [
      [
@@ -36748,7 +36748,7 @@
     "EstTaxNewBuyer": 27294,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73424407030003150"
     },
     "Shape": [
      [
@@ -36866,7 +36866,7 @@
     "EstTaxNewBuyer": 29189,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=4560%20S%2025TH%20ST",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/131870"
     },
     "Shape": [
      [
@@ -36988,7 +36988,7 @@
     "EstTaxNewBuyer": 29704,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=52424209040002010"
     },
     "Shape": [
      [
@@ -37098,7 +37098,7 @@
     "EstTaxNewBuyer": 29720,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434731100070100"
     },
     "Shape": [
      [
@@ -37208,7 +37208,7 @@
     "EstTaxNewBuyer": 31765,
     "Links": {
      "bill": "https://stlucie.county-taxes.com/public/search/property_tax?search_query=7953%20SADDLEBROOK%20DR",
-     "appraiser": "https://www.paslc.gov/"
+     "appraiser": "https://apps.paslc.gov/rerecordcard/35763"
     },
     "Shape": [
      [
@@ -37374,7 +37374,7 @@
     "EstTaxNewBuyer": 31327,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30434108040000450"
     },
     "Shape": [
      [
@@ -37484,7 +37484,7 @@
     "EstTaxNewBuyer": 32130,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=52424125080060390"
     },
     "Shape": [
      [
@@ -37654,7 +37654,7 @@
     "EstTaxNewBuyer": 34941,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00414636010001470"
     },
     "Shape": [
      [
@@ -37950,7 +37950,7 @@
     "EstTaxNewBuyer": 36146,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=30424114160000010"
     },
     "Shape": [
      [
@@ -38187,7 +38187,7 @@
     "EstTaxNewBuyer": 42572,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=52434131150000430"
     },
     "Shape": [
      [
@@ -38590,7 +38590,7 @@
     "EstTaxNewBuyer": 52934,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=74434327230000061"
     },
     "Shape": [
      [
@@ -38709,7 +38709,7 @@
     "EstTaxNewBuyer": 56147,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424330040000520"
     },
     "Shape": [
      [
@@ -38832,7 +38832,7 @@
     "EstTaxNewBuyer": 57834,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00404321010001700"
     },
     "Shape": [
      [
@@ -39187,7 +39187,7 @@
     "EstTaxNewBuyer": 66670,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06424736010740191"
     },
     "Shape": [
      [
@@ -39302,7 +39302,7 @@
     "EstTaxNewBuyer": 68260,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=52434131120000140"
     },
     "Shape": [
      [
@@ -39432,7 +39432,7 @@
     "EstTaxNewBuyer": 76309,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=73414418010060050"
     },
     "Shape": [
      [
@@ -39672,7 +39672,7 @@
     "EstTaxNewBuyer": 175109,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=00424705010000800"
     },
     "Shape": [
      [
@@ -39693,8 +39693,8 @@
        26.403975
       ],
       [
-       -80.173178,
-       26.403929
+       -80.173179,
+       26.403952
       ],
       [
        -80.173172,
@@ -39798,7 +39798,7 @@
     "EstTaxNewBuyer": 369495,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434729100010340"
     },
     "Shape": [
      [
@@ -40074,7 +40074,7 @@
     "EstTaxNewBuyer": 2008125,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=06434720000040040"
     },
     "Shape": [
      [
@@ -40192,7 +40192,7 @@
     "EstTaxNewBuyer": 2522205,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=50434335000010020"
     },
     "Shape": [
      [
@@ -40342,7 +40342,7 @@
     "EstTaxNewBuyer": 3132675,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=50434411000010010"
     },
     "Shape": [
      [
@@ -40498,7 +40498,7 @@
     "EstTaxNewBuyer": 3293325,
     "Links": {
      "bill": "https://www.pbctax.gov/",
-     "appraiser": "https://pbcpao.gov/"
+     "appraiser": "https://pbcpao.gov/Property/Details?parcelId=50434234040000100"
     },
     "Shape": [
      [

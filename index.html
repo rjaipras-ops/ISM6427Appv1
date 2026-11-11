@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="vendor/leaflet.markercluster/MarkerCluster.css" />
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -22,6 +23,7 @@
       <a href="#/" class="is-active">Buy</a>
       <a href="#/saved">Saved homes</a>
       <a href="#/my-reviews">My tour reviews</a>
+      <a href="#/mls-search">MLS Search</a>
     </nav>
     <div class="account" id="account"></div>
   </header>
@@ -107,6 +109,7 @@
       <label class="map-toggle"><input type="checkbox" id="boundsToggle" /> Search as I move the map</label>
     </section>
     <section class="list-wrap" aria-label="Results">
+      <div class="feed-banner" id="feedBanner" hidden></div>
       <div class="list-head">
         <div>
           <h1 class="list-title" id="listTitle">South Florida homes for sale</h1>
@@ -143,6 +146,7 @@
   <!-- Saved / my reviews -->
   <main id="view-saved" class="page" hidden></main>
   <main id="view-myreviews" class="page" hidden></main>
+  <main id="view-mlssearch" class="page page-wide" hidden></main>
 
   <!-- Listing detail -->
   <main id="view-detail" class="detail" hidden></main>
@@ -251,9 +255,13 @@
     <form method="dialog" class="modal-body" id="reviewForm"></form>
   </dialog>
 
+  <!-- Full-screen listing photos (filled by js/gallery.js) -->
+  <dialog class="modal modal-photos" id="photoModal" aria-label="Listing photos"></dialog>
+
   <div class="toast" id="toast" role="status" hidden></div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -65,9 +65,7 @@ export function satelliteMap(el, l, { zoom = null, interactive = true } = {}) {
   L.tileLayer(IMAGERY_TILES, { attribution: IMAGERY_ATTRIBUTION, maxZoom: 20, maxNativeZoom: 19 }).addTo(m);
   const shape = l.Parcel?.Shape;
   if (shape) {
-    const poly = L.polygon(shape.map((ring) => ring.map(([lng, lat]) => [lat, lng])), {
-      color: "#ffd84d", weight: 3, fillOpacity: 0.08, fillColor: "#ffd84d", interactive: false,
-    }).addTo(m);
+    const poly = addParcelOutline(m, shape);
     if (zoom) m.setView(poly.getBounds().getCenter(), zoom);
     else m.fitBounds(poly.getBounds(), { padding: [40, 40], maxZoom: 20 });
   } else {
@@ -75,4 +73,11 @@ export function satelliteMap(el, l, { zoom = null, interactive = true } = {}) {
     L.circleMarker([l.Latitude, l.Longitude], { radius: 8, color: "#fff", weight: 3, fillColor: "#e8563f", fillOpacity: 1 }).addTo(m);
   }
   return m;
+}
+
+/** Draws a parcel outline (rings of [lng, lat]) on a Leaflet map; returns the polygon. */
+export function addParcelOutline(m, rings) {
+  return L.polygon(rings.map((ring) => ring.map(([lng, lat]) => [lat, lng])), {
+    color: "#ffd84d", weight: 3, fillOpacity: 0.08, fillColor: "#ffd84d", interactive: false,
+  }).addTo(m);
 }

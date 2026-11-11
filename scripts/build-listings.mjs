@@ -12,6 +12,7 @@
 // Usage: node scripts/build-listings.mjs
 
 import { readFileSync, writeFileSync } from "node:fs";
+import { toParcel } from "../netlify/lib/parcels.mjs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -226,90 +227,22 @@ for (const [file, fileCounty] of Object.entries(manifest.files)) {
 const listings = [...byId.values()].sort((a, b) => a.ListPrice - b.ListPrice);
 
 /* ---------- Public parcel records (FL Dept. of Revenue), if fetched ---------- */
-// Run scripts/fetch-parcels.mjs to create data/parcels/parcels.json.
-const DOR_USE = {
-  "000": "Vacant residential", "001": "Single family", "002": "Mobile home", "003": "Multi-family (10+ units)",
-  "004": "Condominium", "005": "Co-op", "006": "Retirement home", "007": "Misc. residential",
-  "008": "Multi-family (2-9 units)", "009": "Residential common area", "010": "Vacant commercial",
-};
-// Approximate 2025 combined millage (per $1,000 of taxable value), used only for
-// the "estimated tax" figure. School levies apply to TV_SD, the rest to TV_NSD.
-const MILLAGE = {
-  Broward: { school: 5.6, other: 13.6 },
-  "Palm Beach": { school: 6.3, other: 12.6 },
-  "St. Lucie": { school: 6.2, other: 14.0 },
-};
-// Florida DOR sale qualification code "01" = qualified (arm's-length) sale.
-const saleOf = (price, yr, mo, q) => (price > 100 && yr > 0
-  ? { price, year: yr, month: Number(mo) || null, qualified: String(q).trim() === "01" }
-  : null);
-const taxLinks = (county, p, l) => ({
-  Broward: {
-    bill: `https://broward.county-taxes.com/public/search/property_tax?search_query=${encodeURIComponent(p.PARCEL_ID)}`,
-    appraiser: `https://www.bcpa.net/RecInfo.asp?URL_Folio=${encodeURIComponent(p.PARCEL_ID.trim())}`,
-  },
-  "St. Lucie": {
-    bill: `https://stlucie.county-taxes.com/public/search/property_tax?search_query=${encodeURIComponent(p.PHY_ADDR1.trim())}`,
-    appraiser: "https://www.paslc.gov/",
-  },
-  "Palm Beach": {
-    bill: "https://www.pbctax.gov/",
-    appraiser: "https://pbcpao.gov/",
-  },
-})[county];
-
+// Run scripts/fetch-parcels.mjs and scripts/fetch-parcel-shapes.mjs first.
+// Shared logic (tax estimates, county links, outline check) lives in netlify/lib/parcels.mjs.
 let parcelFile = null;
 let shapes = {};
-try { shapes = JSON.parse(readFileSync(join(root, "data", "parcels", "shapes.json"), "utf8")); } catch { /* run fetch-parcel-shapes.mjs */ }
-// Keep an outline only if the listing's location falls inside it (or within ~60 m),
-// so a mismatched parcel never gets drawn around the wrong building.
-function shapeFits(rings, lng, lat) {
-  const inside = (ring) => {
-    let c = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [xi, yi] = ring[i], [xj, yj] = ring[j];
-      if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) c = !c;
-    }
-    return c;
-  };
-  if (rings.some(inside)) return true;
-  const pts = rings.flat();
-  const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length, cy = pts.reduce((a, q) => a + q[1], 0) / pts.length;
-  return Math.hypot((cx - lng) * 99000, (cy - lat) * 111000) < 60;
-}
+let altKeys = {};
 try { parcelFile = JSON.parse(readFileSync(join(root, "data", "parcels", "parcels.json"), "utf8")); } catch { /* not fetched yet */ }
+try { shapes = JSON.parse(readFileSync(join(root, "data", "parcels", "shapes.json"), "utf8")); } catch { /* run fetch-parcel-shapes.mjs */ }
+try { altKeys = JSON.parse(readFileSync(join(root, "data", "parcels", "altkeys.json"), "utf8")); } catch { /* run fetch-parcel-shapes.mjs */ }
 let matched = 0;
 for (const l of listings) {
   const p = parcelFile?.parcels?.[l.ListingId];
   if (!p || !p.PARCEL_ID) continue;
   matched++;
-  const rate = MILLAGE[l.County];
-  const ownerTax = Math.round((p.TV_SD * rate.school + p.TV_NSD * rate.other) / 1000);
-  l.Parcel = {
-    ParcelId: p.PARCEL_ID.trim(),
-    AssessmentYear: p.ASMNT_YR,
-    LandUse: DOR_USE[p.DOR_UC] || `DOR code ${p.DOR_UC}`,
-    Owner: (p.OWN_NAME || "").trim() || null, // owner mailing address intentionally omitted
-    SitusAddress: (p.PHY_ADDR1 || "").trim(),
-    JustValue: p.JV,
-    AssessedValue: p.AV_SD,
-    TaxableValueSchool: p.TV_SD,
-    TaxableValueNonSchool: p.TV_NSD,
-    LandValue: p.LND_VAL,
-    Homestead: p.JV_HMSTD > 0,
-    YearBuilt: p.ACT_YR_BLT || null,
-    EffectiveYearBuilt: p.EFF_YR_BLT || null,
-    LivingAreaSqFt: p.TOT_LVG_AR || null,
-    LotSqFt: p.LND_SQFOOT || null,
-    LastSale: saleOf(p.SALE_PRC1, p.SALE_YR1, p.SALE_MO1, p.QUAL_CD1),
-    PriorSale: saleOf(p.SALE_PRC2, p.SALE_YR2, p.SALE_MO2, p.QUAL_CD2),
-    EstTaxCurrentOwner: ownerTax,
-    // A sale resets the assessed value to market (Save Our Homes cap is lost),
-    // so a buyer's bill is based on roughly the purchase price.
-    EstTaxNewBuyer: Math.round((l.ListPrice * 0.85 * (rate.school + rate.other)) / 1000),
-    Links: taxLinks(l.County, p, l),
-    Shape: shapes[l.ListingId] && shapeFits(shapes[l.ListingId], l.Longitude, l.Latitude) ? shapes[l.ListingId] : null,
-  };
+  if (!p.ALT_KEY && altKeys[l.ListingId]) p.ALT_KEY = altKeys[l.ListingId];
+  // Demo listings aren't MLS/IDX data, so the owner of record can be shown.
+  l.Parcel = toParcel(l, p, { shape: shapes[l.ListingId] || null, includeOwner: true });
   // Real values replace generated placeholders so filters use them.
   if (p.ACT_YR_BLT > 1800) { l.demo.YearBuilt = p.ACT_YR_BLT; l.demo.NewConstructionYN = p.ACT_YR_BLT >= 2025; }
   if (l.PropertyType !== "Condo" && p.LND_SQFOOT > 0) l.demo.LotSizeSquareFeet = p.LND_SQFOOT;

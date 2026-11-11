@@ -2,7 +2,9 @@
 // data/parcels/parcels.json) from the Florida DOR statewide parcel layer and
 // saves them, simplified, to data/parcels/shapes.json:
 //   { "<ListingId>": [[[lng, lat], ...], ...rings] }
-// The app draws these outlines over satellite imagery.
+// The app draws these outlines over satellite imagery. Also saves each parcel's
+// county account number (ALT_KEY) to data/parcels/altkeys.json, which St. Lucie's
+// property-appraiser record-card links use.
 //
 // Usage: node scripts/fetch-parcel-shapes.mjs   (run after fetch-parcels.mjs)
 // (Behind a proxy, run with NODE_USE_ENV_PROXY=1.)
@@ -34,20 +36,25 @@ async function post(params) {
 
 const round = (n) => Math.round(n * 1e6) / 1e6;
 const shapes = {};
+const altKeys = {};
 const BATCH = 25;
 for (let i = 0; i < wanted.length; i += BATCH) {
   const batch = wanted.slice(i, i + BATCH);
   const where = batch.map((w) => `(CO_NO=${w.co} AND PARCEL_ID='${w.id.replace(/'/g, "''")}')`).join(" OR ");
   const j = await post({
-    where, outFields: "PARCEL_ID,CO_NO", returnGeometry: "true", outSR: "4326",
+    where, outFields: "PARCEL_ID,CO_NO,ALT_KEY", returnGeometry: "true", outSR: "4326",
     geometryPrecision: "6", maxAllowableOffset: "0.000004", f: "json",
   });
-  const byKey = new Map(j.features.map((f) => [`${f.attributes.CO_NO}|${f.attributes.PARCEL_ID.trim()}`, f.geometry]));
+  const byKey = new Map(j.features.map((f) => [`${f.attributes.CO_NO}|${f.attributes.PARCEL_ID.trim()}`, f]));
   for (const w of batch) {
-    const g = byKey.get(`${w.co}|${w.id}`);
+    const f = byKey.get(`${w.co}|${w.id}`);
+    const g = f?.geometry;
+    const alt = String(f?.attributes?.ALT_KEY || "").trim();
+    if (alt) altKeys[w.listingId] = alt;
     if (g?.rings?.length) shapes[w.listingId] = g.rings.map((ring) => ring.map(([x, y]) => [round(x), round(y)]));
   }
   process.stdout.write(`\r${Math.min(i + BATCH, wanted.length)}/${wanted.length}`);
 }
 writeFileSync(new URL("../data/parcels/shapes.json", import.meta.url), JSON.stringify(shapes));
+writeFileSync(new URL("../data/parcels/altkeys.json", import.meta.url), JSON.stringify(altKeys));
 console.log(`\nSaved outlines for ${Object.keys(shapes).length}/${wanted.length} parcels`);

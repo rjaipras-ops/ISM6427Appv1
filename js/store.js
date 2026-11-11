@@ -259,10 +259,77 @@ export function toggleSaved(listingId) {
 }
 
 /* ---------------- Listings ---------------- */
-// Swap this for your MLS/IDX API (e.g. a Netlify Function that calls a RESO Web API).
-export async function loadListings() {
+// Listings come from the site's IDX API (Netlify Functions → BeachesMLS / Flexmls Spark feed).
+// If that API isn't available (e.g. the site is served by a plain static file server),
+// the bundled demo data in data/listings.json is used instead.
+
+// Rebuilds listing objects from the compact column format sent by /api/idx/listings.
+function decodeIndex(data) {
+  const fi = data.fields.indexOf("_flags");
+  return data.rows.map((row) => {
+    const l = { demo: {} };
+    data.fields.forEach((f, i) => {
+      if (i === fi) return;
+      const [a, b] = f.split(".");
+      if (b) l.demo[b] = row[i]; else l[a] = row[i];
+    });
+    data.flags.forEach((f, bit) => {
+      const [a, b] = f.split(".");
+      const v = Boolean(row[fi] & (1 << bit));
+      if (b) l.demo[b] = v; else l[a] = v;
+    });
+    l.Source = "mls";
+    l.ListingKey = l.ListingId;
+    l.StateOrProvince = "FL";
+    l.UnparsedAddress = l.AddressHidden ? `${l.City}, FL ${l.PostalCode}` : `${l.StreetAddress}, ${l.City}, FL ${l.PostalCode}`;
+    l.PricePerSqFt = l.LivingArea ? Math.round(l.ListPrice / l.LivingArea) : 0;
+    l.demo.OpenHouse = null;
+    l.demo.PublicRemarks = null; // loaded with the listing details
+    return l;
+  });
+}
+
+/**
+ * Loads all listings. Returns { mode: "live" | "mock" | "demo", lastSyncTimestamp, version, listings }.
+ *  live = BeachesMLS feed, mock = test mode (no Spark token yet), demo = static fallback file.
+ */
+export async function loadFeed() {
+  try {
+    // "no-cache" revalidates with the server's ETag, so unchanged data isn't re-downloaded.
+    const res = await fetch("/api/idx/listings", { cache: "no-cache", headers: { Accept: "application/json" } });
+    if (res.ok && (res.headers.get("content-type") || "").includes("json")) {
+      const data = await res.json();
+      return { mode: data.mode, lastSyncTimestamp: data.lastSyncTimestamp, version: data.version, listings: decodeIndex(data) };
+    }
+  } catch { /* fall through to the demo file */ }
   const res = await fetch("data/listings.json");
   if (!res.ok) throw new Error(`Could not load listings (${res.status})`);
   const data = await res.json();
-  return data.listings;
+  return { mode: "demo", lastSyncTimestamp: data.generated, version: 0, listings: data.listings };
+}
+
+/** Backwards-compatible: just the listings array. */
+export async function loadListings() { return (await loadFeed()).listings; }
+
+/** Full listing (all photos, remarks, office contact). Returns null if it's no longer active. */
+export async function loadListingDetail(key) {
+  const res = await fetch(`/api/idx/listing/${encodeURIComponent(key)}`, { cache: "no-cache" });
+  if (res.status === 410) return { gone: true };
+  if (!res.ok) throw new Error(`Listing details unavailable (${res.status})`);
+  return res.json();
+}
+
+/** Public parcel records for an MLS listing: { status, parcel }. */
+export async function loadParcel(key) {
+  const res = await fetch(`/api/idx/parcel/${encodeURIComponent(key)}`);
+  if (!res.ok) return { status: "error", parcel: null };
+  return res.json();
+}
+
+/** Feed status: { mode, lastSyncTimestamp, version, activeListings, ... } or null. */
+export async function getSyncStatus() {
+  try {
+    const res = await fetch("/api/idx/sync-status", { cache: "no-store" });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
 }

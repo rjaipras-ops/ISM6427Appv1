@@ -5,7 +5,8 @@ import {
 } from "./filters.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
-import { satelliteThumb, satelliteMap } from "./imagery.js";
+import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
+import { carouselHTML, initCarousel, openLightbox } from "./gallery.js";
 
 /* ---------------- helpers ---------------- */
 const $ = (s, el = document) => el.querySelector(s);
@@ -38,6 +39,10 @@ const S = {
   saved: store.getSaved(),
   user: store.getUser(),
   results: [],
+  // Where listings came from: "live" (BeachesMLS feed), "mock" (test mode), "demo" (static file).
+  feed: { mode: "demo", lastSyncTimestamp: null, version: 0 },
+  // Details loaded per MLS listing (photos, remarks, office contact, public records).
+  details: new Map(),
 };
 
 /* ---------------- boot ---------------- */
@@ -47,10 +52,8 @@ init().catch((e) => {
 });
 
 async function init() {
-  S.listings = await store.loadListings();
-  S.listings.forEach((l) => S.byId.set(l.ListingId, l));
+  applyFeed(await store.loadFeed());
   buildControls();
-  $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)} · ${esc(SITE.phone)} · Lic. ${esc(SITE.licenseNo)}. ${esc(SITE.mlsDisclaimer)}`;
   initMap();
   renderAccount();
   store.onAuthChange((u) => { S.user = u; renderAccount(); route(); });
@@ -59,6 +62,86 @@ async function init() {
   observeSearchbar();
   window.addEventListener("hashchange", route);
   route();
+  startBackgroundRefresh();
+}
+
+/* ---------------- feed (BeachesMLS IDX) ---------------- */
+function applyFeed(feed) {
+  S.feed = { mode: feed.mode, lastSyncTimestamp: feed.lastSyncTimestamp, version: feed.version };
+  S.listings = feed.listings;
+  S.byId = new Map(S.listings.map((l) => [l.ListingId, l]));
+  renderFeedBanner();
+  renderFooter();
+}
+const isMls = (l) => l?.Source === "mls";
+const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—");
+function ago(iso) {
+  if (!iso) return "—";
+  const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `${h} hr ago` : fmtDateTime(iso);
+}
+// BeachesMLS logo (required on IDX listings). Text mark until the official logo file is configured.
+function mlsMark() {
+  return SITE.mlsLogo
+    ? `<img class="mls-logo" src="${esc(SITE.mlsLogo)}" alt="BeachesMLS">`
+    : `<span class="mls-mark" title="Listing provided by BeachesMLS">BMLS</span>`;
+}
+function renderFeedBanner() {
+  const el = $("#feedBanner");
+  if (!el) return;
+  const m = S.feed.mode;
+  el.hidden = false;
+  el.className = `feed-banner feed-${m}`;
+  el.innerHTML = m === "live"
+    ? `${mlsMark()} <span>Listings from BeachesMLS · last updated <b class="feed-updated" title="${esc(fmtDateTime(S.feed.lastSyncTimestamp))}">${esc(ago(S.feed.lastSyncTimestamp))}</b></span>`
+    : m === "mock"
+      ? `<b>Sample data (test mode).</b> <span>These sample listings use satellite images in place of photos. Real BeachesMLS listings and photos appear automatically once the feed key is configured.</span>`
+      : `<b>Demo data.</b> <span>Not a live listing service.</span>`;
+}
+function renderFooter() {
+  const mls = S.feed.mode !== "demo";
+  $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)} · ${esc(SITE.phone)} · Lic. ${esc(SITE.licenseNo)}` +
+    (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
+}
+
+// Keep listings fresh while the page is open, without moving the map or closing anything.
+function startBackgroundRefresh() {
+  if (S.feed.mode === "demo") return;
+  const tick = () => checkForUpdates().catch(() => {});
+  setInterval(tick, (SITE.refreshMinutes || 5) * 60e3);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") tick(); });
+}
+async function checkForUpdates() {
+  const st = await store.getSyncStatus();
+  if (!st) return;
+  if (st.version === S.feed.version && st.mode === S.feed.mode) {
+    S.feed.lastSyncTimestamp = st.lastSyncTimestamp;
+    renderFeedBanner();
+    $$(".feed-refreshed").forEach((e) => (e.textContent = fmtDateTime(st.lastSyncTimestamp)));
+    return;
+  }
+  applyFeed(await store.loadFeed());
+  refreshViews();
+}
+let refreshQueued = false;
+function refreshViews() {
+  if (!$("#view-search").hidden) {
+    // Don't yank an open map popup; refresh when it closes.
+    if (map && map._popup && map.hasLayer(map._popup)) {
+      if (!refreshQueued) { refreshQueued = true; map.once("popupclose", () => { refreshQueued = false; renderResults({ fitMap: false }); }); }
+    } else renderResults({ fitMap: false });
+  }
+  const m = (location.hash || "").match(/^#\/home\/([\w-]+)/);
+  if (m && S.feed.mode !== "demo" && !S.byId.has(m[1])) showGoneNotice();
+  $$(".feed-refreshed").forEach((e) => (e.textContent = fmtDateTime(S.feed.lastSyncTimestamp)));
+}
+function showGoneNotice() {
+  const host = $("#view-detail");
+  if (!host || host.hidden || $(".gone-notice", host)) return;
+  host.insertAdjacentHTML("afterbegin", `<div class="gone-notice" role="status"><b>This home is no longer available.</b> It went off-market, so it's been removed from search. <a href="#/">Back to search</a></div>`);
 }
 
 /* ---------------- controls ---------------- */
@@ -323,7 +406,14 @@ function initMap() {
   }
   map = L.map("map", { zoomControl: true, preferCanvas: false }).setView(SITE.mapCenter, SITE.mapZoom);
   addBasemap(map);
-  markerLayer = L.layerGroup().addTo(map);
+  // Cluster nearby pins so tens of thousands of listings stay fast; individual price pins from zoom 15.
+  markerLayer = (L.markerClusterGroup
+    ? L.markerClusterGroup({
+        chunkedLoading: true, maxClusterRadius: 50, disableClusteringAtZoom: 15, showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        iconCreateFunction: (c) => L.divIcon({ className: "pin-icon", html: `<div class="pin-cluster">${c.getChildCount().toLocaleString("en-US")}</div>`, iconSize: [0, 0] }),
+      })
+    : L.layerGroup()).addTo(map);
   const zoomClass = () => $("#map").classList.toggle("zoomed-out", map.getZoom() < 12);
   map.on("zoomend", zoomClass); zoomClass();
   map.on("moveend", () => { if (S.f.bounds) setFilters({ bounds: boundsArr() }, { fromMap: true }); });
@@ -338,6 +428,7 @@ function pinPrice(p) { return p >= 1e6 ? `$${(p / 1e6).toFixed(p >= 1e7 ? 0 : 1)
 function renderMarkers(rows, fit) {
   if (!map) return;
   markerLayer.clearLayers(); markers.clear();
+  const batch = [];
   for (const l of rows) {
     const reviewed = !!S.summaries[l.ListingId];
     const pending = l.demo.StandardStatus !== "Active";
@@ -350,9 +441,10 @@ function renderMarkers(rows, fit) {
       .bindPopup(() => `<div class="map-pop">${cardHTML(l, { compact: true })}</div>`, { closeButton: false, offset: [0, -6] })
       .on("mouseover", () => hot(l.ListingId, false))
       .on("mouseout", () => hot(null, false));
-    m.addTo(markerLayer);
+    batch.push(m);
     markers.set(l.ListingId, m);
   }
+  if (markerLayer.addLayers) markerLayer.addLayers(batch); else batch.forEach((m) => m.addTo(markerLayer));
   if (fit && rows.length) fitToResults();
 }
 function hot(id, scroll = false) {
@@ -382,16 +474,29 @@ function cardHTML(l, { compact = false } = {}) {
     ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>`
     : `<span class="no-reviews">No tour reviews yet</span>`;
   return `<a class="card" href="#/home/${l.ListingId}" data-id="${l.ListingId}">
-    <div class="card-media">${satelliteThumb(l, { fallback: houseSVG(l) })}<div class="badges">${badgesFor(l)}</div>
+    <div class="card-media">${cardMedia(l)}<div class="badges">${badgesFor(l)}</div>
       ${compact ? "" : `<button class="save-btn" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>`}
     </div>
     <div class="card-body">
       <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}</div>
       <div class="facts"><span><b>${l.BedroomsTotal}</b> bd</span><span><b>${l.BathroomsTotalInteger}</b> ba</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span>${compact ? "" : `<span>${l.PropertyType}</span>`}</div>
       <p class="addr">${esc(l.UnparsedAddress)}</p>
-      ${compact ? `<div style="margin-top:6px">${rating}</div>` : `<div class="card-foot">${rating}<span class="office" title="${esc(l.ListOfficeName)}">${esc(l.ListOfficeName)}</span></div>`}
+      ${isMls(l) ? `<p class="courtesy">${mlsMark()}<span>Courtesy of ${esc(l.ListOfficeName)}</span></p>` : ""}
+      ${compact ? `<div style="margin-top:6px">${rating}</div>`
+        : `<div class="card-foot">${rating}${isMls(l) ? "" : `<span class="office" title="${esc(l.ListOfficeName)}">${esc(l.ListOfficeName)}</span>`}</div>`}
     </div>
   </a>`;
+}
+
+// MLS listings show their primary photo; homes without one (and demo data) show satellite imagery.
+function cardMedia(l) {
+  if (!l.primaryPhotoUrl) return satelliteThumb(l, { fallback: houseSVG(l) });
+  return `<div class="card-photo">
+    <div class="sat-fallback">${houseSVG(l)}</div>
+    <img src="${esc(l.primaryPhotoUrl)}" alt="Photo of ${esc(l.StreetAddress)}" loading="lazy" decoding="async"
+      onerror="this.parentNode.classList.add('photo-failed')">
+    ${l.photoCount > 1 ? `<span class="photo-count">${l.photoCount} photos</span>` : ""}
+  </div>`;
 }
 
 function renderResults({ fitMap = false } = {}) {
@@ -413,20 +518,23 @@ const titleCase = (s) => s.replace(/\b\w/g, (m) => m.toUpperCase());
 
 /* ---------------- routing ---------------- */
 function show(id) {
-  for (const v of ["view-search", "view-detail", "view-saved", "view-myreviews"]) $("#" + v).hidden = v !== id;
+  for (const v of ["view-search", "view-detail", "view-saved", "view-myreviews", "view-mlssearch"]) $("#" + v).hidden = v !== id;
   $(".searchbar").hidden = id !== "view-search";
   $$(".mainnav a").forEach((a) => a.classList.toggle("is-active",
     (id === "view-search" && a.getAttribute("href") === "#/") ||
     (id === "view-saved" && a.getAttribute("href") === "#/saved") ||
-    (id === "view-myreviews" && a.getAttribute("href") === "#/my-reviews")));
+    (id === "view-myreviews" && a.getAttribute("href") === "#/my-reviews") ||
+    (id === "view-mlssearch" && a.getAttribute("href") === "#/mls-search")));
 }
 let firstSearchRender = true;
 function route() {
   const h = location.hash || "#/";
-  const m = h.match(/^#\/home\/(\w+)/);
+  const m = h.match(/^#\/home\/([\w-]+)/);
   if (m && S.byId.has(m[1])) { show("view-detail"); renderDetail(S.byId.get(m[1])); window.scrollTo(0, 0); return; }
+  if (m) toast("That home is no longer available.");
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
+  if (h === "#/mls-search") { show("view-mlssearch"); renderMlsSearch(); return; }
   show("view-search");
   document.title = "Toured — South Florida homes reviewed by people who walked through";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
@@ -436,18 +544,35 @@ function route() {
 
 /* ---------------- detail ---------------- */
 function renderDetail(l) {
+  const mls = isMls(l);
+  const extra = mls ? S.details.get(l.ListingId) : null;
+  if (extra) Object.assign(l, extra.fields, { Parcel: extra.parcel ?? l.Parcel });
   const d = l.demo;
   const reviews = store.getReviews(l.ListingId);
   const s = S.summaries[l.ListingId];
   const saved = S.saved.has(l.ListingId);
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
+  const reviewsOff = SITE.reviewsDisabled.includes(l.ListingId) || (l.MlsNumber && SITE.reviewsDisabled.includes(l.MlsNumber));
   document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | Toured`;
-  const est = `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
+  // "est." badges mark generated placeholder values; MLS listings never have any.
+  const est = mls ? "" : `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
   const pr = `<span class="est est-pr" title="From the county property appraiser's tax roll (FL Dept. of Revenue)">public record</span>`;
-  const fromPR = (k) => (d._fromParcel || []).includes(k);
+  const fromPR = (k) => !mls && (d._fromParcel || []).includes(k);
   const statusDot = d.StandardStatus === "Active" ? "" : "pending";
 
-  const keyFacts = [
+  const keyFacts = mls ? [
+    ["Property type", l.PropertyType],
+    d.YearBuilt && ["Year built", d.YearBuilt],
+    d.LotSizeSquareFeet && ["Lot size", `${fmtN(d.LotSizeSquareFeet)} sqft`],
+    l.PricePerSqFt && ["Price / sqft", fmt$(l.PricePerSqFt)],
+    ["HOA", d.AssociationFee ? `${fmt$(d.AssociationFee)}/mo` : "None listed"],
+    ["Garage", d.GarageSpaces ? `${d.GarageSpaces} space${d.GarageSpaces > 1 ? "s" : ""}` : "None listed"],
+    d.StoriesTotal && ["Stories", d.StoriesTotal],
+    d.DaysOnMarket != null && ["Days on market", d.DaysOnMarket],
+    ["County", l.County],
+    d.TaxAnnualAmount && ["Annual taxes (per listing)", fmt$(d.TaxAnnualAmount)],
+    d.ArchitecturalStyle && ["Style", esc(d.ArchitecturalStyle)],
+  ].filter(Boolean) : [
     ["Property type", l.PropertyType],
     ["Year built", d.YearBuilt + " " + (fromPR("YearBuilt") ? pr : est)],
     ["Lot size", d.LotSizeSquareFeet ? `${fmtN(d.LotSizeSquareFeet)} sqft ${fromPR("LotSizeSquareFeet") ? pr : est}` : "—"],
@@ -462,25 +587,52 @@ function renderDetail(l) {
     ["Style", d.ArchitecturalStyle + " " + est],
   ];
   const features = [
-    d.PoolPrivateYN && "Private pool", d.WaterfrontYN && "Waterfront", d.View && `${d.View} view`,
+    d.PoolPrivateYN && "Private pool", d.WaterfrontYN && "Waterfront", d.View && `${esc(d.View)} view`,
     d.FireplaceYN && "Fireplace", d.CentralAir && "Central air", d.GatedCommunity && "Gated community",
     d.SolarPanels && "Solar panels", d.ImpactWindows && "Impact windows & doors",
     d.BoatDock && "Private boat dock", d.OceanAccess && "Ocean access", d.GolfCommunity && "Golf community", d.EVCharging && "EV charging", d.VirtualTour && "Virtual tour available",
     d.NewConstructionYN && "New construction", d.SeniorCommunityYN && "55+ community",
   ].filter(Boolean);
 
-  $("#view-detail").innerHTML = `
-    <div class="crumbs">
-      <a class="linkbtn" href="#/" data-back>← Back to search</a>
-      <button class="save-btn" style="position:static" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>
-    </div>
+  const photos = mls ? (extra?.fields.photos || (l.primaryPhotoUrl ? [{ url: l.primaryPhotoUrl, medium: l.primaryPhotoUrl, thumb: l.primaryPhotoUrl, caption: "" }] : [])) : [];
+  const remarks = mls ? (extra ? (d.PublicRemarks || "No remarks provided by the listing broker.") : "Loading listing details…") : d.PublicRemarks;
+
+  const gallery = mls ? `
+    <div class="gallery">
+      <div id="galPhotos">${carouselHTML(photos, { address: l.UnparsedAddress, fallback: houseSVG(l), loading: !extra })}</div>
+      <div><div class="gal-map" id="galMain" role="img" aria-label="Satellite view of the property"></div><span class="gal-label">Satellite</span></div>
+      <div><div class="gal-map" id="galStreet" role="img" aria-label="Street map"></div><span class="gal-label">Map</span></div>
+    </div>` : `
     <div class="gallery">
       <div><div class="gal-map" id="galMain" role="img" aria-label="Satellite view of the property${l.Parcel?.Shape ? " with the county parcel boundary outlined" : ""}"></div>
         <a class="photos-link" href="${esc(photoGalleryUrl(l))}" target="_blank" rel="noopener noreferrer">View photos ↗</a>
         <span class="gal-label">${l.Parcel?.Shape ? "Satellite · parcel boundary from county records" : "Satellite view"}</span></div>
       <div><div class="gal-map" id="galWide" role="img" aria-label="Satellite view of the neighborhood"></div><span class="gal-label">Neighborhood</span></div>
       <div><div class="gal-map" id="galStreet" role="img" aria-label="Street map"></div><span class="gal-label">Map</span></div>
+    </div>`;
+
+  const reviewsSection = reviewsOff ? `
+        <section class="section" id="reviews">
+          <h2>Tour reviews</h2>
+          <p class="muted">Reviews are turned off for this listing at the seller's request.</p>
+        </section>` : `
+        <section class="section" id="reviews">
+          <h2>Tour reviews</h2>
+          ${reviewSummaryHTML(s)}
+          <div class="cta-review">
+            <p>${mine ? "Thanks — you've reviewed this home." : "Toured this home? Share what the listing doesn't tell you."}</p>
+            ${mine ? "" : `<button class="btn" type="button" id="writeReview">Write a tour review</button>`}
+          </div>
+          <div id="reviewList">${reviews.length ? reviews.map(reviewHTML).join("") : `<p class="muted" style="padding:12px 0">No reviews yet. Reviews can only be written by signed-in users who certify they toured the home in person.</p>`}</div>
+          ${mls ? `<p class="muted not-mls">Tour reviews are opinions of Toured users, not information from BeachesMLS or the listing broker.</p>` : ""}
+        </section>`;
+
+  $("#view-detail").innerHTML = `
+    <div class="crumbs">
+      <a class="linkbtn" href="#/" data-back>← Back to search</a>
+      <button class="save-btn" style="position:static" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>
     </div>
+    ${gallery}
     <div class="detail-grid">
       <div>
         <div class="badges" style="position:static;margin-bottom:8px">${badgesFor(l)}</div>
@@ -490,23 +642,14 @@ function renderDetail(l) {
         <div class="status-line">
           <span><span class="dot ${statusDot}"></span> ${d.StandardStatus} ${est}</span>
           <span>·</span><span>${esc(l.Neighborhood)}</span><span>·</span><span>${esc(l.County)} County</span>
-          ${s ? `<span>·</span><a href="#reviews" class="rating-mini" style="text-decoration:none;color:inherit"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">(${s.count} verified tour${s.count > 1 ? "s" : ""})</span></a>` : ""}
+          ${s && !reviewsOff ? `<span>·</span><a href="#reviews" class="rating-mini" style="text-decoration:none;color:inherit"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">(${s.count} verified tour${s.count > 1 ? "s" : ""})</span></a>` : ""}
         </div>
+        ${mls ? idxAttributionHTML(l) : ""}
         ${d.OpenHouse ? `<div class="cta-review" style="background:#fff;border:1.5px solid var(--line)"><p><b>Open house</b> · ${weekday(d.OpenHouse.date)}, ${fmtTime(d.OpenHouse.start)}–${fmtTime(addHours(d.OpenHouse.start, d.OpenHouse.durationHrs))} ${est}</p><span class="muted">Tour it, then come back to review it</span></div>` : ""}
-
-        <section class="section" id="reviews">
-          <h2>Tour reviews</h2>
-          ${reviewSummaryHTML(s)}
-          <div class="cta-review">
-            <p>${mine ? "Thanks — you've reviewed this home." : "Toured this home? Share what the listing doesn't tell you."}</p>
-            ${mine ? "" : `<button class="btn" type="button" id="writeReview">Write a tour review</button>`}
-          </div>
-          <div id="reviewList">${reviews.length ? reviews.map(reviewHTML).join("") : `<p class="muted" style="padding:12px 0">No reviews yet. Reviews can only be written by signed-in users who certify they toured the home in person.</p>`}</div>
-        </section>
-
+        ${reviewsSection}
         <section class="section">
           <h2>About this home</h2>
-          <p>${esc(d.PublicRemarks)}</p>
+          <p id="remarks">${esc(remarks)}</p>
         </section>
         ${publicRecordsHTML(l)}
         <section class="section">
@@ -515,8 +658,12 @@ function renderDetail(l) {
         </section>
         ${features.length ? `<section class="section"><h2>Features ${est}</h2><ul class="feature-list">${features.map((x) => `<li>${x}</li>`).join("")}</ul></section>` : ""}
         <section class="section" style="border:0">
+          ${mls ? `
+          <p class="idx-source">${mlsMark()} Listing information provided by BeachesMLS through IDX. Listing courtesy of <b>${esc(l.ListOfficeName)}</b>. MLS #${esc(l.MlsNumber || "—")}. Last updated ${esc(fmtDateTime(l.ModificationTimestamp))}; feed refreshed <span class="feed-refreshed">${esc(fmtDateTime(S.feed.lastSyncTimestamp))}</span>.</p>
+          <p class="idx-disclaimer">${esc(SITE.mlsDisclaimer())}</p>
+          <p class="muted" style="font-size:13px">Displayed by ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Public records, tax estimates, satellite imagery and tour reviews on this page are not from BeachesMLS.</p>` : `
           <p class="muted" style="font-size:13px">Listed by <b>${esc(l.ListOfficeName)}</b>. Listing facts retrieved ${fmtDate(l.SourceRetrieved)} from public listing data (<a href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">source</a>). Fields marked ${est} are placeholders. Tour reviews are user opinions and are not verified by the listing broker.</p>
-          <p class="muted" style="font-size:12px">${esc(SITE.mlsDisclaimer)}</p>
+          <p class="muted" style="font-size:12px">Demo data — not from an MLS feed.</p>`}
         </section>
       </div>
       <aside>
@@ -524,20 +671,20 @@ function renderDetail(l) {
           <h3>Tour this home with ${esc(SITE.agentName)}</h3>
           <p class="muted" style="font-size:14px">${esc(SITE.brokerage)} · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a><br>After you tour, come back and leave a verified review.</p>
           <button class="btn" type="button" id="reqTour">Request a tour</button>
-          <button class="btn btn-ghost" type="button" style="margin-top:8px" id="sideReview">${mine ? "View your review" : "I toured this home"}</button>
+          ${reviewsOff ? "" : `<button class="btn btn-ghost" type="button" style="margin-top:8px" id="sideReview">${mine ? "View your review" : "I toured this home"}</button>`}
         </div>
         <div class="side-card calc" id="calc"></div>
       </aside>
     </div>`;
 
   $("#writeReview")?.addEventListener("click", () => requireAuth(() => openReviewForm(l)));
-  $("#sideReview").addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
+  $("#sideReview")?.addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
   $("#reqTour").addEventListener("click", () => {
-    const subj = encodeURIComponent(`Tour request: ${l.UnparsedAddress}`);
+    const subj = encodeURIComponent(`Tour request: ${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`);
     const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).\n\nThanks!`);
     location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
   });
-  $("#reviewList").addEventListener("click", async (e) => {
+  $("#reviewList")?.addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
     if (h) { if (store.markHelpful(h.dataset.helpful)) { renderDetail(l); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
     const del = e.target.closest("[data-delete]");
@@ -545,19 +692,102 @@ function renderDetail(l) {
   });
   renderCalc(l);
 
-  if (!window.L) return;
-  galleryMaps.forEach((m) => m.remove());
-  galleryMaps = [
-    satelliteMap("galMain", l),
-    satelliteMap("galWide", l, { zoom: 17, interactive: false }),
-  ];
-  const street = L.map("galStreet", { zoomControl: false, scrollWheelZoom: false, dragging: false, doubleClickZoom: false, touchZoom: false, keyboard: false })
-    .setView([l.Latitude, l.Longitude], 15);
-  addBasemap(street);
-  L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(street);
-  galleryMaps.push(street);
+  if (mls) {
+    initCarousel($("#galPhotos"), photos, {
+      address: l.UnparsedAddress,
+      onOpen: (i) => openLightbox(photos, i, { address: l.UnparsedAddress, compliance: idxAttributionHTML(l, { compact: true }) }),
+    });
+  }
+
+  if (window.L) {
+    galleryMaps.forEach((m) => m.remove());
+    galleryMaps = mls
+      ? [satelliteMap("galMain", l)]
+      : [satelliteMap("galMain", l), satelliteMap("galWide", l, { zoom: 17, interactive: false })];
+    const street = L.map("galStreet", { zoomControl: false, scrollWheelZoom: false, dragging: false, doubleClickZoom: false, touchZoom: false, keyboard: false })
+      .setView([l.Latitude, l.Longitude], 15);
+    addBasemap(street);
+    L.marker([l.Latitude, l.Longitude], { icon: L.divIcon({ className: "pin-icon", html: `<div class="pin">${pinPrice(l.ListPrice)}</div>`, iconSize: [0, 0] }) }).addTo(street);
+    galleryMaps.push(street);
+  }
+
+  if (mls) loadMlsExtras(l);
 }
-// Opens the listing straight into Zillow's full-screen photo viewer
+
+// Listing firm, MLS #, last-updated and the BeachesMLS mark (IDX rules: firm name plus an email or
+// phone, in type no smaller than the listing details). Shown on the listing and in the photo viewer.
+function idxAttributionHTML(l, { compact = false } = {}) {
+  const contact = [
+    l.ListOfficePhone && `<a href="tel:${esc(String(l.ListOfficePhone).replace(/[^0-9+]/g, ""))}">${esc(l.ListOfficePhone)}</a>`,
+    l.ListOfficeEmail && `<a href="mailto:${esc(l.ListOfficeEmail)}">${esc(l.ListOfficeEmail)}</a>`,
+  ].filter(Boolean).join(" · ");
+  return `<div class="idx-attrib${compact ? " idx-attrib-compact" : ""}">
+    <div class="idx-firm">${mlsMark()}<span>Listing courtesy of <b>${esc(l.ListOfficeName || "—")}</b>${contact ? ` · ${contact}` : ""}</span></div>
+    <div class="idx-meta">MLS #: <b>${esc(l.MlsNumber || "—")}</b> · Last updated ${esc(fmtDateTime(l.ModificationTimestamp))} · Feed refreshed <span class="feed-refreshed">${esc(fmtDateTime(S.feed.lastSyncTimestamp))}</span></div>
+    ${compact ? `<div class="idx-disclaimer">${esc(SITE.mlsDisclaimer())}</div>` : ""}
+  </div>`;
+}
+
+// Loads full details (all photos, remarks, office contact) and public records for an MLS listing.
+const loading = new Set();
+async function loadMlsExtras(l) {
+  const id = l.ListingId;
+  const cached = S.details.get(id) || {};
+  const stale = !cached.at || Date.now() - cached.at > (SITE.refreshMinutes || 5) * 60e3;
+  const onThisListing = () => location.hash === `#/home/${id}`;
+
+  if (stale && !loading.has(`d:${id}`)) {
+    loading.add(`d:${id}`);
+    store.loadListingDetail(id).then((r) => {
+      if (r.gone) { handleGone(l); return; }
+      const { Parcel, ...fields } = r;
+      S.details.set(id, { ...(S.details.get(id) || {}), at: Date.now(), fields });
+      if (onThisListing() && !document.getElementById("photoModal")?.open) renderDetail(l);
+    }).catch(() => {
+      if (onThisListing() && !cached.fields) $("#remarks") && ($("#remarks").textContent = "Listing details are temporarily unavailable. Please try again shortly.");
+    }).finally(() => loading.delete(`d:${id}`));
+  }
+
+  if ((cached.parcelStatus === undefined || cached.parcelStatus === "pending") && !loading.has(`p:${id}`)) {
+    loading.add(`p:${id}`);
+    const retry = cached.parcelStatus === "pending";
+    store.loadParcel(id).then((r) => {
+      const entry = S.details.get(id) || {};
+      S.details.set(id, { ...entry, parcel: r.parcel, parcelStatus: r.status });
+      l.Parcel = r.parcel;
+      if (!onThisListing()) return;
+      const sec = $("#records");
+      if (sec) sec.outerHTML = publicRecordsHTML(l);
+      if (r.parcel?.Shape && galleryMaps[0]) {
+        const poly = addParcelOutline(galleryMaps[0], r.parcel.Shape);
+        galleryMaps[0].fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 20 });
+      }
+      // County server was slow: try once more shortly.
+      if (r.status === "pending" && !retry) setTimeout(() => { S.details.get(id).parcelStatus = "pending"; loadMlsExtras(l); }, 10000);
+    }).finally(() => loading.delete(`p:${id}`));
+  }
+}
+
+function handleGone(l) {
+  S.listings = S.listings.filter((x) => x.ListingId !== l.ListingId);
+  S.byId.delete(l.ListingId);
+  S.details.delete(l.ListingId);
+  showGoneNotice();
+}
+
+// Your Flexmls IDX Lite search, embedded (BeachesMLS-provided; compliance handled by Flexmls).
+function renderMlsSearch() {
+  const el = $("#view-mlssearch");
+  if (el.dataset.ready) return; // keep the iframe (and the user's search) when coming back
+  el.dataset.ready = "1";
+  el.innerHTML = `<h1>MLS Search</h1>
+    <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}.</p>
+    <div class="idx-frame-wrap">
+      <iframe src="${esc(SITE.idxLiteUrl)}" title="BeachesMLS listing search (Flexmls IDX)" loading="lazy"></iframe>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:10px">Search not loading? <a href="${esc(SITE.idxLiteUrl)}" target="_blank" rel="noopener noreferrer">Open MLS search in a new tab ↗</a></p>`;
+}
+// Demo listings only: opens the listing straight into Zillow's full-screen photo viewer
 // (?mmlb=g,0) instead of the listing page. Photos stay hosted on Zillow.
 const photoGalleryUrl = (l) => `${l.SourceUrl}?mmlb=g,0`;
 
@@ -568,14 +798,23 @@ function saleText(sale) {
   return `${fmt$(sale.price)} · ${sale.month ? MONTHS[sale.month] + " " : ""}${sale.year}${sale.qualified ? "" : ` <span class="muted" style="font-size:12px">(non-arm's-length)</span>`}`;
 }
 function publicRecordsHTML(l) {
+  const mls = isMls(l);
+  const st = mls ? S.details.get(l.ListingId)?.parcelStatus : "matched";
   const p = l.Parcel;
-  if (!p) {
-    return `<section class="section"><h2>Public records &amp; taxes</h2>
-      <p class="muted">We couldn't match this listing to a county parcel record automatically. Search the ${esc(l.County)} County property appraiser by address.</p></section>`;
+  const label = mls ? `<p class="not-mls">Not from BeachesMLS · county tax-roll data from the Florida Department of Revenue</p>` : "";
+  const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/" }[l.County];
+  if (mls && (st === undefined || st === "pending")) {
+    return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
+      <p class="muted">${st === "pending" ? "County records are taking longer than usual to load. Check back in a few minutes." : "Loading public records…"}</p></section>`;
   }
+  if (!p) {
+    return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
+      <p class="muted">We couldn't match this listing to a county parcel record automatically.${search ? ` <a href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the ${esc(l.County)} County property appraiser ↗</a>` : ""}</p></section>`;
+  }
+  const showOwner = p.Owner && (!mls || SITE.showOwnerOnMlsListings);
   const listVsJust = p.JustValue ? Math.round(((l.ListPrice - p.JustValue) / p.JustValue) * 100) : null;
   const rows = [
-    ["Owner of record", esc(p.Owner || "—")],
+    showOwner && ["Owner of record", esc(p.Owner)],
     ["Parcel ID", `<span style="font-variant-numeric:tabular-nums">${esc(p.ParcelId)}</span>`],
     ["Land use", esc(p.LandUse)],
     ["Market (just) value", `${fmt$(p.JustValue)}${listVsJust != null ? ` <span class="muted" style="font-size:12px">· list price is ${Math.abs(listVsJust)}% ${listVsJust >= 0 ? "above" : "below"}</span>` : ""}`],
@@ -587,19 +826,20 @@ function publicRecordsHTML(l) {
     ["Living area (county)", p.LivingAreaSqFt ? `${fmtN(p.LivingAreaSqFt)} sqft <span class="muted" style="font-size:12px">· listing says ${fmtN(l.LivingArea)}</span>` : "—"],
     ["Last sale", saleText(p.LastSale)],
     ["Prior sale", saleText(p.PriorSale)],
-  ];
+  ].filter(Boolean);
   return `<section class="section" id="records">
     <h2>Public records &amp; taxes</h2>
+    ${label}
     <div class="records-grid">${rows.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
     <div class="tax-compare">
       <div><small>Est. tax, current owner</small><b>${fmt$(p.EstTaxCurrentOwner)}/yr</b><span class="muted">${p.Homestead ? "Includes homestead savings" : "No homestead exemption"}</span></div>
       <div><small>Est. tax after you buy</small><b>${fmt$(p.EstTaxNewBuyer)}/yr</b><span class="muted">Reassessed near the purchase price</span></div>
     </div>
     <div class="records-links">
-      <a class="btn" href="${esc(p.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>
-      <a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${esc(l.County)} property appraiser ↗</a>
+      ${p.Links?.bill ? `<a class="btn" href="${esc(p.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
     </div>
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address.${l.County === "Palm Beach" ? ` On the Palm Beach Tax Collector site, search parcel <b>${esc(p.ParcelId)}</b>.` : ""} Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.</p>
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address.${l.County === "Palm Beach" ? ` On the Palm Beach Tax Collector site, search parcel <b>${esc(p.ParcelId)}</b>.` : ""} Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
 const fmtTime = (hm) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`; };
