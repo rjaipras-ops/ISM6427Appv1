@@ -150,8 +150,8 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .type-grid label:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
 .type-grid svg { width: 28px; height: 28px; }
 
-.check { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; }
-.check input { width: 18px; height: 18px; accent-color: var(--brand); }
+.check { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; cursor: pointer; line-height: 1.35; }
+.check input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--brand); }
 
 .chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 .chips:empty { display: none; }

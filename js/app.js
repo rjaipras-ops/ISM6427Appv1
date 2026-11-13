@@ -701,6 +701,7 @@ function renderDetail(l) {
     d.PoolPrivateYN && "Private pool", d.WaterfrontYN && "Waterfront", d.View && `${esc(d.View)} view`,
     d.FireplaceYN && "Fireplace", d.CentralAir && "Central air", d.GatedCommunity && "Gated community",
     d.SolarPanels && "Solar panels", d.ImpactWindows && "Impact windows & doors",
+    d.CBS && "CBS (concrete block) construction", d.ShortTermRental && "Short-term rentals allowed",
     d.BoatDock && "Private boat dock", d.OceanAccess && "Ocean access", d.GolfCommunity && "Golf community", d.EVCharging && "EV charging", d.VirtualTour && "Virtual tour available",
     d.NewConstructionYN && "New construction", d.SeniorCommunityYN && "55+ community",
   ].filter(Boolean);

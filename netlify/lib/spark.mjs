@@ -17,6 +17,16 @@ export const RESO_SELECT = [
   "ListOfficeName", "ListOfficePhone", "ListOfficeEmail", "ListAgentFullName",
   "VirtualTourURLUnbranded", "ModificationTimestamp", "PhotosChangeTimestamp", "PhotosCount",
   "InternetEntireListingDisplayYN", "InternetAddressDisplayYN",
+  // Feature filters (field names confirmed against the BeachesMLS feed; "_sp_" fields are local).
+  "ConstructionMaterials", "SecurityFeatures", "WaterfrontFeatures", "LotFeatures", "SpecialListingConditions",
+  "General_sp_Property_sp_Information_co_Senior_sp_Community_sp_YN",
+  "General_sp_Property_sp_Information_co_Gated_sp_Community_sp_YN",
+  "Leasing_sp_Permitted_sp_Details_co_Leasing_sp_Permitted_sp_Details",
+  "Other_sp_Leasing_sp_Restrictions_co_Other_sp_Leasing_sp_Restrictions",
+  "Storm_sp_Protection_co_Impact_sp_Glass",
+  "Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details",
+  "Boat_sp_and_sp_Dock_sp_Information_co_Dock",
+  "Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features",
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

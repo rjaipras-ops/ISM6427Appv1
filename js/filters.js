@@ -20,7 +20,7 @@ const BOOL_KEYS = [
   "statusActive", "statusContingent", "statusPending", "reviewedOnly",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev",
-  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone",
+  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
 ];
 const NUM_KEYS = ["priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating"];
 
@@ -35,7 +35,7 @@ export function defaults() {
     foreclosure: false, virtualTour: false, hideSenior: false,
     pool: false, waterfront: false, view: false, fireplace: false, centralAir: false,
     basement: false, gated: false, solar: false, ev: false,
-    impactWindows: false, boatDock: false, oceanAccess: false, golf: false, noFloodZone: false,
+    impactWindows: false, boatDock: false, oceanAccess: false, golf: false, noFloodZone: false, cbs: false, str: false,
     bounds: null,
   };
 }
@@ -45,7 +45,7 @@ export const DRAWER_KEYS = [
   "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "stories", "garageMin",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev", "minRating", "keyword",
-  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone",
+  "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
 ];
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
@@ -100,6 +100,8 @@ export function matches(l, f, summary) {
   if (f.oceanAccess && !d.OceanAccess) return false;
   if (f.golf && !d.GolfCommunity) return false;
   if (f.noFloodZone && d.FloodZone !== "X") return false;
+  if (f.cbs && !d.CBS) return false;
+  if (f.str && !d.ShortTermRental) return false;
 
   if (f.reviewedOnly && !summary) return false;
   if (f.minRating != null && (!summary || summary.avg < f.minRating)) return false;
@@ -195,6 +197,7 @@ export function chipsFor(f) {
     pool: "Pool", waterfront: "Waterfront", view: "View", fireplace: "Fireplace", centralAir: "Central air",
     basement: "Basement", gated: "Gated", solar: "Solar", ev: "EV charging", reviewedOnly: "Has tour reviews",
     impactWindows: "Impact windows", boatDock: "Boat dock", oceanAccess: "Ocean access", golf: "Golf community", noFloodZone: "Outside flood zone",
+    cbs: "CBS", str: "STR allowed",
   };
   for (const [k, label] of Object.entries(flags)) if (f[k]) add(label, { [k]: false });
   if (f.minRating != null) add(`${f.minRating}+ ★ tours`, { minRating: null });

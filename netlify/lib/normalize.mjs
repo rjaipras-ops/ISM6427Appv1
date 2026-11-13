@@ -47,7 +47,7 @@ const SUBTYPE = [
 ];
 const mapType = (sub, type) => (SUBTYPE.find(([re]) => re.test(sub || "")) || SUBTYPE.find(([re]) => re.test(type || "")) || [null, "Other"])[1];
 
-const yes = (v) => v === true || v === "Y" || v === "true" || v === 1;
+const yes = (v) => v === true || v === 1 || /^(y|yes|true)$/i.test(String(v ?? "").trim());
 const list = (v) => (Array.isArray(v) ? v.join(", ") : typeof v === "string" ? v : "");
 const monthlyFee = (fee, freq) => {
   const f = Number(fee);
@@ -94,6 +94,8 @@ export function normalizeListing(rec, { syncedAt } = {}) {
   const listed = rec.OnMarketDate || rec.ListingContractDate || null;
   const lot = Number(rec.LotSizeSquareFeet) || (Number(rec.LotSizeAcres) ? Math.round(Number(rec.LotSizeAcres) * 43560) : 0);
   const cooling = list(rec.Cooling);
+  const leasing = list(rec.Leasing_sp_Permitted_sp_Details_co_Leasing_sp_Permitted_sp_Details);
+  const leaseLimits = list(rec.Other_sp_Leasing_sp_Restrictions_co_Other_sp_Leasing_sp_Restrictions);
 
   return {
     ListingId: String(rec.ListingKey),
@@ -148,16 +150,21 @@ export function normalizeListing(rec, { syncedAt } = {}) {
       CentralAir: /central/i.test(cooling),
       GarageSpaces: Number(rec.GarageSpaces) || 0,
       Basement: false,
-      SeniorCommunityYN: yes(rec.SeniorCommunityYN),
-      Foreclosure: false,
+      SeniorCommunityYN: yes(rec.SeniorCommunityYN) || yes(rec.General_sp_Property_sp_Information_co_Senior_sp_Community_sp_YN),
+      Foreclosure: /reo|foreclos|bank owned|auction/i.test(list(rec.SpecialListingConditions)),
+      ShortSale: /short sale/i.test(list(rec.SpecialListingConditions)),
       VirtualTour: !!rec.VirtualTourURLUnbranded,
-      GatedCommunity: false,
-      SolarPanels: false,
-      EVCharging: false,
-      ImpactWindows: false,
-      BoatDock: false,
-      OceanAccess: false,
-      GolfCommunity: false,
+      GatedCommunity: yes(rec.General_sp_Property_sp_Information_co_Gated_sp_Community_sp_YN) || /gated|security gate|guard/i.test(list(rec.SecurityFeatures)),
+      SolarPanels: false, // not in the BeachesMLS feed
+      EVCharging: false,  // not in the BeachesMLS feed
+      ImpactWindows: /complete|partial/i.test(list(rec.Storm_sp_Protection_co_Impact_sp_Glass)) || /impact/i.test(list(rec.Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details)),
+      BoatDock: /^(yes|available)/i.test(list(rec.Boat_sp_and_sp_Dock_sp_Information_co_Dock)) || /dock/i.test(list(rec.Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features)),
+      OceanAccess: /ocean access|ocean front|no fixed bridge|intracoastal/i.test(list(rec.WaterfrontFeatures)),
+      GolfCommunity: /golf/i.test(`${list(rec.View)} ${list(rec.LotFeatures)}`),
+      // Concrete block / CBS construction (Florida buyers and insurers look for it).
+      CBS: /\bcbs\b|block|concrete/i.test(list(rec.ConstructionMaterials)),
+      // Short-term rentals allowed (and not separately prohibited).
+      ShortTermRental: /short term rentals? allowed/i.test(leasing) && !/short term rentals? prohibited|leasing prohibited$/i.test(leaseLimits),
       FloodZone: null,
       PublicRemarks: rec.PublicRemarks || "",
     },

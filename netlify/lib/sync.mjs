@@ -14,6 +14,7 @@
 import { idxConfig, ACTIVE } from "./config.mjs";
 import { firstPageUrl, fetchPage } from "./spark.mjs";
 import { normalizeListing } from "./normalize.mjs";
+import { INDEX_SCHEMA } from "./index-format.mjs";
 import { getState, setState, getIndex, setIndex, getJSON, setJSON, del } from "./store.mjs";
 import { toRow } from "./index-format.mjs";
 import { warmParcels } from "./detail.mjs";
@@ -25,7 +26,7 @@ const log = (...a) => console.log("[IDX]", ...a);
 
 function freshState(mode) {
   return {
-    mode, phase: "initial", next: null, lastSyncTimestamp: null, runStartedAt: null,
+    mode, phase: "initial", next: null, lastSyncTimestamp: null, runStartedAt: null, schema: INDEX_SCHEMA,
     initialCompletedAt: null, lastReconcileAt: null, activeCount: 0, lastRun: null, version: 0,
   };
 }
@@ -34,6 +35,7 @@ function freshState(mode) {
 export function isDue(state, cfg = idxConfig()) {
   if (state.mode !== (cfg.mock ? "mock" : "live")) return true;
   if (state.phase !== "idle") return true;
+  if (state.schema !== INDEX_SCHEMA) return true;
   const last = Date.parse(state.lastRun?.finishedAt || 0);
   return Date.now() - last >= cfg.intervalMinutes * 60 * 1000;
 }
@@ -83,6 +85,15 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
     return { ok: true, state };
   }
 
+  // New fields added to the index: refresh every listing (the current index stays up meanwhile).
+  // (An in-progress first load restarts too, since its saved next-page links ask for the old fields.)
+  if ((state.phase === "idle" || state.phase === "initial") && state.schema !== INDEX_SCHEMA && !cfg.mock) {
+    log(`index schema ${state.schema || 1} → ${INDEX_SCHEMA}: refreshing all listings`);
+    state.schema = INDEX_SCHEMA;
+    state.phase = "initial";
+    state.next = null;
+    state.runStartedAt = new Date().toISOString();
+  }
   // Pick the phase for this run.
   if (state.phase === "idle") {
     const reconcileDue = !state.lastReconcileAt || Date.now() - Date.parse(state.lastReconcileAt) >= cfg.reconcileHours * 3600e3;

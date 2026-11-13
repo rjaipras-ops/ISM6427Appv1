@@ -15,7 +15,11 @@ export const INDEX_FIELDS = [
 export const INDEX_FLAGS = [
   "AddressHidden", "demo.PriceReduced", "demo.NewConstructionYN", "demo.PoolPrivateYN", "demo.WaterfrontYN",
   "demo.FireplaceYN", "demo.CentralAir", "demo.SeniorCommunityYN", "demo.VirtualTour",
+  // Added later: append only. Bumping INDEX_SCHEMA re-pulls every listing so these fill in.
+  "demo.GatedCommunity", "demo.ImpactWindows", "demo.BoatDock", "demo.OceanAccess", "demo.GolfCommunity",
+  "demo.Foreclosure", "demo.ShortSale", "demo.CBS", "demo.ShortTermRental",
 ];
+export const INDEX_SCHEMA = 2;
 
 const get = (o, path) => path.split(".").reduce((v, k) => (v == null ? v : v[k]), o);
 
