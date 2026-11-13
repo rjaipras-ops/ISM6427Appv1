@@ -46,14 +46,67 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
 /* ---------------- Auth ---------------- */
+// On the real site (Netlify Functions available) sign-in is "Sign in with Google": Google's button
+// gives the browser an ID token, /api/auth/google verifies it and sets an HttpOnly session cookie,
+// and reviews are stored on the server. If the API isn't there (plain static hosting), everything
+// falls back to the original browser-only demo (localStorage).
+let remote = false;      // true once /api/reviews answered
+let remoteUser = null;   // { id, displayName, email, picture } from the session
+let reviewCache = [];    // all reviews, loaded once at startup
+let authCfg = { googleClientId: null, devLogin: false };
+
 const listeners = new Set();
 export function onAuthChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 const emit = () => listeners.forEach((fn) => fn(getUser()));
 
-export function getUser() { return read(KEYS.user, null); }
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: "same-origin",
+    ...opts,
+    headers: { Accept: "application/json", ...(opts.body ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) },
+  });
+  const ct = res.headers.get("content-type") || "";
+  const data = ct.includes("json") ? await res.json() : null;
+  if (!data) throw new Error(`API unavailable (${res.status})`);
+  if (!res.ok) throw Object.assign(new Error(data.error || `Request failed (${res.status})`), { errors: data.errors, status: res.status });
+  return data;
+}
 
-// Replace with your provider's sign-in. Must resolve to { id, displayName, email }.
+/** Loads the session and all reviews from the server. Call once before rendering. */
+export async function initBackend() {
+  try {
+    const [cfg, me, rv] = await Promise.all([api("/api/auth/config"), api("/api/auth/me"), api("/api/reviews")]);
+    authCfg = cfg;
+    remoteUser = me.user;
+    reviewCache = rv.reviews || [];
+    remote = true;
+  } catch {
+    remote = false; // demo mode
+  }
+  return { remote };
+}
+
+export const isRemote = () => remote;
+export const authConfig = () => authCfg;
+
+export function getUser() { return remote ? remoteUser : read(KEYS.user, null); }
+
+/** Finishes "Sign in with Google": `credential` is the ID token from Google's button. */
+export async function signInWithGoogle(credential) {
+  const { user } = await api("/api/auth/google", { method: "POST", body: JSON.stringify({ credential }) });
+  remoteUser = user;
+  emit();
+  return user;
+}
+
+// Demo sign-in (browser-only fallback), or the local-testing login when AUTH_DEV_LOGIN=true.
 export async function signIn({ displayName, email }) {
+  if (remote) {
+    const { user } = await api("/api/auth/dev", { method: "POST", body: JSON.stringify({ name: displayName, email }) });
+    remoteUser = user;
+    emit();
+    return user;
+  }
   const existing = getUser();
   const user = {
     id: existing?.email === email ? existing.id : uid(),
@@ -67,7 +120,13 @@ export async function signIn({ displayName, email }) {
 }
 
 export async function signOut() {
-  try { localStorage.removeItem(KEYS.user); } catch { /* ignore */ }
+  if (remote) {
+    await api("/api/auth/logout", { method: "POST" }).catch(() => {});
+    remoteUser = null;
+    try { window.google?.accounts?.id?.disableAutoSelect(); } catch { /* ignore */ }
+  } else {
+    try { localStorage.removeItem(KEYS.user); } catch { /* ignore */ }
+  }
   emit();
 }
 
@@ -143,6 +202,7 @@ function seededSamples() {
 }
 
 function allReviews() {
+  if (remote) return reviewCache;
   let rows = read(KEYS.reviews, null);
   if (!rows) { rows = seededSamples(); write(KEYS.reviews, rows); }
   return rows;
@@ -203,6 +263,14 @@ export function validateReview(input, { listing, user }) {
 export async function addReview(input, { listing, user }) {
   const errors = validateReview(input, { listing, user });
   if (errors.length) throw Object.assign(new Error(errors[0]), { errors });
+  if (remote) {
+    const { review } = await api("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify({ ...input, listingId: listing.ListingId, address: listing.UnparsedAddress || null }),
+    });
+    reviewCache.push(review);
+    return review;
+  }
   const now = new Date().toISOString();
   const review = {
     id: uid(),
@@ -233,6 +301,11 @@ export async function addReview(input, { listing, user }) {
 }
 
 export async function deleteReview(id, user) {
+  if (remote) {
+    await api(`/api/reviews/${encodeURIComponent(id)}/delete`, { method: "POST" });
+    reviewCache = reviewCache.filter((x) => x.id !== id);
+    return true;
+  }
   const rows = allReviews();
   const r = rows.find((x) => x.id === id);
   if (!r || r.userId !== user?.id) return false;
@@ -240,6 +313,8 @@ export async function deleteReview(id, user) {
   return true;
 }
 
+// Returns false if this browser already voted. On the real site the server also allows one vote
+// per signed-in user (callers make sure the user is signed in first).
 export function markHelpful(id) {
   const voted = read(KEYS.helpful, []);
   if (voted.includes(id)) return false;
@@ -247,7 +322,8 @@ export function markHelpful(id) {
   const r = rows.find((x) => x.id === id);
   if (!r) return false;
   r.helpful = (r.helpful || 0) + 1;
-  write(KEYS.reviews, rows);
+  if (remote) api(`/api/reviews/${encodeURIComponent(id)}/helpful`, { method: "POST" }).then((d) => { r.helpful = d.helpful; }).catch(() => {});
+  else write(KEYS.reviews, rows);
   write(KEYS.helpful, [...voted, id]);
   return true;
 }

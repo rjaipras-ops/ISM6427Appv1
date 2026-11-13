@@ -237,18 +237,25 @@
     </aside>
   </div>
 
-  <!-- Auth modal (placeholder; swap for real auth) -->
+  <!-- Sign-in dialog: "Sign in with Google" (js/app.js renders Google's button into #gsiButton). -->
   <dialog class="modal" id="authModal" aria-labelledby="authTitle">
-    <form method="dialog" class="modal-body" id="authForm">
-      <h2 id="authTitle">Sign in to review homes you've toured</h2>
-      <p class="muted">Demo sign-in only — stored in this browser. Real authentication plugs in at <code>js/store.js</code>.</p>
-      <label class="field">Name shown on reviews<input name="displayName" required maxlength="40" autocomplete="nickname" /></label>
-      <label class="field">Email<input name="email" type="email" required autocomplete="email" /></label>
-      <div class="modal-actions">
-        <button class="linkbtn" value="cancel" formnovalidate>Cancel</button>
-        <button class="btn" value="ok">Continue</button>
-      </div>
-    </form>
+    <div class="modal-body auth-body">
+      <button class="iconbtn auth-close" type="button" aria-label="Close" onclick="this.closest('dialog').close()">✕</button>
+      <h2 id="authTitle">Sign in to Toured</h2>
+      <p class="muted">Post reviews of homes you've toured and keep track of them.</p>
+      <div id="gsiButton" class="gsi-button"></div>
+      <p class="muted auth-status" id="authStatus" role="status"></p>
+      <!-- Shown only in browser-only demo mode, or local testing (AUTH_DEV_LOGIN=true). -->
+      <form method="dialog" id="authForm" hidden>
+        <label class="field">Name shown on reviews<input name="displayName" required maxlength="40" autocomplete="nickname" /></label>
+        <label class="field">Email<input name="email" type="email" required autocomplete="email" /></label>
+        <div class="modal-actions">
+          <button class="linkbtn" value="cancel" formnovalidate>Cancel</button>
+          <button class="btn" value="ok">Continue</button>
+        </div>
+      </form>
+      <p class="muted auth-fine">Reviews show your first name and last initial. Your email is never shown publicly.</p>
+    </div>
   </dialog>
 
   <!-- Review modal -->

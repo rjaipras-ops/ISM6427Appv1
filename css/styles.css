@@ -687,3 +687,12 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .drawer-foot .btn { order: -1; }
 @media (max-width: 640px) { .drawer-foot { padding-right: 20px; padding-bottom: 72px; } }
 .drawer-foot .btn, .drawer-foot .linkbtn { white-space: nowrap; }
+
+/* Sign in with Google */
+.auth-body { position: relative; text-align: center; }
+.auth-body .field, .auth-body .modal-actions { text-align: left; }
+.auth-close { position: absolute; top: 12px; right: 12px; }
+.gsi-button { display: flex; justify-content: center; min-height: 44px; margin: 22px 0 6px; }
+.auth-status { min-height: 1.2em; font-size: 14px; }
+.auth-fine { font-size: 12px; margin-top: 16px; }
+img.avatar { object-fit: cover; padding: 0; }

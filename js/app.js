@@ -52,7 +52,10 @@ init().catch((e) => {
 });
 
 async function init() {
-  applyFeed(await store.loadFeed());
+  const [feed] = await Promise.all([store.loadFeed(), store.initBackend()]);
+  S.user = store.getUser();
+  S.summaries = store.getReviewSummaries();
+  applyFeed(feed);
   buildControls();
   initMap();
   renderAccount();
@@ -366,14 +369,16 @@ function wireEvents() {
 
   // Auth modal
   $("#authForm").addEventListener("submit", async (e) => {
-    if (e.submitter?.value !== "ok") return;
+    if (e.submitter?.value !== "ok") { $("#authModal").close(); return; }
+    e.preventDefault();
     const fd = new FormData(e.target);
-    await store.signIn({ displayName: fd.get("displayName"), email: fd.get("email") });
-    toast(`Signed in as ${fd.get("displayName")}`);
-    if (authThen) { const fn = authThen; authThen = null; fn(); }
+    try {
+      await store.signIn({ displayName: fd.get("displayName"), email: fd.get("email") });
+      signedIn();
+    } catch (err) { $("#authStatus").textContent = err.message; }
   });
   $("#contactForm").addEventListener("submit", submitContact);
-  $("#authModal").addEventListener("close", () => { if ($("#authModal").returnValue !== "ok") authThen = null; });
+  $("#authModal").addEventListener("close", () => { if (!S.user) authThen = null; });
 }
 
 function closeDropdowns() {
@@ -405,13 +410,67 @@ function requireAuth(then) {
   if (S.user) return then();
   authThen = then;
   $("#authForm").reset();
+  $("#authStatus").textContent = "";
+  const cfg = store.authConfig();
+  // Browser-only demo, or local testing: show the simple name/email form.
+  $("#authForm").hidden = store.isRemote() && !cfg.devLogin;
   $("#authModal").showModal();
+  if (store.isRemote() && cfg.googleClientId) renderGoogleButton(cfg.googleClientId);
+  else if (store.isRemote() && !cfg.devLogin) $("#authStatus").textContent = "Sign-in is being set up and will be available shortly.";
+}
+function signedIn() {
+  $("#authModal").close();
+  toast(`Signed in as ${S.user?.displayName || "you"}`);
+  if (authThen) { const fn = authThen; authThen = null; fn(); }
+}
+
+// "Sign in with Google" via Google Identity Services. Google shows its own account picker;
+// we receive an ID token and the server verifies it before starting a session.
+let gsiLoad;
+function loadGsi() {
+  gsiLoad ||= new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { gsiLoad = null; reject(new Error("Couldn't reach Google. Check your connection and try again.")); };
+    document.head.append(s);
+  });
+  return gsiLoad;
+}
+let gsiReady = false;
+async function renderGoogleButton(clientId) {
+  const el = $("#gsiButton");
+  el.innerHTML = `<span class="muted">Loading Google sign-in…</span>`;
+  try {
+    await loadGsi();
+    if (!gsiReady) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        ux_mode: "popup",
+        callback: async ({ credential }) => {
+          $("#authStatus").textContent = "Signing you in…";
+          try { await store.signInWithGoogle(credential); signedIn(); }
+          catch (err) { $("#authStatus").textContent = err.message; }
+        },
+      });
+      gsiReady = true;
+    }
+    el.innerHTML = "";
+    google.accounts.id.renderButton(el, { theme: "outline", size: "large", shape: "pill", text: "continue_with", logo_alignment: "left", width: 300 });
+  } catch (err) {
+    el.innerHTML = "";
+    $("#authStatus").textContent = err.message;
+  }
 }
 function renderAccount() {
   const el = $("#account");
   if (S.user) {
     const initials = S.user.displayName.split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
-    el.innerHTML = `<span class="avatar" title="${esc(S.user.email)}">${esc(initials)}</span><button class="linkbtn" id="signOut" type="button">Sign out</button>`;
+    const face = S.user.picture
+      ? `<img class="avatar" src="${esc(S.user.picture)}" alt="" referrerpolicy="no-referrer" title="${esc(S.user.email || "")}">`
+      : `<span class="avatar" title="${esc(S.user.email || "")}">${esc(initials)}</span>`;
+    el.innerHTML = `${face}<button class="linkbtn" id="signOut" type="button">Sign out</button>`;
     $("#signOut").onclick = () => { store.signOut(); toast("Signed out"); };
   } else {
     el.innerHTML = `<button class="btn btn-ghost" id="signIn" type="button">Sign in</button>`;
@@ -737,6 +796,7 @@ function renderDetail(l) {
   });
   $("#reviewList")?.addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
+    if (h && store.isRemote() && !S.user) { requireAuth(() => renderDetail(l)); return; }
     if (h) { if (store.markHelpful(h.dataset.helpful)) { renderDetail(l); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
     const del = e.target.closest("[data-delete]");
     if (del && confirm("Delete your review?")) { await store.deleteReview(del.dataset.delete, S.user); S.summaries = store.getReviewSummaries(); renderDetail(l); toast("Review deleted"); }
@@ -998,6 +1058,7 @@ function panelClick(e) {
     contactAgent(`Tour request: ${p.address}`, `I found ${p.address} in your MLS search and I'd like to tour it.`, p.address);
   }
   const h = e.target.closest("[data-helpful]");
+  if (h && p && store.isRemote() && !S.user) { requireAuth(() => renderPanelProperty(p)); return; }
   if (h && p) { if (store.markHelpful(h.dataset.helpful)) { renderPanelProperty(p); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
   const del = e.target.closest("[data-delete]");
   if (del && p && confirm("Delete your review?")) store.deleteReview(del.dataset.delete, S.user).then(() => { renderPanelProperty(p); toast("Review deleted"); });

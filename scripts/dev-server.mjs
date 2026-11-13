@@ -14,6 +14,13 @@ import sync from "../netlify/functions/idx-sync.mjs";
 import parcel from "../netlify/functions/idx-parcel.mjs";
 import propertyLookup from "../netlify/functions/property-lookup.mjs";
 import scheduled from "../netlify/functions/idx-sync-scheduled.mjs";
+import authConfig from "../netlify/functions/auth-config.mjs";
+import authMe from "../netlify/functions/auth-me.mjs";
+import authGoogle from "../netlify/functions/auth-google.mjs";
+import authLogout from "../netlify/functions/auth-logout.mjs";
+import authDev from "../netlify/functions/auth-dev.mjs";
+import reviews from "../netlify/functions/reviews.mjs";
+import reviewAction from "../netlify/functions/review-action.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
@@ -28,6 +35,13 @@ const routes = [
   [/^\/api\/idx\/sync-status$/, status],
   [/^\/api\/idx\/sync$/, sync],
   [/^\/api\/property\/lookup$/, propertyLookup],
+  [/^\/api\/auth\/config$/, authConfig],
+  [/^\/api\/auth\/me$/, authMe],
+  [/^\/api\/auth\/google$/, authGoogle],
+  [/^\/api\/auth\/logout$/, authLogout],
+  [/^\/api\/auth\/dev$/, authDev],
+  [/^\/api\/reviews$/, reviews],
+  [/^\/api\/reviews\/([\w-]+)\/(delete|helpful)$/, reviewAction, (m) => ({ id: m[1], action: m[2] })],
 ];
 
 createServer(async (req, res) => {

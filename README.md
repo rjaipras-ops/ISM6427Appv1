@@ -159,3 +159,28 @@ npm run dev             # http://localhost:8888 — site + /api/idx/* functions
 ## Deploy
 
 In Netlify, choose "Import from Git", pick this repo and branch `main`. Netlify reads `netlify.toml`: there's no build command, the publish directory is `.` and the functions are in `netlify/functions`. Add the environment variables above when your Spark key is ready. Netlify Blobs and the 5-minute schedule need no extra setup.
+
+## Sign in with Google & reviews
+
+Visitors sign in with Google (Google Identity Services). Google shows its own account picker and hands
+the browser an ID token; `/api/auth/google` verifies it (Google's signature, issuer, audience = your
+client ID, expiry, verified email) and sets a signed, HttpOnly session cookie for 30 days. The site never
+sees a password.
+
+Reviews are stored server-side in Netlify Blobs (`reviews/all`), so everyone sees them. Only signed-in
+users can post; one review per home per user; "helpful" votes are one per user. Reviews show the
+reviewer's first name and last initial. Emails are kept privately in `users/<id>` and never shown.
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/auth/config` | Google client ID for the sign-in button |
+| `GET /api/auth/me` | Current user, or null |
+| `POST /api/auth/google` | Verify Google ID token, start session |
+| `POST /api/auth/logout` | End session |
+| `GET/POST /api/reviews` | List all reviews / post one (signed in) |
+| `POST /api/reviews/:id/delete` · `/helpful` | Delete your review / vote helpful |
+
+**Setup:** in Google Cloud Console create an OAuth client ID (type *Web application*) with your site URL as
+an *Authorized JavaScript origin*, then set `GOOGLE_CLIENT_ID` in Netlify and redeploy. Until it is set,
+the sign-in dialog says sign-in is being set up. Without Netlify Functions (plain static hosting) the
+app falls back to the original browser-only demo.
