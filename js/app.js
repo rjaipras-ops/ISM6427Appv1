@@ -68,10 +68,39 @@ async function init() {
 
 // Agent contact helpers: phone/email are optional in config.js.
 const phoneLink = () => (SITE.phone ? ` · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a>` : "");
-function contactAgent(subj, body) {
-  if (SITE.email) location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
-  else if (SITE.phone) location.href = `tel:${SITE.phone.replace(/[^0-9+]/g, "")}`;
-  else toast(`Contact ${SITE.agentName} at ${SITE.brokerage} to schedule a tour.`);
+// Tour requests are posted to Netlify Forms, which emails them to the agent. The agent's email
+// address is set in Netlify (Forms → notifications) and never appears in the site's code.
+function contactAgent(subject, message, home = "") {
+  const dlg = $("#contactModal");
+  const f = $("#contactForm");
+  f.reset();
+  $("#contactTitle").textContent = home ? "Request a tour" : `Contact ${SITE.agentName}`;
+  $("#contactAgentName").textContent = `${SITE.agentName}, ${SITE.brokerage}`;
+  f.subject.value = subject;
+  f.home.value = home;
+  f.message.value = message;
+  const u = store.getUser?.();
+  if (u) { f.name.value = u.displayName || ""; f.email.value = u.email || ""; }
+  $("#contactStatus").textContent = "";
+  dlg.showModal();
+}
+async function submitContact(e) {
+  e.preventDefault();
+  const f = e.target;
+  if (!f.reportValidity()) return;
+  const btn = f.querySelector("[type=submit]");
+  btn.disabled = true;
+  $("#contactStatus").textContent = "Sending…";
+  try {
+    const data = new URLSearchParams(new FormData(f));
+    data.set("page", location.href);
+    const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: data.toString(), signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(res.status);
+    $("#contactModal").close();
+    toast(`Thanks! ${SITE.agentName} will be in touch soon.`);
+  } catch {
+    $("#contactStatus").textContent = "Sorry, that didn't send. Please try again in a moment.";
+  } finally { btn.disabled = false; }
 }
 
 // BeachesMLS rule 20.2.5: the site must clearly identify the brokerage, visible on arrival.
@@ -343,6 +372,7 @@ function wireEvents() {
     toast(`Signed in as ${fd.get("displayName")}`);
     if (authThen) { const fn = authThen; authThen = null; fn(); }
   });
+  $("#contactForm").addEventListener("submit", submitContact);
   $("#authModal").addEventListener("close", () => { if ($("#authModal").returnValue !== "ok") authThen = null; });
 }
 
@@ -702,9 +732,8 @@ function renderDetail(l) {
   $("#writeReview")?.addEventListener("click", () => requireAuth(() => openReviewForm(l)));
   $("#sideReview")?.addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
   $("#reqTour").addEventListener("click", () => {
-    const subj = encodeURIComponent(`Tour request: ${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`);
-    const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).\n\nThanks!`);
-    contactAgent(subj, body);
+    const home = `${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`;
+    contactAgent(`Tour request: ${home}`, `I'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).`, home);
   });
   $("#reviewList")?.addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
@@ -966,9 +995,7 @@ function panelClick(e) {
   if (act === "clear") { $("#tpAddr").value = ""; renderPanelHome(); $("#tpAddr").focus(); }
   if (act === "review" && p) requireAuth(() => openReviewForm(panelListing(p)));
   if (act === "tour" && p) {
-    const subj = encodeURIComponent(`Tour request: ${p.address}`);
-    const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI found ${p.address} in your MLS search and I'd like to tour it.\n\nThanks!`);
-    contactAgent(subj, body);
+    contactAgent(`Tour request: ${p.address}`, `I found ${p.address} in your MLS search and I'd like to tour it.`, p.address);
   }
   const h = e.target.closest("[data-helpful]");
   if (h && p) { if (store.markHelpful(h.dataset.helpful)) { renderPanelProperty(p); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }

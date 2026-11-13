@@ -3,16 +3,16 @@ export const SITE = {
   agentName: "Rajesh Jaiprashad",
   // BeachesMLS rule 20.2.5: the site must clearly identify your brokerage.
   brokerage: "LoKation Real Estate",
-  // Leave phone/email empty to hide them; "Request a tour" needs an email to work.
+  // Leave phone empty to hide it. Tour requests go through the site's contact form (Netlify Forms),
+  // which emails you without your address ever appearing on the site; set the address in Netlify.
   phone: "",
-  email: "",
   licenseNo: "SL3403530",
 
   /* ---------------- BeachesMLS IDX ---------------- */
   mls: "BeachesMLS",
   // Official BeachesMLS logo file (required on every IDX listing). Get it from BeachesMLS/RWorld,
   // save it as e.g. assets/beachesmls-logo.png and put the path here. Until then a text mark shows.
-  mlsLogo: null,
+  mlsLogo: "assets/beachesmls-logo.jpg",
   // Required IDX disclaimer (BeachesMLS IDX & VOW Rules, Section 20). The year updates automatically.
   mlsDisclaimer: () =>
     `All listings featuring the BMLS logo are provided by BeachesMLS, Inc. This information is not verified for authenticity or accuracy and is not guaranteed. Copyright ©${new Date().getFullYear()} BeachesMLS, Inc.`,

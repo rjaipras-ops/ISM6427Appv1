@@ -256,6 +256,30 @@
     <form method="dialog" class="modal-body" id="reviewForm"></form>
   </dialog>
 
+  <!-- Tour request / contact form. Submissions go to Netlify Forms, which emails them to the agent
+       (set the address in Netlify: Forms → Form notifications). Honeypot field "company" catches bots. -->
+  <dialog class="modal" id="contactModal" aria-labelledby="contactTitle">
+    <form class="modal-body" id="contactForm" name="contact" method="POST" data-netlify="true" netlify-honeypot="company">
+      <input type="hidden" name="form-name" value="contact" />
+      <input type="hidden" name="subject" />
+      <input type="hidden" name="home" />
+      <p class="hp-field" aria-hidden="true"><label>Leave this empty <input name="company" tabindex="-1" autocomplete="off" /></label></p>
+      <h2 id="contactTitle">Request a tour</h2>
+      <p class="muted" id="contactAgentName"></p>
+      <label class="field">Your name<input name="name" required maxlength="80" autocomplete="name" /></label>
+      <label class="field">Email<input name="email" type="email" required maxlength="120" autocomplete="email" /></label>
+      <label class="field">Phone (optional)<input name="phone" type="tel" maxlength="30" autocomplete="tel" /></label>
+      <label class="field">Message<textarea name="message" maxlength="2000"></textarea></label>
+      <label class="consent"><input type="checkbox" name="consent" value="yes" required />
+        <span>I agree to be contacted about this request by email, phone or text. Message and data rates may apply. Consent is not a condition of any purchase.</span></label>
+      <p class="muted" id="contactStatus" role="status" style="font-size:13px"></p>
+      <div class="modal-actions">
+        <button class="linkbtn" type="button" onclick="this.closest('dialog').close()">Cancel</button>
+        <button class="btn" type="submit">Send request</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Full-screen listing photos (filled by js/gallery.js) -->
   <dialog class="modal modal-photos" id="photoModal" aria-label="Listing photos"></dialog>
 

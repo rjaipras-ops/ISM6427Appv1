@@ -500,7 +500,7 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
   font-size: 10px; font-weight: 700; letter-spacing: .04em; line-height: 1;
   color: var(--brand-ink); border: 1.5px solid var(--brand); border-radius: 4px; padding: 3px 4px;
 }
-.mls-logo { height: 20px; width: auto; flex: none; vertical-align: middle; }
+.mls-logo { height: 26px; width: auto; flex: none; vertical-align: middle; background: #fff; border-radius: 3px; padding: 1px 3px; }
 
 /* Cards: MLS primary photo, courtesy line */
 .card-photo { position: absolute; inset: 0; overflow: hidden; background: var(--line-2); }
@@ -676,3 +676,8 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
   .broker-agent { display: none; }
   .broker-firm { font-size: 13px; }
 }
+
+/* Contact / tour request form */
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 13px; line-height: 1.4; color: var(--muted, #555); }
+.consent input { margin-top: 3px; flex: none; }
