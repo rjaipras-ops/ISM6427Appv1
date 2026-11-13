@@ -362,6 +362,7 @@ function wireEvents() {
   $("#boundsToggle").addEventListener("change", (e) => setFilters({ bounds: e.target.checked ? boundsArr() : null }, { fromMap: true }));
   $("#mobileMapBtn").addEventListener("click", () => {
     const on = $("#view-search").classList.toggle("show-map");
+    if (on) window.scrollTo(0, 0);
     $("#mobileMapBtn").textContent = on ? "List" : "Map";
     setTimeout(() => { map?.invalidateSize(); if (on && needsFit) fitToResults(); }, 50);
   });
@@ -663,6 +664,8 @@ function show(id) {
     (id === "view-saved" && a.getAttribute("href") === "#/saved") ||
     (id === "view-myreviews" && a.getAttribute("href") === "#/my-reviews") ||
     (id === "view-mlssearch" && a.getAttribute("href") === "#/mls-search")));
+  $$(".tabbar a").forEach((a) => a.classList.toggle("is-active", a.dataset.view === id || (id === "view-detail" && a.dataset.view === "view-search")));
+  document.body.classList.toggle("on-search", id === "view-search");
 }
 let firstSearchRender = true;
 function route() {

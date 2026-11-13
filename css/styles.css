@@ -747,3 +747,61 @@ input.money { width: 100%; min-width: 0; }
 .sale-history td { padding: 8px; border-bottom: 1px solid var(--line-2, #eef1f3); }
 .sale-history .num { text-align: right; font-variant-numeric: tabular-nums; }
 .sale-history tr.nonsale td { color: var(--ink-3); }
+
+/* ---------- Phones ---------- */
+.tabbar { display: none; }
+@media (max-width: 860px) {
+  :root { --topbar-h: 56px; --tabbar-h: 60px; }
+  body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+
+  /* Header: logo, brokerage (required to be visible), compact Sign in */
+  .topbar { gap: 10px; padding: 0 12px; }
+  .brand img { width: 28px; height: 28px; }
+  .brand span { font-size: 21px; }
+  .brokerage { margin-left: auto; padding-right: 0; overflow: hidden; }
+  .broker-firm { font-size: 12px; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; }
+  .brokerage + .account { margin-left: 6px; }
+  .account .btn { padding: 7px 14px; font-size: 14px; white-space: nowrap; }
+  .account .avatar { width: 30px; height: 30px; }
+
+  /* Bottom tab bar replaces the hidden top menu */
+  .tabbar {
+    display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 1001;
+    height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+    background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -2px 12px rgba(16,24,32,.06);
+  }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    text-decoration: none; color: var(--ink-3); font-size: 11px; font-weight: 600; }
+  .tabbar svg { width: 22px; height: 22px; }
+  .tabbar a.is-active { color: var(--brand-ink); }
+
+  /* Search + filters stay on top; Filters button comes first in the scrolling pill row */
+  .searchbar { position: sticky; top: var(--topbar-h); z-index: 900; padding: 8px 12px 6px; }
+  #moreBtn { order: -1; }
+  .filterbar .pill, .filterbar .toggle-pill span { padding-top: 7px; padding-bottom: 7px; font-size: 14px; white-space: nowrap; }
+  .filterbar #resetBtn { white-space: nowrap; }
+
+  /* Map view sits below the search bar and above the tab bar */
+  .results-layout.show-map .map-wrap { top: calc(var(--topbar-h) + var(--searchbar-h, 104px)); bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); left: 0; right: 0; }
+  .mobile-map-btn { bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom)); }
+  body:not(.on-search) .mobile-map-btn { display: none; }
+  .map-toggle { font-size: 13px; padding: 6px 12px; white-space: nowrap; }
+  .map-wrap .leaflet-control-attribution { font-size: 9px; max-width: 70vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Feed banner and list spacing */
+  .list-wrap { padding: 12px 12px 0; }
+  .drawer-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 380px) {
+  .brand span { font-size: 19px; }
+  .broker-firm { max-width: 30vw; }
+}
+@media (max-width: 860px) {
+  /* MLS Search: never wider than the screen */
+  .mls-layout { grid-template-columns: minmax(0, 1fr); }
+  .mls-layout > * { min-width: 0; }
+  .tp-form > * { min-width: 0; }
+  /* Brokerage name wraps to two short lines instead of being cut off (must stay readable) */
+  .brokerage { align-items: flex-start; flex: 1 1 auto; margin-left: 4px; }
+  .broker-firm { white-space: normal; max-width: none; overflow: visible; line-height: 1.15; font-size: 12px; }
+}
