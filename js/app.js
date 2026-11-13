@@ -66,12 +66,20 @@ async function init() {
   startBackgroundRefresh();
 }
 
+// Agent contact helpers: phone/email are optional in config.js.
+const phoneLink = () => (SITE.phone ? ` · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a>` : "");
+function contactAgent(subj, body) {
+  if (SITE.email) location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
+  else if (SITE.phone) location.href = `tel:${SITE.phone.replace(/[^0-9+]/g, "")}`;
+  else toast(`Contact ${SITE.agentName} at ${SITE.brokerage} to schedule a tour.`);
+}
+
 // BeachesMLS rule 20.2.5: the site must clearly identify the brokerage, visible on arrival.
 function renderBrokerage() {
   const el = $("#brokerage");
   if (!el) return;
   el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}</span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
-  el.title = `${SITE.agentName}, ${SITE.brokerage} · ${SITE.phone}`;
+  el.title = [`${SITE.agentName}, ${SITE.brokerage}`, SITE.phone].filter(Boolean).join(" · ");
 }
 
 /* ---------------- feed (BeachesMLS IDX) ---------------- */
@@ -114,7 +122,7 @@ function renderFeedBanner() {
 }
 function renderFooter() {
   const mls = S.feed.mode === "live" || S.feed.mode === "mock";
-  $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)} · ${esc(SITE.phone)} · Lic. ${esc(SITE.licenseNo)}` +
+  $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""} · Lic. ${esc(SITE.licenseNo)}` +
     (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
 }
 
@@ -681,7 +689,7 @@ function renderDetail(l) {
       <aside>
         <div class="side-card">
           <h3>Tour this home with ${esc(SITE.agentName)}</h3>
-          <p class="muted" style="font-size:14px">${esc(SITE.brokerage)} · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a><br>After you tour, come back and leave a verified review.</p>
+          <p class="muted" style="font-size:14px">${esc(SITE.brokerage)}${phoneLink()}<br>After you tour, come back and leave a verified review.</p>
           <button class="btn" type="button" id="reqTour">Request a tour</button>
           ${reviewsOff ? "" : `<button class="btn btn-ghost" type="button" style="margin-top:8px" id="sideReview">${mine ? "View your review" : "I toured this home"}</button>`}
         </div>
@@ -694,7 +702,7 @@ function renderDetail(l) {
   $("#reqTour").addEventListener("click", () => {
     const subj = encodeURIComponent(`Tour request: ${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`);
     const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).\n\nThanks!`);
-    location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
+    contactAgent(subj, body);
   });
   $("#reviewList")?.addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
@@ -935,7 +943,7 @@ function renderPanelProperty(p) {
     ${p.county === "Palm Beach" ? `<p class="muted" style="font-size:12px">On the Palm Beach Tax Collector site, search parcel <b>${esc(pc.ParcelId || "")}</b>.</p>` : ""}
 
     <div class="tp-agent">
-      <p><b>Want to see it in person?</b><br>${esc(SITE.agentName)}, ${esc(SITE.brokerage)} · <a href="tel:${esc(SITE.phone.replace(/[^0-9+]/g, ""))}">${esc(SITE.phone)}</a></p>
+      <p><b>Want to see it in person?</b><br>${esc(SITE.agentName)}, ${esc(SITE.brokerage)}${phoneLink()}</p>
       <button class="btn" type="button" data-tp="tour">Request a tour</button>
     </div>
     <button type="button" class="linkbtn" data-tp="clear">← Look up another home</button>
@@ -958,7 +966,7 @@ function panelClick(e) {
   if (act === "tour" && p) {
     const subj = encodeURIComponent(`Tour request: ${p.address}`);
     const body = encodeURIComponent(`Hi ${SITE.agentName},\n\nI found ${p.address} in your MLS search and I'd like to tour it.\n\nThanks!`);
-    location.href = `mailto:${SITE.email}?subject=${subj}&body=${body}`;
+    contactAgent(subj, body);
   }
   const h = e.target.closest("[data-helpful]");
   if (h && p) { if (store.markHelpful(h.dataset.helpful)) { renderPanelProperty(p); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }

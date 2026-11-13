@@ -1,11 +1,12 @@
 // Site / agent settings. Fill these in with your own details.
 export const SITE = {
-  agentName: "Your Name",
+  agentName: "Rajesh Jaiprashad",
   // BeachesMLS rule 20.2.5: the site must clearly identify your brokerage.
   brokerage: "LoKation Real Estate",
-  phone: "(561) 555-0100",
-  email: "you@yourbrokerage.com",
-  licenseNo: "SL0000000",
+  // Leave phone/email empty to hide them; "Request a tour" needs an email to work.
+  phone: "",
+  email: "",
+  licenseNo: "SL3403530",
 
   /* ---------------- BeachesMLS IDX ---------------- */
   mls: "BeachesMLS",
