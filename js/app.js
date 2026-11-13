@@ -3,6 +3,7 @@ import {
   PRICE_STEPS, SQFT_STEPS, LOT_STEPS, LOT_LABELS, HOME_TYPES, SEGMENTS, DRAWER_KEYS,
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney,
 } from "./filters.js";
+import { monthlyCost, parseMoney } from "./payment.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
@@ -198,14 +199,18 @@ function showGoneNotice() {
 }
 
 /* ---------------- controls ---------------- */
+const fmtMoneyInput = (v) => "$" + Math.round(v).toLocaleString("en-US");
 function fillSelect(sel, steps, { min, label = shortMoney } = {}) {
   sel.innerHTML = `<option value="">${min ? "No min" : "No max"}</option>` +
     steps.filter((v) => v > 0).map((v) => `<option value="${v}">${label(v)}</option>`).join("");
 }
 
 function buildControls() {
-  $$("[name=priceMin]").forEach((s) => fillSelect(s, PRICE_STEPS, { min: true }));
-  $$("[name=priceMax]").forEach((s) => fillSelect(s, PRICE_STEPS));
+  // Price and payment are type-or-pick fields: suggestions come from datalists.
+  const opts = (vals, fmt) => vals.map((v) => `<option value="${fmt(v)}">`).join("");
+  $("#priceMinList").innerHTML = opts(PRICE_STEPS.filter((v) => v > 0), fmtMoneyInput);
+  $("#priceMaxList").innerHTML = opts(PRICE_STEPS.filter((v) => v > 0), fmtMoneyInput);
+  $("#payList").innerHTML = opts([1500, 2000, 2500, 3000, 3500, 4000, 5000, 6000, 7500, 10000], fmtMoneyInput);
   fillSelect($("[name=sqftMin]"), SQFT_STEPS, { min: true, label: (v) => fmtN(v) + " sqft" });
   fillSelect($("[name=sqftMax]"), SQFT_STEPS, { label: (v) => fmtN(v) + " sqft" });
   fillSelect($("[name=lotMin]"), LOT_STEPS, { min: true, label: (v) => LOT_LABELS[v] });
@@ -256,6 +261,7 @@ function syncControls() {
     if (el.name === "type") el.checked = f.types.includes(el.value);
     else if (el.name === "county") el.checked = f.counties.includes(el.value);
     else if (el.type === "checkbox") el.checked = !!f[el.name];
+    else if (el.classList.contains("money")) { if (document.activeElement !== el) el.value = f[el.name] != null ? fmtMoneyInput(f[el.name]) : ""; }
     else el.value = f[el.name] ?? "";
   }
   for (const seg of $$("[data-seg]")) {
@@ -315,11 +321,18 @@ function wireEvents() {
     if (el.name === "county") return setFilters({ counties: $$("[name=county]:checked", box).map((i) => i.value) });
     if (el.type === "checkbox") return setFilters({ [el.name]: el.checked });
     if (el.name === "keyword") return setFilters({ keyword: el.value.trim() });
+    if (el.classList.contains("money")) {
+      const v = parseMoney(el.value);
+      if (el.value.trim() && v == null) { toast("Enter an amount like 450k, $1.2M or 3,000"); syncControls(); return; }
+      return setFilters({ [el.name]: v });
+    }
     const v = el.value === "" ? null : Number(el.value);
     setFilters({ [el.name]: Number.isFinite(v) ? v : null });
   };
   $("#filterbar").addEventListener("change", onInput);
   $("#moreForm").addEventListener("change", onInput);
+  // Tidy typed amounts ("450k" → "$450,000") when leaving the field.
+  document.addEventListener("focusout", (e) => { if (e.target.classList?.contains("money")) setTimeout(syncControls, 0); });
   $("#moreForm").addEventListener("submit", (e) => e.preventDefault());
 
   for (const seg of $$("[data-seg]")) {
@@ -590,7 +603,7 @@ function cardHTML(l, { compact = false } = {}) {
       ${compact ? "" : `<button class="save-btn" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>`}
     </div>
     <div class="card-body">
-      <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}</div>
+      <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}${compact ? "" : `<span class="est-pay" title="Estimated monthly cost: ${S.f.payDown ?? 20}% down, ${S.f.payRate ?? 6.4}% 30-yr, plus est. taxes, insurance and HOA">Est. ${fmt$(monthlyCost(l, { down: S.f.payDown, rate: S.f.payRate }).total)}/mo</span>`}</div>
       <div class="facts"><span><b>${l.BedroomsTotal}</b> bd</span><span><b>${l.BathroomsTotalInteger}</b> ba</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span>${compact ? "" : `<span>${l.PropertyType}</span>`}</div>
       <p class="addr">${esc(l.UnparsedAddress)}</p>
       ${isMls(l) ? `<p class="courtesy">${mlsMark()}<span>Courtesy of ${esc(l.ListOfficeName)}</span></p>` : ""}
@@ -1189,15 +1202,7 @@ function renderCalc(l) {
   const el = $("#calc");
   const st = { down: 20, rate: 6.4, years: 30 };
   const draw = () => {
-    const loan = l.ListPrice * (1 - st.down / 100);
-    const r = st.rate / 100 / 12, n = st.years * 12;
-    const pi = r ? (loan * r) / (1 - (1 + r) ** -n) : loan / n;
-    const tax = l.demo.TaxAnnualAmount / 12;
-    // South Florida wind/homeowners insurance runs high; impact windows earn a discount.
-    const ins = (l.ListPrice * (l.demo.ImpactWindows ? 0.011 : 0.014)) / 12;
-    const flood = l.demo.FloodZone === "X" ? 0 : (l.ListPrice * 0.003) / 12;
-    const hoa = l.demo.AssociationFee;
-    const total = pi + tax + ins + flood + hoa;
+    const { pi, tax, ins, flood, hoa, total } = monthlyCost(l, { ...st, useListingTax: true });
     const parts = [["Principal & interest", pi, "#0b6e63"], ["Property tax", tax, "#5aa6c9"], ["Home insurance", ins, "#f2a516"], ["Flood insurance", flood, "#7a5af5"], ["HOA", hoa, "#e8563f"]].filter((p) => p[1] > 0);
     $(".total", el).textContent = fmt$(total) + "/mo";
     $(".bar", el).innerHTML = parts.map(([, v, c]) => `<span style="width:${(v / total) * 100}%;background:${c}"></span>`).join("");

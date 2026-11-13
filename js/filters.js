@@ -1,4 +1,5 @@
 // Search filter model (Realtor.com-style), matching, sorting and URL sync.
+import { monthlyCost } from "./payment.js";
 
 export const PRICE_STEPS = [0, 100e3, 150e3, 200e3, 250e3, 300e3, 350e3, 400e3, 450e3, 500e3, 600e3, 700e3, 800e3, 900e3, 1e6, 1.25e6, 1.5e6, 2e6, 3e6, 5e6, 10e6];
 export const SQFT_STEPS = [0, 750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000, 5000, 7500];
@@ -22,14 +23,14 @@ const BOOL_KEYS = [
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev",
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
 ];
-const NUM_KEYS = ["priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating"];
+const NUM_KEYS = ["priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating", "payMax", "payDown", "payRate"];
 
 export function defaults() {
   return {
     q: "", keyword: "", sort: "relevant", types: [], counties: [], stories: "",
     priceMin: null, priceMax: null, bedsMin: null, bathsMin: null,
     sqftMin: null, sqftMax: null, lotMin: null, lotMax: null, yearMin: null, yearMax: null,
-    hoaMax: null, domMax: null, garageMin: null, minRating: null,
+    hoaMax: null, domMax: null, garageMin: null, minRating: null, payMax: null, payDown: null, payRate: null,
     statusActive: true, statusContingent: true, statusPending: false,
     reviewedOnly: false, openHouse: false, priceReduced: false, newConstruction: false,
     foreclosure: false, virtualTour: false, hideSenior: false,
@@ -42,7 +43,7 @@ export function defaults() {
 
 // Keys that live in the "More filters" drawer (for its count badge).
 export const DRAWER_KEYS = [
-  "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "stories", "garageMin",
+  "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "stories", "garageMin", "payMax",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev", "minRating", "keyword",
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
@@ -75,6 +76,7 @@ export function matches(l, f, summary, kwKeys) {
   if (f.yearMin != null && d.YearBuilt < f.yearMin) return false;
   if (f.yearMax != null && d.YearBuilt > f.yearMax) return false;
   if (f.hoaMax != null && d.AssociationFee > f.hoaMax) return false;
+  if (f.payMax != null && monthlyCost(l, { down: f.payDown, rate: f.payRate }).total > f.payMax) return false;
   if (f.domMax != null && d.DaysOnMarket > f.domMax) return false;
   if (f.stories === "single" && d.StoriesTotal !== 1) return false;
   if (f.stories === "multi" && d.StoriesTotal < 2) return false;
@@ -189,6 +191,7 @@ export function chipsFor(f) {
   if (f.lotMin != null || f.lotMax != null)
     add(`Lot ${LOT_LABELS[f.lotMin] ?? "Any"}–${LOT_LABELS[f.lotMax] ?? "Any"}`, { lotMin: null, lotMax: null });
   if (f.yearMin != null || f.yearMax != null) add(`Built ${f.yearMin ?? "…"}–${f.yearMax ?? "…"}`, { yearMin: null, yearMax: null });
+  if (f.payMax != null) add(`≤ $${Math.round(f.payMax).toLocaleString()}/mo`, { payMax: null });
   if (f.hoaMax != null) add(f.hoaMax === 0 ? "No HOA" : `HOA ≤ $${f.hoaMax}`, { hoaMax: null });
   if (f.domMax != null) add(f.domMax === 1 ? "New listings" : `≤ ${f.domMax} days listed`, { domMax: null });
   if (f.stories) add(f.stories === "single" ? "Single story" : "Multi-story", { stories: "" });

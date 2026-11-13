@@ -64,9 +64,9 @@
         <div class="dd-panel" role="dialog" aria-label="Price">
           <h4>Price range</h4>
           <div class="range-row">
-            <select name="priceMin" aria-label="Minimum price"></select>
+            <input name="priceMin" class="money" inputmode="decimal" autocomplete="off" list="priceMinList" placeholder="No min" aria-label="Minimum price" />
             <span>–</span>
-            <select name="priceMax" aria-label="Maximum price"></select>
+            <input name="priceMax" class="money" inputmode="decimal" autocomplete="off" list="priceMaxList" placeholder="No max" aria-label="Maximum price" />
           </div>
           <canvas class="histogram" id="priceHist" width="280" height="56" aria-hidden="true"></canvas>
         </div>
@@ -182,7 +182,19 @@
         </fieldset>
         <fieldset>
           <legend>Price</legend>
-          <div class="range-row"><select name="priceMin" aria-label="Minimum price"></select><span>–</span><select name="priceMax" aria-label="Maximum price"></select></div>
+          <div class="range-row"><input name="priceMin" class="money" inputmode="decimal" autocomplete="off" list="priceMinList" placeholder="No min" aria-label="Minimum price" /><span>–</span><input name="priceMax" class="money" inputmode="decimal" autocomplete="off" list="priceMaxList" placeholder="No max" aria-label="Maximum price" /></div>
+        </fieldset>
+        <fieldset>
+          <legend>Monthly payment</legend>
+          <div class="range-row pay-row">
+            <input name="payMax" class="money" inputmode="decimal" autocomplete="off" list="payList" placeholder="No max" aria-label="Maximum monthly payment" />
+            <span class="muted">/mo max</span>
+          </div>
+          <div class="pay-assume">
+            <label>Down <input name="payDown" type="number" min="0" max="100" step="1" placeholder="20" />%</label>
+            <label>Rate <input name="payRate" type="number" min="0" max="15" step="0.125" placeholder="6.4" />%</label>
+            <span class="muted">30-yr loan · includes est. taxes, insurance &amp; HOA</span>
+          </div>
         </fieldset>
         <fieldset>
           <legend>Bedrooms</legend>
@@ -272,6 +284,11 @@
       </footer>
     </aside>
   </div>
+
+  <!-- Suggestions for the type-or-pick money fields (filled by js/app.js) -->
+  <datalist id="priceMinList"></datalist>
+  <datalist id="priceMaxList"></datalist>
+  <datalist id="payList"></datalist>
 
   <!-- Sign-in dialog: "Sign in with Google" (js/app.js renders Google's button into #gsiButton). -->
   <dialog class="modal" id="authModal" aria-labelledby="authTitle">
