@@ -74,6 +74,11 @@ export function fixCoords(lat, lng) {
   return null;
 }
 
+// Solar and EV charging have no dedicated BeachesMLS checkbox, so combine the structured fields that
+// can mention them with the listing description. Pool "solar heat" is a pool heater, not panels.
+const SOLAR_TEXT = /\bsolar\s+(panels?|system|array|power|energy|electric|roof)\b|photovoltaic|\bpv\s+(system|panels?|array)\b|(owned|leased|paid[- ]off)\s+solar|tesla\s+(solar|powerwall)|solar\s+(is\s+)?(owned|paid)/i;
+const EV_TEXT = /\bev\s*(charg\w*|ready|outlet|plug)|electric\s+(vehicle|car)\s+charg\w*|\bcar\s+charg(er|ing)\b|tesla\s+(wall\s*)?(charger|connector)|level\s*2\s+charg\w*/i;
+
 /** Full listing (for the detail view). Returns null if the listing may not be displayed. */
 export function normalizeListing(rec, { syncedAt } = {}) {
   if (rec.InternetEntireListingDisplayYN === false) return null; // seller opted out of internet display
@@ -155,8 +160,8 @@ export function normalizeListing(rec, { syncedAt } = {}) {
       ShortSale: /short sale/i.test(list(rec.SpecialListingConditions)),
       VirtualTour: !!rec.VirtualTourURLUnbranded,
       GatedCommunity: yes(rec.General_sp_Property_sp_Information_co_Gated_sp_Community_sp_YN) || /gated|security gate|guard/i.test(list(rec.SecurityFeatures)),
-      SolarPanels: false, // not in the BeachesMLS feed
-      EVCharging: false,  // not in the BeachesMLS feed
+      SolarPanels: !!list(rec.Power_sp_Production_co_Annual_sp_Status) || SOLAR_TEXT.test(`${list(rec.GreenEnergyEfficient)} ${list(rec.Electric)} ${rec.PublicRemarks || ""}`),
+      EVCharging: EV_TEXT.test(`${list(rec.ParkingFeatures)} ${list(rec.Electric)} ${list(rec.GreenEnergyEfficient)} ${rec.PublicRemarks || ""}`),
       ImpactWindows: /complete|partial/i.test(list(rec.Storm_sp_Protection_co_Impact_sp_Glass)) || /impact/i.test(list(rec.Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details)),
       BoatDock: /^(yes|available)/i.test(list(rec.Boat_sp_and_sp_Dock_sp_Information_co_Dock)) || /dock/i.test(list(rec.Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features)),
       OceanAccess: /ocean access|ocean front|no fixed bridge|intracoastal/i.test(list(rec.WaterfrontFeatures)),

@@ -27,6 +27,7 @@ export const RESO_SELECT = [
   "Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details",
   "Boat_sp_and_sp_Dock_sp_Information_co_Dock",
   "Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features",
+  "ParkingFeatures", "Electric", "GreenEnergyEfficient", "Power_sp_Production_co_Annual_sp_Status",
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
