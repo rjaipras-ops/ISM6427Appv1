@@ -3,8 +3,28 @@
 
 const num = (v, d) => (Number.isFinite(Number(v)) && String(v).trim() !== "" ? Number(v) : d);
 
+// Reads a variable from process.env, falling back to the Netlify runtime (Netlify.env).
+function env(name) {
+  let v = process.env[name];
+  if (!v && typeof Netlify !== "undefined") { try { v = Netlify.env.get(name); } catch {} }
+  return v || "";
+}
+
+// The token as pasted into Netlify: tolerate surrounding quotes/spaces or a "Bearer " prefix.
+function readToken() {
+  return env("SPARK_API_BEARER_TOKEN").trim().replace(/^["']|["']$/g, "").replace(/^Bearer\s+/i, "").trim();
+}
+
+/** Names (never values) of environment variables that look feed-related, for setup troubleshooting. */
+export function envDiagnostics() {
+  return {
+    tokenFound: !!readToken(),
+    relatedVariableNames: Object.keys(process.env).filter((k) => /spark|idx|token|bearer/i.test(k) && !/^(NETLIFY|AWS|LAMBDA)_/.test(k)).sort(),
+  };
+}
+
 export function idxConfig() {
-  const token = (process.env.SPARK_API_BEARER_TOKEN || "").trim();
+  const token = readToken();
   const baseUrl = (process.env.SPARK_API_BASE_URL || "https://replication.sparkapi.com/Version/3/Reso/OData").replace(/\/+$/, "");
   return {
     token,
