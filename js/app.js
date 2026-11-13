@@ -145,9 +145,9 @@ function renderFeedBanner() {
   el.hidden = false;
   el.className = `feed-banner feed-${m}`;
   el.innerHTML = m === "live" && !S.feed.lastSyncTimestamp
-    ? `${mlsMark()} <span>Listings from BeachesMLS · first full load in progress (${S.listings.length.toLocaleString()} homes so far; more appear automatically)</span>`
+    ? `${mlsMark()} <span>Loading listings… ${S.listings.length.toLocaleString()} so far</span>`
     : m === "live"
-    ? `${mlsMark()} <span>Listings from BeachesMLS · last updated <b class="feed-updated" title="${esc(fmtDateTime(S.feed.lastSyncTimestamp))}">${esc(ago(S.feed.lastSyncTimestamp))}</b></span>`
+    ? `${mlsMark()} <span>Updated <b class="feed-updated" title="Listings from BeachesMLS, last synced ${esc(fmtDateTime(S.feed.lastSyncTimestamp))}">${esc(ago(S.feed.lastSyncTimestamp))}</b></span>`
     : m === "mock"
       ? `<b>Sample data (test mode).</b> <span>These sample listings use satellite images in place of photos. Real BeachesMLS listings and photos appear automatically once the feed key is configured.</span>`
       : m === "pending"
@@ -204,8 +204,8 @@ function fillSelect(sel, steps, { min, label = shortMoney } = {}) {
 }
 
 function buildControls() {
-  fillSelect($("[name=priceMin]"), PRICE_STEPS, { min: true });
-  fillSelect($("[name=priceMax]"), PRICE_STEPS);
+  $$("[name=priceMin]").forEach((s) => fillSelect(s, PRICE_STEPS, { min: true }));
+  $$("[name=priceMax]").forEach((s) => fillSelect(s, PRICE_STEPS));
   fillSelect($("[name=sqftMin]"), SQFT_STEPS, { min: true, label: (v) => fmtN(v) + " sqft" });
   fillSelect($("[name=sqftMax]"), SQFT_STEPS, { label: (v) => fmtN(v) + " sqft" });
   fillSelect($("[name=lotMin]"), LOT_STEPS, { min: true, label: (v) => LOT_LABELS[v] });
@@ -215,7 +215,7 @@ function buildControls() {
     const key = el.dataset.seg;
     el.innerHTML = SEGMENTS[key].map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="false">${l}</button>`).join("");
   }
-  $("#typeGrid").innerHTML = HOME_TYPES.map((t) =>
+  for (const g of $$(".type-grid")) g.innerHTML = HOME_TYPES.map((t) =>
     `<label><input type="checkbox" name="type" value="${t}" />${typeIcon(t)}${t}</label>`).join("");
 
   const places = new Set();
@@ -309,8 +309,10 @@ function wireEvents() {
   const onInput = (e) => {
     const el = e.target;
     if (!el.name) return;
-    if (el.name === "type") return setFilters({ types: $$("[name=type]:checked").map((i) => i.value) });
-    if (el.name === "county") return setFilters({ counties: $$("[name=county]:checked").map((i) => i.value) });
+    // The same controls exist in the top bar and the Filters panel: read the group that changed.
+    const box = el.closest("#moreForm, #filterbar");
+    if (el.name === "type") return setFilters({ types: $$("[name=type]:checked", box).map((i) => i.value) });
+    if (el.name === "county") return setFilters({ counties: $$("[name=county]:checked", box).map((i) => i.value) });
     if (el.type === "checkbox") return setFilters({ [el.name]: el.checked });
     if (el.name === "keyword") return setFilters({ keyword: el.value.trim() });
     const v = el.value === "" ? null : Number(el.value);

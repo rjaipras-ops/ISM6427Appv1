@@ -163,6 +163,39 @@
         <button class="iconbtn" type="button" data-close aria-label="Close filters">✕</button>
       </header>
       <form class="drawer-body" id="moreForm">
+        <!-- Same filters as the top bar, so everything can be set in one place. -->
+        <fieldset>
+          <legend>Listing status</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" name="statusActive" /> Active</label>
+            <label class="check"><input type="checkbox" name="statusContingent" /> Under contract</label>
+            <label class="check"><input type="checkbox" name="statusPending" /> Pending</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>County</legend>
+          <div class="checks">
+            <label class="check"><input type="checkbox" name="county" value="Broward" /> Broward</label>
+            <label class="check"><input type="checkbox" name="county" value="Palm Beach" /> Palm Beach</label>
+            <label class="check"><input type="checkbox" name="county" value="St. Lucie" /> St. Lucie</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Price</legend>
+          <div class="range-row"><select name="priceMin" aria-label="Minimum price"></select><span>–</span><select name="priceMax" aria-label="Maximum price"></select></div>
+        </fieldset>
+        <fieldset>
+          <legend>Bedrooms</legend>
+          <div class="seg" data-seg="bedsMin"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Bathrooms</legend>
+          <div class="seg" data-seg="bathsMin"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Home type</legend>
+          <div class="type-grid"></div>
+        </fieldset>
         <fieldset>
           <legend>Home size (sq ft)</legend>
           <div class="range-row"><select name="sqftMin"></select><span>–</span><select name="sqftMax"></select></div>
