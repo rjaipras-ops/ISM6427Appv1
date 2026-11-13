@@ -17,7 +17,9 @@ const COOKIE = "toured_session";
 const SESSION_DAYS = 30;
 const GOOGLE_ISSUERS = new Set(["accounts.google.com", "https://accounts.google.com"]);
 
-export const googleClientId = () => (process.env.GOOGLE_CLIENT_ID || "").trim();
+// The OAuth client ID is public (it appears in every sign-in page), so the site's own ID is the default.
+const DEFAULT_GOOGLE_CLIENT_ID = "908502143209-idds9msdihkefe2ueibuviq5mkv08sms.apps.googleusercontent.com";
+export const googleClientId = () => (process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID).trim();
 export const devLoginEnabled = () => process.env.AUTH_DEV_LOGIN === "true" && !process.env.NETLIFY && !process.env.NETLIFY_BLOBS_CONTEXT;
 
 const b64url = (buf) => Buffer.from(buf).toString("base64url");

@@ -645,6 +645,12 @@ function route() {
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
   if (h === "#/mls-search") { show("view-mlssearch"); renderMlsSearch(); return; }
+  if (h === "#/contact") {
+    history.replaceState(null, "", location.pathname + location.search + "#/");
+    route();
+    contactAgent(`Message from Toured`, "", "");
+    return;
+  }
   if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch(); return; }
   show("view-search");
   document.title = "Toured — South Florida homes reviewed by people who walked through";
