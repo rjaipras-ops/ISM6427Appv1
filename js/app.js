@@ -6,6 +6,7 @@ import {
 import { monthlyCost, parseMoney } from "./payment.js";
 import { taxBillLink, formatPcn } from "./taxlinks.js";
 import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
+import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
@@ -903,6 +904,7 @@ async function loadMlsExtras(l) {
       if (!onThisListing()) return;
       const sec = $("#records");
       if (sec) sec.outerHTML = publicRecordsHTML(l);
+      loadHistoryFor(l);
       if (r.parcel?.Shape && galleryMaps[0]) {
         const poly = addParcelOutline(galleryMaps[0], r.parcel.Shape);
         galleryMaps[0].fitBounds(poly.getBounds(), { padding: [30, 30], maxZoom: 20 });
@@ -1042,6 +1044,7 @@ function renderPanelProperty(p) {
     ["Taxable value", pc.TaxableValueNonSchool ? fmt$(pc.TaxableValueNonSchool) : "—"],
     ["Homestead", pc.Homestead ? "Yes" : "No"],
     ["Est. tax (current owner)", pc.EstTaxCurrentOwner ? `${fmt$(pc.EstTaxCurrentOwner)}/yr` : "—"],
+    ["Est. tax after a sale", pc.JustValue ? `${fmt$(taxEstimates({ County: p.county, ListPrice: 0, demo: {} }, pc).afterBuy)}/yr` : "—"],
     ["Last sale", saleText(pc.LastSale)],
     ["Prior sale", saleText(pc.PriorSale)],
   ];
@@ -1111,6 +1114,7 @@ function publicRecordsHTML(l) {
   const mls = isMls(l);
   const st = mls ? S.details.get(l.ListingId)?.parcelStatus : "matched";
   const p = l.Parcel;
+  if (p) setTimeout(() => loadHistoryFor(l), 0);
   const label = mls ? `<p class="not-mls">County property records · not from BeachesMLS</p>` : "";
   const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/" }[l.County];
   const taxSearch = taxBillLink(l.County, "");
@@ -1139,24 +1143,55 @@ function publicRecordsHTML(l) {
     ["Homestead exemption", p.Homestead ? "Yes" : "No"],
     ["Year built (actual / effective)", `${p.YearBuilt || "—"} / ${p.EffectiveYearBuilt || "—"}`],
     ["Living area (county)", p.LivingAreaSqFt ? `${fmtN(p.LivingAreaSqFt)} sqft <span class="muted" style="font-size:12px">· listing says ${fmtN(l.LivingArea)}</span>` : "—"],
-    ["Last sale", saleText(p.LastSale)],
-    ["Prior sale", saleText(p.PriorSale)],
   ].filter(Boolean);
+  const h = l.History; // county appraiser data, loaded after the parcel (see loadHistoryFor)
+  const t = taxEstimates(l, p, h);
+  const lastMarket = h?.sales?.find((x) => x.armsLength) || h?.sales?.find((x) => x.marketSale);
+  if (h) rows.push(["Last sale", lastMarket ? `${fmt$(lastMarket.price)} · ${fmtMonthYear(lastMarket.date)}` : "No market sale on record"]);
+  else rows.push(["Last sale", saleText(p.LastSale)]);
   return `<section class="section" id="records">
     <h2>Public records &amp; taxes</h2>
     ${label}
     <div class="records-grid">${rows.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
     <div class="tax-compare">
-      <div><small>Est. tax, current owner</small><b>${fmt$(p.EstTaxCurrentOwner)}/yr</b><span class="muted">${p.Homestead ? "Includes homestead savings" : "No homestead exemption"}</span></div>
-      <div><small>Est. tax after you buy</small><b>${fmt$(p.EstTaxNewBuyer)}/yr</b><span class="muted">Reassessed near the purchase price</span></div>
+      <div><small>Current owner's taxes</small><b>${fmt$(t.current)}/yr</b>
+        <span class="muted">${esc(t.currentNote)} · ${t.currentHomestead ? "with homestead exemption" : "no homestead exemption"}</span></div>
+      <div><small>Est. taxes after you buy</small><b>${fmt$(t.afterBuy)}/yr</b>
+        <span class="muted">About ${fmt$(t.afterBuyHomestead)}/yr if it's your primary home (homestead)</span></div>
     </div>
+    <p class="muted tax-why">After a sale the county resets the taxable value, so the seller's capped value and exemptions don't carry over.
+      This estimate uses ${fmt$(t.newTaxable)} (the higher of the county's market value or 85% of the price) at ${t.millage.toFixed(2)} mills${t.exactMillage ? "" : " (approx.)"}${t.fixed ? ` plus ${fmt$(t.fixed)} in fixed county charges` : ""}.</p>
+    ${saleHistoryHTML(h)}
     <div class="records-links">
       ${taxBillLink(l.County, p.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(l.County, p.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
       ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
     </div>
     ${l.County === "Palm Beach" ? pbcTaxHint(p.ParcelId) : ""}
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
+}
+const fmtMonthYear = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
+function saleHistoryHTML(h) {
+  if (!h?.sales?.length) return "";
+  return `<div class="sale-history"><h3>Sale history</h3>
+    <table><thead><tr><th>Date</th><th class="num">Price</th><th>Type</th></tr></thead><tbody>
+    ${h.sales.slice(0, 6).map((x) => `<tr class="${x.marketSale ? "" : "nonsale"}"><td>${esc(fmtMonthYear(x.date))}</td>
+      <td class="num">${x.marketSale ? fmt$(x.price) : x.price ? `<span title="Nominal amount on a non-sale transfer">${fmt$(x.price)}</span>` : "—"}</td>
+      <td>${esc(x.marketSale ? (x.armsLength ? "Sale" : "Sale (not arm's-length)") : "Transfer, not a sale")}${x.type ? ` <span class="muted">· ${esc(titleCase(x.type))}</span>` : ""}</td></tr>`).join("")}
+    </tbody></table>
+    <p class="muted" style="font-size:12px">From the county property appraiser. Recent sales can take a few weeks to appear.</p></div>`;
+}
+// Load the county appraiser's sale history and actual bill, then redraw the records section.
+function loadHistoryFor(l) {
+  const p = l.Parcel;
+  if (!p?.ParcelId || l.History !== undefined || !["Broward", "Palm Beach"].includes(l.County)) return;
+  l.History = null;
+  store.loadHistory(l.County, p.ParcelId).then((h) => {
+    if (!h) return;
+    l.History = h;
+    const sec = $("#records");
+    if (sec && location.hash === `#/home/${l.ListingId}`) sec.outerHTML = publicRecordsHTML(l);
+  });
 }
 // Palm Beach's tax site can't open one parcel by link: show the number with a copy button.
 function pbcTaxHint(parcelId) {

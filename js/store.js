@@ -416,6 +416,19 @@ export async function loadParcel(key) {
   return res.json();
 }
 
+/** Sale history + actual tax bill from the county appraiser (Broward, Palm Beach). Null if unavailable. */
+const historyCache = new Map();
+export function loadHistory(county, parcelId) {
+  const k = `${county}|${parcelId}`;
+  if (!historyCache.has(k)) {
+    historyCache.set(k, fetch(`/api/property/history?county=${encodeURIComponent(county)}&parcel=${encodeURIComponent(parcelId)}`)
+      .then((r) => (r.ok && (r.headers.get("content-type") || "").includes("json") ? r.json() : null))
+      .then((d) => (d && d.status === "ok" ? d : null))
+      .catch(() => null));
+  }
+  return historyCache.get(k);
+}
+
 /** Server-side keyword search over listing descriptions. Returns a Set of ListingKeys, or null if unavailable. */
 export async function searchDescriptions(q) {
   try {
