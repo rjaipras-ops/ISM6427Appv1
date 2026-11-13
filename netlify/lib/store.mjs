@@ -28,12 +28,14 @@ async function backend() {
           opts.siteID = process.env.NETLIFY_SITE_ID;
           opts.token = process.env.NETLIFY_AUTH_TOKEN;
         }
-        const s = getStore(opts);
+        // Open the store on every call: Netlify passes a fresh, short-lived access token with each
+        // invocation, and a store kept from an earlier invocation fails with "Token expired".
+        const s = () => getStore(opts);
         return {
           kind: "netlify-blobs",
-          get: (k) => s.get(k, { type: "json" }),
-          set: (k, v) => s.setJSON(k, v),
-          del: (k) => s.delete(k),
+          get: (k) => s().get(k, { type: "json" }),
+          set: (k, v) => s().setJSON(k, v),
+          del: (k) => s().delete(k),
         };
       }
       const dir = process.env.IDX_CACHE_DIR || join(process.cwd(), ".idx-cache");
