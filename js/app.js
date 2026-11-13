@@ -121,6 +121,12 @@ function renderBrokerage() {
   if (!el) return;
   el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}</span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
   el.title = [`${SITE.agentName}, ${SITE.brokerage}`, SITE.phone].filter(Boolean).join(" · ");
+  el.onclick = () => {
+    $("#aboutTitle").textContent = SITE.agentName;
+    $(".about-firm").innerHTML = `${esc(SITE.brokerage)} · Florida real estate license ${esc(SITE.licenseNo)}${SITE.phone ? `<br>${phoneLink().replace(/^ · /, "")}` : ""}`;
+    $("#aboutModal").showModal();
+  };
+  $("#aboutContact").onclick = () => { $("#aboutModal").close(); contactAgent("Message from Toured", "", ""); };
 }
 
 /* ---------------- feed (BeachesMLS IDX) ---------------- */

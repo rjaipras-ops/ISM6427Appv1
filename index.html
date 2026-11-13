@@ -26,7 +26,7 @@
       <a href="#/my-reviews">My tour reviews</a>
       <a href="#/mls-search">MLS Search</a>
     </nav>
-    <a class="brokerage" id="brokerage" href="#/mls-search" aria-label="Agent and brokerage"></a>
+    <button class="brokerage" id="brokerage" type="button" aria-haspopup="dialog" aria-label="About the agent and brokerage"></button>
     <div class="account" id="account"></div>
   </header>
 
@@ -308,6 +308,21 @@
   <!-- Review modal -->
   <dialog class="modal modal-wide" id="reviewModal" aria-labelledby="reviewTitle">
     <form method="dialog" class="modal-body" id="reviewForm"></form>
+  </dialog>
+
+  <!-- About the agent / brokerage (opened from the header) -->
+  <dialog class="modal" id="aboutModal" aria-labelledby="aboutTitle">
+    <div class="modal-body about-body">
+      <button class="iconbtn auth-close" type="button" aria-label="Close" onclick="this.closest('dialog').close()">✕</button>
+      <img src="assets/brand/toured-icon.svg" width="44" height="44" alt="" />
+      <h2 id="aboutTitle"></h2>
+      <p class="about-firm"></p>
+      <p class="muted about-text">Toured is a home search where buyers who toured a home share what the listing doesn't tell you. Listings are provided by BeachesMLS.</p>
+      <div class="about-actions">
+        <button class="btn" type="button" id="aboutContact">Contact</button>
+      </div>
+      <p class="muted about-links"><a href="privacy.html">Privacy policy</a> · <a href="terms.html">Terms of service</a></p>
+    </div>
   </dialog>
 
   <!-- Tour request / contact form. Submissions go to Netlify Forms, which emails them to the agent

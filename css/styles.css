@@ -816,3 +816,24 @@ input.money { width: 100%; min-width: 0; }
 .fee-note { font-size: 12px; margin: 8px 0 0; }
 .consent span { font-size: 12px; }
 @media (max-width: 560px) { #contactModal .field-row { grid-template-columns: 1fr; } }
+
+/* Header agent/brokerage button + About card */
+button.brokerage { background: none; border: 0; font: inherit; cursor: pointer; text-align: right; }
+button.brokerage:hover .broker-firm { text-decoration: underline; }
+.about-body { position: relative; text-align: center; }
+.about-body h2 { margin-top: 10px; }
+.about-firm { font-weight: 600; color: var(--brand-ink); margin: 2px 0 10px; }
+.about-text { font-size: 14px; }
+.about-actions { display: flex; justify-content: center; margin: 14px 0 6px; }
+.about-links { font-size: 13px; }
+@media (max-width: 860px) {
+  /* Phones: name above the brokerage, both readable (BeachesMLS 20.2.5) */
+  .broker-agent { display: block; font-size: 11px; white-space: normal; line-height: 1.15; }
+  .brokerage { align-items: flex-start; text-align: left; overflow: visible; flex: 1 1 auto; margin-left: 2px; }
+  button.brokerage { text-align: left; }
+  .broker-firm { font-size: 12px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
+}
+@media (max-width: 380px) {
+  .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
+  .broker-agent, .broker-firm { white-space: nowrap; }
+}
