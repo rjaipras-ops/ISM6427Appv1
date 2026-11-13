@@ -110,7 +110,7 @@ export function normalizeListing(rec, { syncedAt } = {}) {
     SyncedAt: syncedAt || new Date().toISOString(),
     VirtualTourURL: rec.VirtualTourURLUnbranded || null,
     primaryPhotoUrl: photos[0]?.medium || null,
-    photoCount: photos.length || Number(rec.PhotosCount) || 0,
+    photoCount: Math.max(Number(rec.PhotosCount) || 0, photos.length),
     photos,
     demo: {
       StandardStatus: rec.StandardStatus || "Active",

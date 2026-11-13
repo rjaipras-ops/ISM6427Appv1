@@ -112,7 +112,9 @@ function renderFeedBanner() {
   const m = S.feed.mode;
   el.hidden = false;
   el.className = `feed-banner feed-${m}`;
-  el.innerHTML = m === "live"
+  el.innerHTML = m === "live" && !S.feed.lastSyncTimestamp
+    ? `${mlsMark()} <span>Listings from BeachesMLS · first full load in progress (${S.listings.length.toLocaleString()} homes so far; more appear automatically)</span>`
+    : m === "live"
     ? `${mlsMark()} <span>Listings from BeachesMLS · last updated <b class="feed-updated" title="${esc(fmtDateTime(S.feed.lastSyncTimestamp))}">${esc(ago(S.feed.lastSyncTimestamp))}</b></span>`
     : m === "mock"
       ? `<b>Sample data (test mode).</b> <span>These sample listings use satellite images in place of photos. Real BeachesMLS listings and photos appear automatically once the feed key is configured.</span>`

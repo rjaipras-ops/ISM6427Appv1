@@ -5,7 +5,7 @@ const num = (v, d) => (Number.isFinite(Number(v)) && String(v).trim() !== "" ? N
 
 export function idxConfig() {
   const token = (process.env.SPARK_API_BEARER_TOKEN || "").trim();
-  const baseUrl = (process.env.SPARK_API_BASE_URL || "https://replication.sparkapi.com/Reso/OData").replace(/\/+$/, "");
+  const baseUrl = (process.env.SPARK_API_BASE_URL || "https://replication.sparkapi.com/Version/3/Reso/OData").replace(/\/+$/, "");
   return {
     token,
     mock: !token,

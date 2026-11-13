@@ -109,7 +109,7 @@ The browser checks `/api/idx/sync-status` every 5 minutes (`refreshMinutes` in `
 
 1. In Netlify, open **Site configuration → Environment variables** and add the variables from `.env.example`. At minimum:
    - `SPARK_API_BEARER_TOKEN`: your Datamart access token.
-   - `SPARK_API_BASE_URL`: the RESO endpoint for the host your key was issued for. Replication keys use `https://replication.sparkapi.com/Reso/OData`; IDX keys are usually `https://sparkapi.com/Reso/OData`.
+   - `SPARK_API_BASE_URL` (optional): defaults to `https://replication.sparkapi.com/Version/3/Reso/OData`, the version 3 endpoint FBS recommends for BeachesMLS Datamart feeds. The first full load (~29,000 active homes across the three counties) takes about an hour of 5-minute scheduled runs; after that only changes are synced.
    - `IDX_SYNC_SECRET`: any long random string, if you want the manual sync endpoint.
 2. Redeploy. The first full sync starts within 5 minutes and spans several runs (about 150–300 pages for all three counties). To do it in one go from your computer instead, put the same variables plus `NETLIFY_SITE_ID` and `NETLIFY_AUTH_TOKEN` in `.env` and run `npm run idx:sync`.
 3. Check `https://<your-site>/api/idx/sync-status`. `"mode": "live"` and a growing `activeListings` mean it's working.

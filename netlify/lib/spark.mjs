@@ -10,7 +10,7 @@ export const RESO_SELECT = [
   "UnparsedAddress", "StreetNumber", "StreetName", "UnitNumber", "City", "StateOrProvince", "PostalCode", "CountyOrParish",
   "SubdivisionName", "Latitude", "Longitude",
   "PropertyType", "PropertySubType", "BedroomsTotal", "BathroomsTotalInteger", "BathroomsFull", "BathroomsHalf",
-  "LivingArea", "LotSizeSquareFeet", "LotSizeAcres", "YearBuilt", "StoriesTotal", "GarageSpaces",
+  "LivingArea", "LotSizeAcres", "YearBuilt", "StoriesTotal", "GarageSpaces",
   "AssociationFee", "AssociationFeeFrequency", "TaxAnnualAmount", "PoolPrivateYN", "WaterfrontYN", "View",
   "FireplaceYN", "Cooling", "NewConstructionYN", "SeniorCommunityYN", "ArchitecturalStyle",
   "PublicRemarks", "DaysOnMarket", "OnMarketDate", "ListingContractDate",
@@ -89,7 +89,12 @@ export function firstPageUrl(kind, { since } = {}) {
     else filter = `StandardStatus eq ${odataQuote(ACTIVE)}${area ? ` and ${area}` : ""}`;
     const p = { $filter: filter, $top: String(cfg.pageSize) };
     if (kind === "keys") p.$select = "ListingKey";
-    else { p.$select = RESO_SELECT.join(","); p.$expand = "Media"; }
+    else {
+      p.$select = RESO_SELECT.join(",");
+      // Bulk sync only needs the cover photo; the full gallery is fetched when a listing is opened.
+      // (Expanding every photo makes each page ~35x larger and the initial load far slower.)
+      p.$expand = "Media($select=MediaURL,Order,MediaCategory,PreferredPhotoYN;$orderby=Order;$top=1)";
+    }
     return `${cfg.baseUrl}/Property?${qs(p)}`;
   }
   // Spark REST API
