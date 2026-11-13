@@ -50,7 +50,10 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
   const cfg = idxConfig();
   const mode = cfg.mock ? "mock" : "live";
   const started = Date.now();
-  const deadline = started + (budgetMs ?? cfg.budgetMs) - SAFETY_MS;
+  const hardDeadline = started + (budgetMs ?? cfg.budgetMs);
+  const deadline = hardDeadline - SAFETY_MS;
+  // Test mode with sample data turned off: nothing to do (the public site shows "coming soon").
+  if (cfg.mock && !cfg.sampleData) return { skipped: true, reason: "feed not configured", state: await getState() };
   let state = await getState();
 
   if (state.mode !== mode) {
@@ -89,6 +92,9 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
     if (state.phase === "reconcile") await setJSON("reconcile-keys", []);
   }
   if (!state.runStartedAt) state.runStartedAt = new Date().toISOString();
+  // Record the attempt up front, so the status page shows runs even if one is cut off.
+  state.lastAttemptAt = new Date(started).toISOString();
+  await setState(state);
 
   const index = await getIndex();
   const stats = { fetched: 0, upserted: 0, removed: 0, pages: 0 };
@@ -104,7 +110,7 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
 
   try {
     while (url && Date.now() < deadline) {
-      const { records, next } = await fetchPage(url);
+      const { records, next } = await fetchPage(url, { deadline: hardDeadline });
       stats.pages++;
       stats.fetched += records.length;
       const syncedAt = new Date().toISOString();
@@ -168,18 +174,20 @@ export async function syncStatus() {
   const cfg = idxConfig();
   const state = await getState();
   if (cfg.mock && !cfg.sampleData) return { mode: "pending", lastSyncTimestamp: null, activeListings: 0, phase: "idle", version: 0, intervalMinutes: cfg.intervalMinutes };
+  const current = state.mode === (cfg.mock ? "mock" : "live");
   return {
     mode: cfg.mock ? "mock" : "live",
-    lastSyncTimestamp: state.lastSyncTimestamp,
-    activeListings: state.activeCount || 0,
+    lastSyncTimestamp: current ? state.lastSyncTimestamp : null,
+    activeListings: current ? state.activeCount || 0 : 0,
     phase: state.phase,
     version: state.version || 0,
     intervalMinutes: cfg.intervalMinutes,
     lastReconcileAt: state.lastReconcileAt,
+    lastAttemptAt: state.lastAttemptAt || null,
     lastRun: state.lastRun && {
       startedAt: state.lastRun.startedAt, finishedAt: state.lastRun.finishedAt, phase: state.lastRun.phase,
       completedPhase: state.lastRun.completedPhase, upserted: state.lastRun.upserted, removed: state.lastRun.removed,
-      error: state.lastRun.error ? "Sync error (see function logs)" : null,
+      error: state.lastRun.error ? String(state.lastRun.error).replace(/Bearer\s+\S+/gi, "Bearer ***").slice(0, 200) : null,
     },
   };
 }

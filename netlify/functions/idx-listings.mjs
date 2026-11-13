@@ -20,10 +20,13 @@ export default async (req) => {
   const etag = `"${state.mode}-${state.version || 0}"`;
   if (req.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers: { ETag: etag } });
 
-  const index = await getIndex();
+  // Index left over from a different mode (e.g. samples from before the feed key was added):
+  // don't show it; the first live sync replaces it within a few minutes.
+  const current = state.mode === (cfg.mock ? "mock" : "live");
+  const index = current ? await getIndex() : {};
   const body = JSON.stringify({
     mode: cfg.mock ? "mock" : "live",
-    lastSyncTimestamp: state.lastSyncTimestamp,
+    lastSyncTimestamp: current ? state.lastSyncTimestamp : null,
     version: state.version || 0,
     count: Object.keys(index).length,
     fields: [...INDEX_FIELDS, "_flags"],

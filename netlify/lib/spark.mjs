@@ -21,13 +21,18 @@ export const RESO_SELECT = [
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function sparkGet(url, { attempts = 4 } = {}) {
+// `deadline` (ms timestamp): never wait past it, so a slow response can't push a scheduled
+// function over Netlify's 30-second limit (which would lose the whole run's progress).
+export async function sparkGet(url, { attempts = 4, deadline } = {}) {
   const cfg = idxConfig();
   if (cfg.mock) throw new Error("sparkGet called in mock mode");
+  const left = () => (deadline ? deadline - Date.now() : 25000);
   for (let attempt = 1; ; attempt++) {
+    if (left() < 1500) throw new Error("Out of time for this run (will continue next run)");
     let res;
     try {
       res = await fetch(url, {
+        signal: AbortSignal.timeout(Math.min(25000, left())),
         headers: {
           Authorization: `Bearer ${cfg.token}`,
           "X-SparkApi-User-Agent": cfg.userAgent,
@@ -35,7 +40,7 @@ export async function sparkGet(url, { attempts = 4 } = {}) {
         },
       });
     } catch (e) {
-      if (attempt >= attempts) throw e;
+      if (attempt >= attempts || left() < 1000 * 2 ** attempt + 3000) throw e;
       await sleep(1000 * 2 ** attempt);
       continue;
     }
@@ -43,7 +48,9 @@ export async function sparkGet(url, { attempts = 4 } = {}) {
     // Rate limited or temporary server trouble: back off and retry.
     if ((res.status === 429 || res.status >= 500) && attempt < attempts) {
       const retryAfter = Number(res.headers.get("retry-after"));
-      await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt);
+      const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt;
+      if (left() < wait + 3000) throw new Error(`Spark API ${res.status} (will retry next run)`);
+      await sleep(wait);
       continue;
     }
     const body = await res.text().catch(() => "");
@@ -109,9 +116,9 @@ export function firstPageUrl(kind, { since } = {}) {
 }
 
 /** Fetches one page; returns { records, next } where next is the following page URL or null. */
-export async function fetchPage(url) {
+export async function fetchPage(url, { deadline } = {}) {
   const cfg = idxConfig();
-  const json = await sparkGet(url);
+  const json = await sparkGet(url, { deadline });
   if (cfg.flavor === "reso") {
     return { records: json.value || [], next: json["@odata.nextLink"] || null };
   }
