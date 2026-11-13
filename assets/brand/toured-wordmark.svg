@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14897b"/>
+      <stop offset="1" stop-color="#075a51"/>
+    </linearGradient>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&amp;family=Inter:wght@500&amp;display=swap');</style>
+  </defs>
+  <g transform="translate(20 20) scale(0.3125)">
+    <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+    <path d="M256 104 408 228v156a24 24 0 0 1-24 24H128a24 24 0 0 1-24-24V228Z" fill="#fff"/>
+    <path d="M84 238 256 96l172 142" fill="none" stroke="#f2b544" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m180 300 52 52 104-108" fill="none" stroke="#0b6e63" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="208" y="122" font-family="Fraunces, Georgia, serif" font-weight="700" font-size="96" fill="#12322e" letter-spacing="-1">Toured</text>
+  <text x="212" y="160" font-family="Inter, Arial, sans-serif" font-weight="500" font-size="22" fill="#4f6763" letter-spacing="1.5">HOMES REVIEWED BY PEOPLE WHO TOURED</text>
+</svg>
