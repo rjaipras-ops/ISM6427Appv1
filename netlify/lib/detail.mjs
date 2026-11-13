@@ -49,6 +49,9 @@ async function purge(key) {
 
 const QUEUE = "parcel-queue";
 
+// Bump when the parcel matcher improves, so earlier "couldn't match" results are retried.
+const MATCH_VERSION = 2;
+
 async function listingFromIndex(key) {
   const row = (await getIndex())[key];
   if (!row) return null;
@@ -61,7 +64,7 @@ async function lookupAndCache(listing, ms) {
   // Owner name stays off MLS listings (BeachesMLS rule 20.3.8) unless explicitly allowed.
   const includeOwner = process.env.IDX_SHOW_OWNER === "true";
   const r = await withTimeout(lookupParcel(listing, { includeOwner }), ms);
-  const entry = { at: new Date().toISOString(), status: r.status, parcel: r.parcel };
+  const entry = { at: new Date().toISOString(), v: MATCH_VERSION, status: r.status, parcel: r.parcel };
   await setJSON(`parcel/${listing.ListingKey}`, entry);
   return entry;
 }
@@ -69,7 +72,9 @@ async function lookupAndCache(listing, ms) {
 /** Returns { status: "matched" | "no_match" | "ambiguous" | "unit_not_found" | "pending", parcel }. */
 export async function getParcel(key) {
   const cached = await getJSON(`parcel/${key}`);
-  if (cached) return { status: cached.status, parcel: cached.parcel };
+  // Keep matches; retry failures made by an older matcher or more than a week ago.
+  const fresh = cached && (cached.status === "matched" || (cached.v === MATCH_VERSION && Date.now() - Date.parse(cached.at) < 7 * 864e5));
+  if (fresh) return { status: cached.status, parcel: cached.parcel };
   const listing = await listingFromIndex(key);
   if (!listing) return { status: "gone", parcel: null };
   try {

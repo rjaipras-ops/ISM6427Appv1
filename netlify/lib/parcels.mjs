@@ -125,12 +125,23 @@ const norm = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").re
 const ordinal = (w) => w.replace(/^(\d+)(ST|ND|RD|TH)$/, "$1");
 
 export function addressKey(l) {
-  const street = norm(String(l.StreetAddress).replace(/\s(#\s?\w[\w-]*|Unit \w+|Apt \w+|Lot \w+)$/i, ""));
+  let street = norm(String(l.StreetAddress).replace(/\s(#\s?\w[\w-]*|Unit \w+|Apt \w+|Lot \w+)$/i, ""));
+  // MLS addresses often put the unit right after the street type with no "#":
+  // "1515 E BROWARD BOULEVARD 323", "2100 VAN BUREN STREET 322", "100 OCEAN DR N 4B".
+  let trailingUnit = "";
+  {
+    const w = street.split(" ");
+    const last = w[w.length - 1], prev = w[w.length - 2];
+    if (w.length >= 3 && /\d/.test(last) && last.length <= 6 && (SUFFIX.has(prev) || DIRS.has(prev))) {
+      trailingUnit = last;
+      street = w.slice(0, -1).join(" ");
+    }
+  }
   const words = street.split(" ");
   const num = /^\d+$/.test(words[0]) ? words.shift() : "";
   const core = words.map(ordinal).filter((w) => !DIRS.has(w) && !SUFFIX.has(w));
   const kw = core.sort((a, b) => b.length - a.length)[0] || "";
-  const unitRaw = (l.UnitNumber || (String(l.StreetAddress).match(/\s(?:#|Unit |Apt |Lot )\s?([\w-]+)$/i) || [])[1] || "");
+  const unitRaw = (l.UnitNumber || (String(l.StreetAddress).match(/\s(?:#|Unit |Apt |Lot )\s?([\w-]+)$/i) || [])[1] || trailingUnit || "");
   const unit = norm(unitRaw).replace(/\s/g, "").replace(/^#/, "");
   return { num, kw, unit };
 }
@@ -149,7 +160,8 @@ export function pickParcel(l, rows) {
       const last = toks[toks.length - 1].replace(/^0+/, "");
       return last === u || toks.slice(-2).join("").replace(/^0+/, "") === u;
     });
-    if (hit.length === 1) return { status: "matched", parcel: hit[0] };
+    const hitIds = new Map(hit.map((r) => [r.PARCEL_ID, r]));
+    if (hitIds.size === 1) return { status: "matched", parcel: [...hitIds.values()][0] };
     return { status: hit.length ? "ambiguous" : "unit_not_found", candidates: cands.length };
   }
   const uniq = new Map(cands.map((r) => [r.PARCEL_ID, r]));

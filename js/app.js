@@ -1059,7 +1059,7 @@ function renderPanelProperty(p) {
       ${reviews.length > 3 ? `<p class="muted" style="font-size:13px">+ ${reviews.length - 3} more review${reviews.length - 3 > 1 ? "s" : ""}</p>` : ""}`}
 
     <h3 class="tp-h">Public records &amp; taxes</h3>
-    <p class="not-mls">County tax-roll data (Florida Department of Revenue) · not from BeachesMLS</p>
+    <p class="not-mls">County property records · not from BeachesMLS</p>
     <div class="tp-facts">${facts.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
     <div class="tp-links">
       ${taxBillLink(p.county, pc.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(p.county, pc.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
@@ -1111,15 +1111,20 @@ function publicRecordsHTML(l) {
   const mls = isMls(l);
   const st = mls ? S.details.get(l.ListingId)?.parcelStatus : "matched";
   const p = l.Parcel;
-  const label = mls ? `<p class="not-mls">Not from BeachesMLS · county tax-roll data from the Florida Department of Revenue</p>` : "";
+  const label = mls ? `<p class="not-mls">County property records · not from BeachesMLS</p>` : "";
   const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/" }[l.County];
+  const taxSearch = taxBillLink(l.County, "");
   if (mls && (st === undefined || st === "pending")) {
     return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
       <p class="muted">${st === "pending" ? "County records are taking longer than usual to load. Check back in a few minutes." : "Loading public records…"}</p></section>`;
   }
   if (!p) {
     return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
-      <p class="muted">We couldn't match this listing to a county parcel record automatically.${search ? ` <a href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the ${esc(l.County)} County property appraiser ↗</a>` : ""}</p></section>`;
+      <p class="muted">We couldn't match this listing to its county parcel automatically. You can look it up by address:</p>
+      <div class="records-links">
+        ${taxSearch ? `<a class="btn" href="${esc(taxSearch)}" target="_blank" rel="noopener noreferrer">Search ${esc(l.County)} tax bills ↗</a>` : ""}
+        ${search ? `<a class="btn btn-ghost" href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the property appraiser ↗</a>` : ""}
+      </div></section>`;
   }
   const showOwner = p.Owner && (!mls || SITE.showOwnerOnMlsListings);
   const listVsJust = p.JustValue ? Math.round(((l.ListPrice - p.JustValue) / p.JustValue) * 100) : null;
@@ -1150,7 +1155,7 @@ function publicRecordsHTML(l) {
       ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
     </div>
     ${l.County === "Palm Beach" ? pbcTaxHint(p.ParcelId) : ""}
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address. Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
 // Palm Beach's tax site can't open one parcel by link: show the number with a copy button.
