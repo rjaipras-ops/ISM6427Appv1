@@ -46,17 +46,21 @@ export function countyLinks(county, p) {
   switch (county) {
     case "Broward":
       return {
-        bill: `https://broward.county-taxes.com/public/search/property_tax?search_query=${encodeURIComponent(id)}`,
+        bill: /^[0-9A-Za-z]{12}$/.test(id)
+          ? `https://broward.county-taxes.com/public/real_estate/parcels/${id.slice(0, 6)}-${id.slice(6, 8)}-${id.slice(8)}/bills`
+          : "https://county-taxes.net/broward/property-tax",
         appraiser: `https://www.bcpa.net/RecInfo.asp?URL_Folio=${encodeURIComponent(id)}`,
       };
     case "Palm Beach":
       return {
-        bill: "https://www.pbctax.gov/",
+        bill: "https://pbctax.publicaccessnow.com/PropertyTax.aspx", // no per-parcel links on this site
         appraiser: `https://pbcpao.gov/Property/Details?parcelId=${encodeURIComponent(id.replace(/\D/g, ""))}`,
       };
     case "St. Lucie":
       return {
-        bill: `https://stlucie.county-taxes.com/public/search/property_tax?search_query=${encodeURIComponent(String(p.PHY_ADDR1 || "").trim())}`,
+        bill: /^\d{4}-\d{3}-\d{4}-\d{3}-\d$/.test(id)
+          ? `https://stlucie.county-taxes.com/public/real_estate/parcels/${id}/bills`
+          : "https://county-taxes.net/stlucie/property-tax",
         // St. Lucie record cards are keyed by the county account number (DOR ALT_KEY).
         appraiser: alt && /^\d+$/.test(alt) ? `https://apps.paslc.gov/rerecordcard/${alt}` : "https://apps.paslc.gov/property-search/",
       };

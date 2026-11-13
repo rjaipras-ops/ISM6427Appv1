@@ -4,6 +4,7 @@ import {
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney,
 } from "./filters.js";
 import { monthlyCost, parseMoney } from "./payment.js";
+import { taxBillLink, formatPcn } from "./taxlinks.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
@@ -1066,10 +1067,10 @@ function renderPanelProperty(p) {
     <p class="not-mls">County tax-roll data (Florida Department of Revenue) · not from BeachesMLS</p>
     <div class="tp-facts">${facts.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
     <div class="tp-links">
-      ${pc.Links?.bill ? `<a class="btn" href="${esc(pc.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${taxBillLink(p.county, pc.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(p.county, pc.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
       ${pc.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(pc.Links.appraiser)}" target="_blank" rel="noopener noreferrer">Owner &amp; full property record ↗</a>` : ""}
     </div>
-    ${p.county === "Palm Beach" ? `<p class="muted" style="font-size:12px">On the Palm Beach Tax Collector site, search parcel <b>${esc(pc.ParcelId || "")}</b>.</p>` : ""}
+    ${p.county === "Palm Beach" ? pbcTaxHint(pc.ParcelId) : ""}
 
     <div class="tp-agent">
       <p><b>Want to see it in person?</b><br>${esc(SITE.agentName)}, ${esc(SITE.brokerage)}${phoneLink()}</p>
@@ -1150,12 +1151,25 @@ function publicRecordsHTML(l) {
       <div><small>Est. tax after you buy</small><b>${fmt$(p.EstTaxNewBuyer)}/yr</b><span class="muted">Reassessed near the purchase price</span></div>
     </div>
     <div class="records-links">
-      ${p.Links?.bill ? `<a class="btn" href="${esc(p.Links.bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${taxBillLink(l.County, p.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(l.County, p.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
       ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
     </div>
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address.${l.County === "Palm Beach" ? ` On the Palm Beach Tax Collector site, search parcel <b>${esc(p.ParcelId)}</b>.` : ""} Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
+    ${l.County === "Palm Beach" ? pbcTaxHint(p.ParcelId) : ""}
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: Florida Department of Revenue statewide parcel data (${esc(String(p.AssessmentYear))} tax roll), matched to this listing by location and address. Tax estimates use approximate county millage rates; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
+// Palm Beach's tax site can't open one parcel by link: show the number with a copy button.
+function pbcTaxHint(parcelId) {
+  const pcn = formatPcn(parcelId);
+  return `<p class="pbc-hint">Palm Beach's tax site opens to a search: paste parcel <b>${esc(pcn)}</b>
+    <button type="button" class="linkbtn" data-copy="${esc(String(parcelId || "").replace(/\D/g, ""))}">Copy</button></p>`;
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-copy]");
+  if (!b) return;
+  try { await navigator.clipboard.writeText(b.dataset.copy); toast("Parcel number copied"); }
+  catch { toast(`Parcel number: ${b.dataset.copy}`); }
+});
 const fmtTime = (hm) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`; };
 const addHours = (hm, n) => { const [h, m] = hm.split(":").map(Number); return `${h + n}:${String(m).padStart(2, "0")}`; };
 

@@ -705,3 +705,5 @@ input.money { width: 100%; min-width: 0; }
 .pay-assume label { display: inline-flex; align-items: center; gap: 6px; }
 .pay-assume input { width: 64px; padding: 6px 8px; }
 .price .est-pay { margin-left: 10px; font-size: 13px; font-weight: 500; color: var(--ink-3); }
+.pbc-hint { font-size: 13px; margin: 8px 0 0; color: var(--ink-2); }
+.pbc-hint .linkbtn { margin-left: 6px; font-size: 13px; }
