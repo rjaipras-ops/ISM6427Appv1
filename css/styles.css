@@ -681,3 +681,9 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 13px; line-height: 1.4; color: var(--muted, #555); }
 .consent input { margin-top: 3px; flex: none; }
+
+/* Keep the filter drawer's main button clear of Netlify's "Powered by Netlify" badge (bottom-right). */
+.drawer-foot { justify-content: flex-start; gap: 20px; padding-right: 250px; }
+.drawer-foot .btn { order: -1; }
+@media (max-width: 640px) { .drawer-foot { padding-right: 20px; padding-bottom: 72px; } }
+.drawer-foot .btn, .drawer-foot .linkbtn { white-space: nowrap; }
