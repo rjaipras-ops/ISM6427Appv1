@@ -63,11 +63,7 @@
         <button class="pill" type="button" aria-expanded="false"><span data-label="price">Price</span><i class="caret"></i></button>
         <div class="dd-panel" role="dialog" aria-label="Price">
           <h4>Price range</h4>
-          <div class="range-row">
-            <input name="priceMin" class="money" inputmode="decimal" autocomplete="off" list="priceMinList" placeholder="No min" aria-label="Minimum price" />
-            <span>–</span>
-            <input name="priceMax" class="money" inputmode="decimal" autocomplete="off" list="priceMaxList" placeholder="No max" aria-label="Maximum price" />
-          </div>
+          <div class="rng" data-rng="price"></div>
           <canvas class="histogram" id="priceHist" width="280" height="56" aria-hidden="true"></canvas>
         </div>
       </div>
@@ -182,14 +178,11 @@
         </fieldset>
         <fieldset>
           <legend>Price</legend>
-          <div class="range-row"><input name="priceMin" class="money" inputmode="decimal" autocomplete="off" list="priceMinList" placeholder="No min" aria-label="Minimum price" /><span>–</span><input name="priceMax" class="money" inputmode="decimal" autocomplete="off" list="priceMaxList" placeholder="No max" aria-label="Maximum price" /></div>
+          <div class="rng" data-rng="price"></div>
         </fieldset>
         <fieldset>
           <legend>Monthly payment</legend>
-          <div class="range-row pay-row">
-            <input name="payMax" class="money" inputmode="decimal" autocomplete="off" list="payList" placeholder="No max" aria-label="Maximum monthly payment" />
-            <span class="muted">/mo max</span>
-          </div>
+          <div class="rng" data-rng="pay" data-suffix="/mo max"></div>
           <div class="pay-assume">
             <label>Down <input name="payDown" type="number" min="0" max="100" step="1" placeholder="20" />%</label>
             <label>Rate <input name="payRate" type="number" min="0" max="15" step="0.125" placeholder="6.4" />%</label>
@@ -210,11 +203,11 @@
         </fieldset>
         <fieldset>
           <legend>Home size (sq ft)</legend>
-          <div class="range-row"><select name="sqftMin"></select><span>–</span><select name="sqftMax"></select></div>
+          <div class="rng" data-rng="sqft"></div>
         </fieldset>
         <fieldset>
           <legend>Lot size</legend>
-          <div class="range-row"><select name="lotMin"></select><span>–</span><select name="lotMax"></select></div>
+          <div class="rng" data-rng="lot"></div>
         </fieldset>
         <fieldset>
           <legend>Home age (year built)</legend>
@@ -222,9 +215,7 @@
         </fieldset>
         <fieldset>
           <legend>Max HOA fee / month</legend>
-          <select name="hoaMax">
-            <option value="">Any</option><option value="0">No HOA</option><option value="100">$100</option><option value="200">$200</option><option value="300">$300</option><option value="500">$500</option><option value="750">$750</option>
-          </select>
+          <div class="rng" data-rng="hoa"></div>
         </fieldset>
         <fieldset>
           <legend>Days on Toured</legend>
@@ -284,11 +275,6 @@
       </footer>
     </aside>
   </div>
-
-  <!-- Suggestions for the type-or-pick money fields (filled by js/app.js) -->
-  <datalist id="priceMinList"></datalist>
-  <datalist id="priceMaxList"></datalist>
-  <datalist id="payList"></datalist>
 
   <!-- Sign-in dialog: "Sign in with Google" (js/app.js renders Google's button into #gsiButton). -->
   <dialog class="modal" id="authModal" aria-labelledby="authTitle">

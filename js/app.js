@@ -5,6 +5,7 @@ import {
 } from "./filters.js";
 import { monthlyCost, parseMoney } from "./payment.js";
 import { taxBillLink, formatPcn } from "./taxlinks.js";
+import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
@@ -207,15 +208,7 @@ function fillSelect(sel, steps, { min, label = shortMoney } = {}) {
 }
 
 function buildControls() {
-  // Price and payment are type-or-pick fields: suggestions come from datalists.
-  const opts = (vals, fmt) => vals.map((v) => `<option value="${fmt(v)}">`).join("");
-  $("#priceMinList").innerHTML = opts(PRICE_STEPS.filter((v) => v > 0), fmtMoneyInput);
-  $("#priceMaxList").innerHTML = opts(PRICE_STEPS.filter((v) => v > 0), fmtMoneyInput);
-  $("#payList").innerHTML = opts([1500, 2000, 2500, 3000, 3500, 4000, 5000, 6000, 7500, 10000], fmtMoneyInput);
-  fillSelect($("[name=sqftMin]"), SQFT_STEPS, { min: true, label: (v) => fmtN(v) + " sqft" });
-  fillSelect($("[name=sqftMax]"), SQFT_STEPS, { label: (v) => fmtN(v) + " sqft" });
-  fillSelect($("[name=lotMin]"), LOT_STEPS, { min: true, label: (v) => LOT_LABELS[v] });
-  fillSelect($("[name=lotMax]"), LOT_STEPS, { label: (v) => LOT_LABELS[v] });
+  buildRanges(); // price, payment, size, lot and HOA sliders (js/ranges.js)
 
   for (const el of $$("[data-seg]")) {
     const key = el.dataset.seg;
@@ -284,6 +277,7 @@ function syncControls() {
   $("#moreCount").hidden = !moreN; $("#moreCount").textContent = moreN;
   $("#moreBtn").classList.toggle("is-set", moreN > 0);
   $("#boundsToggle").checked = !!f.bounds;
+  syncRanges(f);
   drawHistogram();
 }
 
@@ -332,6 +326,7 @@ function wireEvents() {
   };
   $("#filterbar").addEventListener("change", onInput);
   $("#moreForm").addEventListener("change", onInput);
+  wireRanges((patch) => setFilters(patch));
   // Tidy typed amounts ("450k" → "$450,000") when leaving the field.
   document.addEventListener("focusout", (e) => { if (e.target.classList?.contains("money")) setTimeout(syncControls, 0); });
   $("#moreForm").addEventListener("submit", (e) => e.preventDefault());

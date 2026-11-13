@@ -707,3 +707,33 @@ input.money { width: 100%; min-width: 0; }
 .price .est-pay { margin-left: 10px; font-size: 13px; font-weight: 500; color: var(--ink-3); }
 .pbc-hint { font-size: 13px; margin: 8px 0 0; color: var(--ink-2); }
 .pbc-hint .linkbtn { margin-left: 6px; font-size: 13px; }
+
+/* Range sliders (js/ranges.js) */
+.rng { padding: 2px 0; }
+.rng-out { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: var(--ink); }
+.rng-track { position: relative; height: 28px; margin: 4px 10px; }
+.rng-rail, .rng-fill { position: absolute; top: 12px; height: 4px; border-radius: 4px; }
+.rng-rail { left: 0; right: 0; background: var(--line); }
+.rng-fill { background: var(--brand); }
+.rng-track input[type=range] {
+  position: absolute; left: -10px; width: calc(100% + 20px); top: 0; height: 28px; margin: 0;
+  background: none; pointer-events: none; -webkit-appearance: none; appearance: none;
+}
+.rng-track input[type=range]::-webkit-slider-runnable-track { background: none; height: 28px; }
+.rng-track input[type=range]::-moz-range-track { background: none; }
+.rng-track input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; pointer-events: auto; cursor: grab; width: 22px; height: 22px; margin-top: 3px;
+  border-radius: 50%; background: #fff; border: 2px solid var(--brand); box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.rng-track input[type=range]::-moz-range-thumb {
+  pointer-events: auto; cursor: grab; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--brand); box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.rng-track input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.08); }
+.rng-track input[type=range]:focus-visible::-webkit-slider-thumb { outline: 3px solid var(--brand-tint, #cfe8e4); }
+.rng-inputs { margin-top: 6px; }
+.rng-inputs input.money { flex: 1; }
+.dd-panel .rng { min-width: 280px; }
+.rng-track input[type=range]:focus { outline: none; }
+.rng-track input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(11,110,99,.25); }
+.rng-track input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(11,110,99,.25); }
