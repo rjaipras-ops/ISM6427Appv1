@@ -20,7 +20,7 @@ export const INDEX_FLAGS = [
   "demo.Foreclosure", "demo.ShortSale", "demo.CBS", "demo.ShortTermRental",
   "demo.SolarPanels", "demo.EVCharging",
 ];
-export const INDEX_SCHEMA = 3;
+export const INDEX_SCHEMA = 4; // 4: also builds the description search shards
 
 const get = (o, path) => path.split(".").reduce((v, k) => (v == null ? v : v[k]), o);
 

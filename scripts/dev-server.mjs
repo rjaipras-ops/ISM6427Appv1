@@ -20,6 +20,7 @@ import authGoogle from "../netlify/functions/auth-google.mjs";
 import authLogout from "../netlify/functions/auth-logout.mjs";
 import authDev from "../netlify/functions/auth-dev.mjs";
 import reviews from "../netlify/functions/reviews.mjs";
+import idxSearch from "../netlify/functions/idx-search.mjs";
 import reviewAction from "../netlify/functions/review-action.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -33,6 +34,7 @@ const routes = [
   [/^\/api\/idx\/listing\/([\w-]+)$/, listing, (m) => ({ key: m[1] })],
   [/^\/api\/idx\/parcel\/([\w-]+)$/, parcel, (m) => ({ key: m[1] })],
   [/^\/api\/idx\/sync-status$/, status],
+  [/^\/api\/idx\/search$/, idxSearch],
   [/^\/api\/idx\/sync$/, sync],
   [/^\/api\/property\/lookup$/, propertyLookup],
   [/^\/api\/auth\/config$/, authConfig],

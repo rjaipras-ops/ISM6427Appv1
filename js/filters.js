@@ -50,7 +50,8 @@ export const DRAWER_KEYS = [
 
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 
-export function matches(l, f, summary) {
+// `kwKeys`: listings whose description matched the keyword search on the server (a Set), if any.
+export function matches(l, f, summary, kwKeys) {
   const d = l.demo;
   const status = d.StandardStatus;
   if (status === "Active" && !f.statusActive) return false;
@@ -108,7 +109,8 @@ export function matches(l, f, summary) {
 
   if (f.keyword) {
     const hay = norm(`${l.UnparsedAddress} ${l.Neighborhood} ${l.PropertyType} ${d.ArchitecturalStyle} ${d.PublicRemarks} ${d.View || ""}`);
-    if (!norm(f.keyword).split(" ").every((t) => hay.includes(t))) return false;
+    const local = norm(f.keyword.replace(/"/g, "")).split(" ").every((t) => hay.includes(t));
+    if (!local && !(kwKeys && kwKeys.has(l.ListingId))) return false;
   }
   if (f.bounds) {
     const [s, w, n, e] = f.bounds;

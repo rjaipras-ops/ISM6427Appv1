@@ -15,12 +15,13 @@ import { idxConfig, ACTIVE } from "./config.mjs";
 import { firstPageUrl, fetchPage } from "./spark.mjs";
 import { normalizeListing } from "./normalize.mjs";
 import { INDEX_SCHEMA } from "./index-format.mjs";
+import { RemarksWriter } from "./remarks.mjs";
 import { getState, setState, getIndex, setIndex, getJSON, setJSON, del } from "./store.mjs";
 import { toRow } from "./index-format.mjs";
 import { warmParcels } from "./detail.mjs";
 
 const OVERLAP_MS = 5 * 60 * 1000;
-const SAFETY_MS = 4000;
+const SAFETY_MS = 7000; // leaves time to write the index and description shards
 
 const log = (...a) => console.log("[IDX]", ...a);
 
@@ -40,9 +41,19 @@ export function isDue(state, cfg = idxConfig()) {
   return Date.now() - last >= cfg.intervalMinutes * 60 * 1000;
 }
 
-async function removeListing(index, key) {
+// What keyword search looks through: the description plus a few descriptive MLS fields.
+const asText = (v) => (Array.isArray(v) ? v.join(" ") : v == null ? "" : String(v));
+function searchText(rec) {
+  return [rec.PublicRemarks, rec.SubdivisionName, rec.ArchitecturalStyle, rec.View, rec.WaterfrontFeatures,
+    rec.ConstructionMaterials, rec.SecurityFeatures, rec.ParkingFeatures, rec.LotFeatures,
+    rec.Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details,
+    rec.Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features].map(asText).join(" ");
+}
+
+async function removeListing(index, key, remarks) {
   if (!index[key]) return false;
   delete index[key];
+  await remarks?.remove(key);
   await Promise.all([del(`listing/${key}`), del(`parcel/${key}`)]);
   return true;
 }
@@ -74,6 +85,9 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
       const l = normalizeListing(rec, { syncedAt: now });
       if (l && l.demo.StandardStatus === ACTIVE) index[l.ListingKey] = toRow(l);
     }
+    const remarks = new RemarksWriter();
+    for (const rec of mockRecords()) if (index[String(rec.ListingKey)]) await remarks.set(String(rec.ListingKey), searchText(rec));
+    await remarks.flush();
     await setIndex(index);
     state = {
       ...state, mode, phase: "idle", next: null, lastSyncTimestamp: now, initialCompletedAt: state.initialCompletedAt || now,
@@ -108,6 +122,7 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
   await setState(state);
 
   const index = await getIndex();
+  const remarks = new RemarksWriter(); // searchable descriptions (see remarks.mjs)
   const stats = { fetched: 0, upserted: 0, removed: 0, pages: 0 };
   let seen = state.phase === "reconcile" ? new Set((await getJSON("reconcile-keys")) || []) : null;
   let url = state.next || (
@@ -131,10 +146,11 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
         const l = normalizeListing(rec, { syncedAt });
         if (l && l.demo.StandardStatus === ACTIVE) {
           index[key] = toRow(l);
+          await remarks.set(key, searchText(rec));
           stats.upserted++;
           // Drop any cached detail so photos/price changes show on next open.
           if (phase === "delta") await del(`listing/${key}`);
-        } else if (await removeListing(index, key)) {
+        } else if (await removeListing(index, key, remarks)) {
           stats.removed++; // off-market (Pending/Closed/Withdrawn/…) or no longer displayable
         }
       }
@@ -149,7 +165,7 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
 
   if (finished) {
     if (phase === "reconcile") {
-      for (const key of Object.keys(index)) if (!seen.has(key) && (await removeListing(index, key))) stats.removed++;
+      for (const key of Object.keys(index)) if (!seen.has(key) && (await removeListing(index, key, remarks))) stats.removed++;
       state.lastReconcileAt = new Date().toISOString();
       await del("reconcile-keys");
       // Reconcile doesn't advance lastSyncTimestamp; the next run does a delta.
@@ -171,6 +187,7 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
     startedAt: new Date(started).toISOString(), finishedAt: new Date().toISOString(), reason, phase,
     completedPhase: finished, ...stats, ms: Date.now() - started, error,
   };
+  try { await remarks.flush(); } catch (e) { log("description index write failed:", e.message); }
   await setIndex(index);
   await setState(state);
   // Spare time: look up public records that were too slow to load on request.

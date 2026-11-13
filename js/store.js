@@ -416,6 +416,15 @@ export async function loadParcel(key) {
   return res.json();
 }
 
+/** Server-side keyword search over listing descriptions. Returns a Set of ListingKeys, or null if unavailable. */
+export async function searchDescriptions(q) {
+  try {
+    const res = await fetch(`/api/idx/search?q=${encodeURIComponent(q)}`);
+    if (!res.ok || !(res.headers.get("content-type") || "").includes("json")) return null;
+    return new Set((await res.json()).keys || []);
+  } catch { return null; }
+}
+
 /** Feed status: { mode, lastSyncTimestamp, version, activeListings, ... } or null. */
 export async function getSyncStatus() {
   try {

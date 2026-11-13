@@ -609,9 +609,25 @@ function cardMedia(l) {
   </div>`;
 }
 
+// Keyword search: descriptions live on the server, so ask it which listings match, then re-render.
+const kw = { q: "", keys: null, pending: null };
+function keywordKeys() {
+  const q = S.f.keyword || "";
+  if (!q || S.feed.mode === "demo") return null;
+  if (kw.q === q) return kw.keys;
+  kw.q = q; kw.keys = null;
+  const p = kw.pending = store.searchDescriptions(q).then((keys) => {
+    if (kw.pending !== p) return; // a newer search replaced this one
+    kw.keys = keys;
+    if (keys) renderResults();
+  });
+  return null;
+}
+
 function renderResults({ fitMap = false } = {}) {
   S.summaries = store.getReviewSummaries();
-  const rows = sortListings(S.listings.filter((l) => matches(l, S.f, S.summaries[l.ListingId])), S.f.sort, S.summaries);
+  const kwKeys = keywordKeys();
+  const rows = sortListings(S.listings.filter((l) => matches(l, S.f, S.summaries[l.ListingId], kwKeys)), S.f.sort, S.summaries);
   S.results = rows;
   const cards = $("#cards");
   cards.innerHTML = rows.slice(0, 200).map((l) => cardHTML(l)).join("");
