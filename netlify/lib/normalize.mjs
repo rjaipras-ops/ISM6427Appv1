@@ -60,11 +60,26 @@ const monthlyFee = (fee, freq) => {
 const daysSince = (iso) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 864e5)) : null);
 const titleCase = (s) => String(s || "").toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
 
+// MLS coordinates are typed in by listing agents and are sometimes wrong (a dropped minus sign
+// puts a Florida home in India; swapped lat/long puts it in the ocean). Repair the obvious
+// mistakes, and reject anything still outside South Florida.
+const SOFLA = { minLat: 24.3, maxLat: 28.5, minLng: -82.0, maxLng: -79.7 };
+const inSoFla = (lat, lng) => lat >= SOFLA.minLat && lat <= SOFLA.maxLat && lng >= SOFLA.minLng && lng <= SOFLA.maxLng;
+export function fixCoords(lat, lng) {
+  lat = Number(lat); lng = Number(lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  for (const [a, b] of [[lat, lng], [lat, -lng], [-lat, lng], [-lat, -lng], [lng, lat], [lng, -lat], [-lng, lat], [-lng, -lat]]) {
+    if (inSoFla(a, b)) return [a, b];
+  }
+  return null;
+}
+
 /** Full listing (for the detail view). Returns null if the listing may not be displayed. */
 export function normalizeListing(rec, { syncedAt } = {}) {
   if (rec.InternetEntireListingDisplayYN === false) return null; // seller opted out of internet display
-  const lat = Number(rec.Latitude), lng = Number(rec.Longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return null; // can't map it
+  const coords = fixCoords(rec.Latitude, rec.Longitude);
+  if (!coords) return null; // missing or impossible location: can't map it
+  const [lat, lng] = coords;
 
   const showAddress = rec.InternetAddressDisplayYN !== false;
   const street = rec.UnparsedAddress

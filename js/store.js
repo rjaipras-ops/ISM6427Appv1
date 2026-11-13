@@ -343,6 +343,13 @@ export function toggleSaved(listingId) {
 // the bundled demo data in data/listings.json is used instead.
 
 // Rebuilds listing objects from the compact column format sent by /api/idx/listings.
+// Same check as the server (netlify/lib/normalize.mjs fixCoords), for listings synced before it existed.
+function fixCoords(lat, lng) {
+  const ok = (a, b) => a >= 24.3 && a <= 28.5 && b >= -82.0 && b <= -79.7;
+  for (const [a, b] of [[lat, lng], [lat, -lng], [-lat, lng], [-lat, -lng], [lng, lat], [lng, -lat], [-lng, lat], [-lng, -lat]]) if (ok(a, b)) return [a, b];
+  return null;
+}
+
 function decodeIndex(data) {
   const fi = data.fields.indexOf("_flags");
   return data.rows.map((row) => {
@@ -364,8 +371,11 @@ function decodeIndex(data) {
     l.PricePerSqFt = l.LivingArea ? Math.round(l.ListPrice / l.LivingArea) : 0;
     l.demo.OpenHouse = null;
     l.demo.PublicRemarks = null; // loaded with the listing details
+    const c = fixCoords(Number(l.Latitude), Number(l.Longitude));
+    if (!c) return null;
+    [l.Latitude, l.Longitude] = c;
     return l;
-  });
+  }).filter(Boolean);
 }
 
 /**
