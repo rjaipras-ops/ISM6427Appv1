@@ -317,15 +317,39 @@
       <input type="hidden" name="form-name" value="contact" />
       <input type="hidden" name="subject" />
       <input type="hidden" name="home" />
+      <!-- Consent record (TCPA): exact wording, version, time and page are saved with each request. -->
+      <input type="hidden" name="page" />
+      <input type="hidden" name="consent_text" />
+      <input type="hidden" name="consent_version" />
+      <input type="hidden" name="consent_at" />
       <p class="hp-field" aria-hidden="true"><label>Leave this empty <input name="company" tabindex="-1" autocomplete="off" /></label></p>
       <h2 id="contactTitle">Request a tour</h2>
-      <p class="muted" id="contactAgentName"></p>
+      <p class="muted" id="contactAgentName">A licensed local agent will reach out, usually within the hour.</p>
       <label class="field">Your name<input name="name" required maxlength="80" autocomplete="name" /></label>
-      <label class="field">Email<input name="email" type="email" required maxlength="120" autocomplete="email" /></label>
-      <label class="field">Phone (optional)<input name="phone" type="tel" maxlength="30" autocomplete="tel" /></label>
-      <label class="field">Message<textarea name="message" maxlength="2000"></textarea></label>
+      <div class="field-row">
+        <label class="field">Email<input name="email" type="email" required maxlength="120" autocomplete="email" /></label>
+        <label class="field">Mobile phone<input name="phone" type="tel" required maxlength="30" autocomplete="tel" inputmode="tel" pattern="(\D*\d){10,}\D*" title="Enter a 10-digit phone number" /></label>
+      </div>
+      <div class="field-row">
+        <label class="field">When are you hoping to buy?
+          <select name="timeline" required>
+            <option value="">Choose…</option><option>Within 3 months</option><option>3–6 months</option><option>6–12 months</option><option>Just browsing</option>
+          </select></label>
+        <label class="field">Financing
+          <select name="financing" required>
+            <option value="">Choose…</option><option>Pre-approved</option><option>Paying cash</option><option>Not yet pre-approved</option>
+          </select></label>
+      </div>
+      <fieldset class="field agent-q">
+        <legend>Are you already working with a real estate agent?</legend>
+        <label><input type="radio" name="has_agent" value="No" required /> No</label>
+        <label><input type="radio" name="has_agent" value="Yes" /> Yes</label>
+      </fieldset>
+      <p class="agent-note" id="agentNote" hidden>Thanks! Please contact your own agent to tour this home; they can schedule it for you.</p>
+      <label class="field">Message (optional)<textarea name="message" maxlength="2000"></textarea></label>
       <label class="consent"><input type="checkbox" name="consent" value="yes" required />
-        <span>I agree to be contacted about this request by email, phone or text. Message and data rates may apply. Consent is not a condition of any purchase.</span></label>
+        <span id="consentText">By checking this box, I agree that Rajesh Jaiprashad (LoKation Real Estate) and the licensed real estate agents he refers me to, directly or through a referral network, may contact me about this request by phone, text message (including automated texts) and email at the number and email I provided. Consent is not a condition of any purchase. Message and data rates may apply. Reply STOP to opt out of texts.</span></label>
+      <p class="muted fee-note" id="feeText">Rajesh may refer your request to another licensed agent and receive a referral fee from that agent's brokerage if you buy or sell. It doesn't change what you pay. <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
       <p class="muted" id="contactStatus" role="status" style="font-size:13px"></p>
       <div class="modal-actions">
         <button class="linkbtn" type="button" onclick="this.closest('dialog').close()">Cancel</button>

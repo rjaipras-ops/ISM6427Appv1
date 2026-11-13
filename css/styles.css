@@ -805,3 +805,14 @@ input.money { width: 100%; min-width: 0; }
   .brokerage { align-items: flex-start; flex: 1 1 auto; margin-left: 4px; }
   .broker-firm { white-space: normal; max-width: none; overflow: visible; line-height: 1.15; font-size: 12px; }
 }
+
+/* Tour request form */
+#contactModal { width: min(520px, calc(100% - 24px)); }
+#contactModal .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.agent-q { border: 0; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-weight: 500; font-size: 14px; }
+.agent-q legend { width: 100%; padding: 0; margin-bottom: 6px; }
+.agent-q label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+.agent-note { background: #fff8e8; border: 1px solid #f3d48a; color: #6b4e00; border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 10px 0 0; }
+.fee-note { font-size: 12px; margin: 8px 0 0; }
+.consent span { font-size: 12px; }
+@media (max-width: 560px) { #contactModal .field-row { grid-template-columns: 1fr; } }

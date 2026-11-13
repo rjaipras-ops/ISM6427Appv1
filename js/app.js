@@ -81,8 +81,8 @@ function contactAgent(subject, message, home = "") {
   const dlg = $("#contactModal");
   const f = $("#contactForm");
   f.reset();
-  $("#contactTitle").textContent = home ? "Request a tour" : `Contact ${SITE.agentName}`;
-  $("#contactAgentName").textContent = `${SITE.agentName}, ${SITE.brokerage}`;
+  $("#contactTitle").textContent = home ? "Request a tour" : "Contact us";
+  $("#agentNote").hidden = true;
   f.subject.value = subject;
   f.home.value = home;
   f.message.value = message;
@@ -99,12 +99,17 @@ async function submitContact(e) {
   btn.disabled = true;
   $("#contactStatus").textContent = "Sending…";
   try {
+    // Someone who already has an agent shouldn't be referred to another one.
+    if (f.has_agent.value === "Yes") { $("#agentNote").hidden = false; btn.disabled = false; $("#contactStatus").textContent = ""; return; }
+    f.page.value = location.href;
+    f.consent_text.value = `${$("#consentText").textContent.trim()} ${$("#feeText").textContent.trim()}`;
+    f.consent_version.value = "2026-11-13";
+    f.consent_at.value = new Date().toISOString();
     const data = new URLSearchParams(new FormData(f));
-    data.set("page", location.href);
     const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: data.toString(), signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(res.status);
     $("#contactModal").close();
-    toast(`Thanks! ${SITE.agentName} will be in touch soon.`);
+    toast("Thanks! A local agent will be in touch soon.");
   } catch {
     $("#contactStatus").textContent = "Sorry, that didn't send. Please try again in a moment.";
   } finally { btn.disabled = false; }
@@ -817,8 +822,8 @@ function renderDetail(l) {
       </div>
       <aside>
         <div class="side-card">
-          <h3>Tour this home with ${esc(SITE.agentName)}</h3>
-          <p class="muted" style="font-size:14px">${esc(SITE.brokerage)}${phoneLink()}<br>After you tour, come back and leave a verified review.</p>
+          <h3>Want to see it in person?</h3>
+          <p class="muted" style="font-size:14px">Request a tour and a licensed local agent will reach out, usually within the hour. After you tour, come back and leave a verified review.</p>
           <button class="btn" type="button" id="reqTour">Request a tour</button>
           ${reviewsOff ? "" : `<button class="btn btn-ghost" type="button" style="margin-top:8px" id="sideReview">${mine ? "View your review" : "I toured this home"}</button>`}
         </div>
@@ -1074,7 +1079,7 @@ function renderPanelProperty(p) {
     ${p.county === "Palm Beach" ? pbcTaxHint(pc.ParcelId) : ""}
 
     <div class="tp-agent">
-      <p><b>Want to see it in person?</b><br>${esc(SITE.agentName)}, ${esc(SITE.brokerage)}${phoneLink()}</p>
+      <p><b>Want to see it in person?</b><br>A licensed local agent will reach out, usually within the hour.</p>
       <button class="btn" type="button" data-tp="tour">Request a tour</button>
     </div>
     <button type="button" class="linkbtn" data-tp="clear">← Look up another home</button>
