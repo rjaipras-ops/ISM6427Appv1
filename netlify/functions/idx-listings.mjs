@@ -8,6 +8,11 @@ import { INDEX_FIELDS, INDEX_FLAGS } from "../lib/index-format.mjs";
 
 export default async (req) => {
   const cfg = idxConfig();
+  // Before the feed is live, the public site shows no listings at all ("pending").
+  if (cfg.mock && !cfg.sampleData) {
+    return Response.json({ mode: "pending", lastSyncTimestamp: null, version: 0, count: 0, fields: [...INDEX_FIELDS, "_flags"], flags: INDEX_FLAGS, rows: [] },
+      { headers: { "Cache-Control": "no-cache" } });
+  }
   let state = await getState();
   // Test mode builds its sample index instantly on first request.
   if (cfg.mock && (state.mode !== "mock" || !state.lastSyncTimestamp)) state = (await runSync({ force: true, reason: "first request" })).state;

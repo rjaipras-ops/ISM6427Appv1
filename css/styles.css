@@ -663,3 +663,16 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
   .mls-layout { grid-template-columns: 1fr; }
   .toured-panel { position: static; max-height: none; order: -1; }
 }
+
+/* Agent + brokerage in the header (BeachesMLS rule 20.2.5: brokerage clearly identified) */
+.brokerage {
+  margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;
+  text-decoration: none; color: var(--ink); padding-right: 6px; min-width: 0;
+}
+.broker-agent { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.broker-firm { font-size: 15px; font-weight: 700; color: var(--brand-ink); white-space: nowrap; }
+.brokerage + .account { margin-left: 8px; }
+@media (max-width: 860px) {
+  .broker-agent { display: none; }
+  .broker-firm { font-size: 13px; }
+}

@@ -56,6 +56,7 @@ async function init() {
   buildControls();
   initMap();
   renderAccount();
+  renderBrokerage();
   store.onAuthChange((u) => { S.user = u; renderAccount(); route(); });
   wireEvents();
   syncControls();
@@ -63,6 +64,14 @@ async function init() {
   window.addEventListener("hashchange", route);
   route();
   startBackgroundRefresh();
+}
+
+// BeachesMLS rule 20.2.5: the site must clearly identify the brokerage, visible on arrival.
+function renderBrokerage() {
+  const el = $("#brokerage");
+  if (!el) return;
+  el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}</span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
+  el.title = `${SITE.agentName}, ${SITE.brokerage} · ${SITE.phone}`;
 }
 
 /* ---------------- feed (BeachesMLS IDX) ---------------- */
@@ -99,17 +108,19 @@ function renderFeedBanner() {
     ? `${mlsMark()} <span>Listings from BeachesMLS · last updated <b class="feed-updated" title="${esc(fmtDateTime(S.feed.lastSyncTimestamp))}">${esc(ago(S.feed.lastSyncTimestamp))}</b></span>`
     : m === "mock"
       ? `<b>Sample data (test mode).</b> <span>These sample listings use satellite images in place of photos. Real BeachesMLS listings and photos appear automatically once the feed key is configured.</span>`
-      : `<b>Demo data.</b> <span>Not a live listing service.</span>`;
+      : m === "pending"
+        ? `<span>Live BeachesMLS listings are coming soon. <a href="#/mls-search">Search all listings now</a>.</span>`
+        : `<b>Demo data.</b> <span>Not a live listing service.</span>`;
 }
 function renderFooter() {
-  const mls = S.feed.mode !== "demo";
+  const mls = S.feed.mode === "live" || S.feed.mode === "mock";
   $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)} · ${esc(SITE.phone)} · Lic. ${esc(SITE.licenseNo)}` +
     (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
 }
 
 // Keep listings fresh while the page is open, without moving the map or closing anything.
 function startBackgroundRefresh() {
-  if (S.feed.mode === "demo") return;
+  if (S.feed.mode === "demo" || S.feed.mode === "pending") return;
   const tick = () => checkForUpdates().catch(() => {});
   setInterval(tick, (SITE.refreshMinutes || 5) * 60e3);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") tick(); });
@@ -535,6 +546,7 @@ function route() {
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
   if (h === "#/mls-search") { show("view-mlssearch"); renderMlsSearch(); return; }
+  if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch(); return; }
   show("view-search");
   document.title = "Toured — South Florida homes reviewed by people who walked through";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });

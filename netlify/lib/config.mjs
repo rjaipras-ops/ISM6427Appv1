@@ -9,6 +9,9 @@ export function idxConfig() {
   return {
     token,
     mock: !token,
+    // Sample (test-mode) listings are for local development only. On the public site they
+    // stay off until the real BeachesMLS feed is live (set IDX_SAMPLE_DATA=true to show them).
+    sampleData: process.env.IDX_SAMPLE_DATA === "true",
     baseUrl,
     // "reso" for the RESO Web API (…/Reso/OData), "spark" for the Spark REST API (…/v1).
     flavor: /\/reso\/odata$/i.test(baseUrl) ? "reso" : "spark",

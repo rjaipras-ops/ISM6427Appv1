@@ -167,6 +167,7 @@ export async function runSync({ budgetMs, force = false, reason = "scheduled" } 
 export async function syncStatus() {
   const cfg = idxConfig();
   const state = await getState();
+  if (cfg.mock && !cfg.sampleData) return { mode: "pending", lastSyncTimestamp: null, activeListings: 0, phase: "idle", version: 0, intervalMinutes: cfg.intervalMinutes };
   return {
     mode: cfg.mock ? "mock" : "live",
     lastSyncTimestamp: state.lastSyncTimestamp,

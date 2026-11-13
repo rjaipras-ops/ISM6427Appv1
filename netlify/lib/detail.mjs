@@ -15,6 +15,7 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeo
 async function fetchRecord(key) {
   const cfg = idxConfig();
   if (cfg.mock) {
+    if (!cfg.sampleData) return null;
     const { mockRecords } = await import("./mock.mjs");
     return mockRecords().find((r) => r.ListingKey === key) || null;
   }

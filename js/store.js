@@ -302,7 +302,8 @@ export async function loadFeed() {
     const res = await fetch("/api/idx/listings", { cache: "no-cache", headers: { Accept: "application/json" } });
     if (res.ok && (res.headers.get("content-type") || "").includes("json")) {
       const data = await res.json();
-      return { mode: data.mode, lastSyncTimestamp: data.lastSyncTimestamp, version: data.version, listings: decodeIndex(data) };
+      // "pending": the BeachesMLS feed isn't live yet; the public site shows no listings.
+      return { mode: data.mode, lastSyncTimestamp: data.lastSyncTimestamp, version: data.version, listings: data.mode === "pending" ? [] : decodeIndex(data) };
     }
   } catch { /* fall through to the demo file */ }
   const res = await fetch("data/listings.json");
