@@ -119,7 +119,7 @@ async function submitContact(e) {
 function renderBrokerage() {
   const el = $("#brokerage");
   if (!el) return;
-  el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}</span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
+  el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}<span class="broker-lic"> · Lic. ${esc(SITE.licenseNo)}</span></span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
   el.title = [`${SITE.agentName}, ${SITE.brokerage}`, SITE.phone].filter(Boolean).join(" · ");
   el.onclick = () => {
     $("#aboutTitle").textContent = SITE.agentName;
@@ -173,6 +173,8 @@ function renderFooter() {
   const mls = S.feed.mode === "live" || S.feed.mode === "mock";
   $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""} · Lic. ${esc(SITE.licenseNo)}` +
     (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
+  $("#globalFoot").innerHTML = `<p><b>${esc(SITE.agentName)}</b>, Florida real estate sales associate · License ${esc(SITE.licenseNo)} · ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""}</p>
+    <p>${mls ? `${esc(SITE.mlsDisclaimer())} · ` : ""}<a href="#/contact">Contact</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
 }
 
 // Keep listings fresh while the page is open, without moving the map or closing anything.

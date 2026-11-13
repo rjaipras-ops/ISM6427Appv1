@@ -837,3 +837,10 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
   .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
   .broker-agent, .broker-firm { white-space: nowrap; }
 }
+
+/* License next to the name (desktop) and a footer on every page */
+.broker-lic { color: var(--ink-3); }
+.globalfoot { max-width: 1100px; margin: 0 auto; padding: 18px 20px 28px; font-size: 12px; color: var(--ink-3); border-top: 1px solid var(--line); }
+.globalfoot p { margin: 4px 0; }
+body.on-search .globalfoot { display: none; }
+@media (max-width: 860px) { .broker-lic { display: none; } .globalfoot { padding: 16px 16px 24px; } }
