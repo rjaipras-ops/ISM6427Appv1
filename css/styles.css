@@ -844,3 +844,8 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
 .globalfoot p { margin: 4px 0; }
 body.on-search .globalfoot { display: none; }
 @media (max-width: 860px) { .broker-lic { display: none; } .globalfoot { padding: 16px 16px 24px; } }
+
+/* Server-rendered listing summary for search engines; the app replaces it as soon as it loads. */
+.seo-listing { max-width: 760px; margin: 24px auto; padding: 0 16px; }
+.seo-listing img { max-width: 100%; height: auto; border-radius: 8px; }
+.seo-listing .seo-price { font-size: 24px; font-weight: 700; }

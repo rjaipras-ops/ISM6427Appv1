@@ -682,6 +682,12 @@ function show(id) {
 }
 let firstSearchRender = true;
 function route() {
+  // Arrived on an indexable listing page (/homes/<key>-<slug>): continue in the app.
+  if (window.__SEO_LISTING__) {
+    const key = window.__SEO_LISTING__; window.__SEO_LISTING__ = null;
+    document.getElementById("seoListing")?.remove();
+    history.replaceState(null, "", `/${location.search}#/home/${key}`);
+  }
   const h = location.hash || "#/";
   const m = h.match(/^#\/home\/([\w-]+)/);
   if (m && S.byId.has(m[1])) { show("view-detail"); renderDetail(S.byId.get(m[1])); window.scrollTo(0, 0); return; }
