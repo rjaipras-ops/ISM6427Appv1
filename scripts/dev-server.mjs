@@ -27,6 +27,8 @@ import sitemap from "../netlify/functions/sitemap.mjs";
 import robots from "../netlify/functions/robots.mjs";
 import sitemapPart from "../netlify/functions/sitemap-part.mjs";
 import reviewAction from "../netlify/functions/review-action.mjs";
+import adminReviews from "../netlify/functions/admin-reviews.mjs";
+import adminSettings from "../netlify/functions/admin-settings.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
@@ -53,7 +55,9 @@ const routes = [
   [/^\/api\/auth\/logout$/, authLogout],
   [/^\/api\/auth\/dev$/, authDev],
   [/^\/api\/reviews$/, reviews],
-  [/^\/api\/reviews\/([\w-]+)\/(delete|helpful)$/, reviewAction, (m) => ({ id: m[1], action: m[2] })],
+  [/^\/api\/admin\/reviews$/, adminReviews],
+  [/^\/api\/admin\/settings$/, adminSettings],
+  [/^\/api\/reviews\/([\w-]+)\/(delete|helpful|report)$/, reviewAction, (m) => ({ id: m[1], action: m[2] })],
 ];
 
 createServer(async (req, res) => {

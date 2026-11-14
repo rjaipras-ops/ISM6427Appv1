@@ -30,6 +30,17 @@ export const TOUR_TYPES = {
   builder_tour: "Builder / model tour",
 };
 
+// "What the photos don't show": structured prompts on the review form (server: netlify/lib/reviews.mjs).
+export const OBSERVATIONS = [
+  { key: "water", label: "Water staining or signs of past water damage", hint: "Ceiling or wall stains, warped floors, musty smell, rust under sinks" },
+  { key: "noise", label: "Road noise or a busier street than expected", hint: "Traffic, trains, flight paths, nearby businesses — note the time of day" },
+  { key: "upkeep", label: "Poor workmanship or deferred maintenance", hint: "DIY repairs, cracked tiles, old roof or AC, peeling paint, rotted wood" },
+  { key: "layout", label: "An awkward floor plan the photos hide", hint: "Small rooms shot wide-angle, odd flow, tiny closets, no dining space" },
+];
+export const OBSERVATION_LEVELS = { none: "Didn't notice", some: "Some", significant: "Significant" };
+export const POSITIVES = ["Better natural light", "Quieter than expected", "Bigger than it looks", "Better views",
+  "Better condition than the photos", "Nicer neighborhood than expected"];
+
 export const REVIEW_TAGS = [
   "Looks like the photos", "Smaller than expected", "Bigger than expected", "Great natural light",
   "Needs updating", "Recently renovated", "Strong odors", "Signs of water damage", "Busy street",
@@ -54,6 +65,7 @@ let remote = false;      // true once /api/reviews answered
 let remoteUser = null;   // { id, displayName, email, picture } from the session
 let reviewCache = [];    // all reviews, loaded once at startup
 let authCfg = { googleClientId: null, devLogin: false };
+let serverReviewsDisabled = [];
 
 const listeners = new Set();
 export function onAuthChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -79,6 +91,7 @@ export async function initBackend() {
     authCfg = cfg;
     remoteUser = me.user;
     reviewCache = rv.reviews || [];
+    serverReviewsDisabled = rv.reviewsDisabled || [];
     remote = true;
   } catch {
     remote = false; // demo mode
@@ -87,6 +100,10 @@ export async function initBackend() {
 }
 
 export const isRemote = () => remote;
+/** Listing keys / MLS numbers with reviews turned off (seller opt-outs, set on the admin page). */
+export const getReviewsDisabled = () => serverReviewsDisabled;
+async function refreshMe() { try { remoteUser = (await api("/api/auth/me")).user || remoteUser; } catch { /* keep */ } }
+async function reloadReviews() { try { const rv = await api("/api/reviews"); reviewCache = rv.reviews || []; serverReviewsDisabled = rv.reviewsDisabled || []; } catch { /* keep */ } }
 export const authConfig = () => authCfg;
 
 export function getUser() { return remote ? remoteUser : read(KEYS.user, null); }
@@ -95,6 +112,7 @@ export function getUser() { return remote ? remoteUser : read(KEYS.user, null); 
 export async function signInWithGoogle(credential) {
   const { user } = await api("/api/auth/google", { method: "POST", body: JSON.stringify({ credential }) });
   remoteUser = user;
+  await Promise.all([refreshMe(), reloadReviews()]); // admin flag + the user's own pending reviews
   emit();
   return user;
 }
@@ -104,6 +122,7 @@ export async function signIn({ displayName, email }) {
   if (remote) {
     const { user } = await api("/api/auth/dev", { method: "POST", body: JSON.stringify({ name: displayName, email }) });
     remoteUser = user;
+    await Promise.all([refreshMe(), reloadReviews()]);
     emit();
     return user;
   }
@@ -224,8 +243,11 @@ export function getReviewsByUser(userId) {
 export function getReviewSummaries() {
   const out = {};
   for (const r of allReviews()) {
-    const s = (out[r.listingId] ||= { count: 0, sum: 0, cats: {} });
+    if (r.status && r.status !== "published") continue;
+    const s = (out[r.listingId] ||= { count: 0, sum: 0, cats: {}, concerns: {}, positives: {} });
     s.count += 1;
+    for (const [k, o] of Object.entries(r.observations || {})) if (o.level === "some" || o.level === "significant") s.concerns[k] = (s.concerns[k] || 0) + 1;
+    for (const p of r.positives || []) s.positives[p] = (s.positives[p] || 0) + 1;
     s.sum += r.ratings.overall;
     for (const { key } of RATING_CATEGORIES) {
       if (r.ratings[key] == null) continue;
@@ -264,12 +286,12 @@ export async function addReview(input, { listing, user }) {
   const errors = validateReview(input, { listing, user });
   if (errors.length) throw Object.assign(new Error(errors[0]), { errors });
   if (remote) {
-    const { review } = await api("/api/reviews", {
+    const { review, held, heldReasons } = await api("/api/reviews", {
       method: "POST",
-      body: JSON.stringify({ ...input, listingId: listing.ListingId, address: listing.UnparsedAddress || null }),
+      body: JSON.stringify({ ...input, listingId: listing.ListingId, mlsNumber: listing.MlsNumber || null, address: listing.UnparsedAddress || null }),
     });
     reviewCache.push(review);
-    return review;
+    return Object.assign(review, { held: !!held, heldReasons: heldReasons || [] });
   }
   const now = new Date().toISOString();
   const review = {
@@ -292,6 +314,9 @@ export async function addReview(input, { listing, user }) {
     pros: (input.pros || "").trim(),
     cons: (input.cons || "").trim(),
     tags: input.tags || [],
+    observations: input.observations || {},
+    positives: input.positives || [],
+    positivesNote: input.positivesNote || "",
     helpful: 0,
   };
   const rows = allReviews();
@@ -327,6 +352,31 @@ export function markHelpful(id) {
   write(KEYS.helpful, [...voted, id]);
   return true;
 }
+
+/** Report a review: reason is one of REPORT_REASONS' keys. */
+export const REPORT_REASONS = {
+  not_toured: "They probably didn't tour this home",
+  personal_info: "Contains personal information",
+  discriminatory: "Discriminatory or a fair-housing concern",
+  offensive: "Offensive or harassing",
+  spam: "Spam or advertising",
+  inaccurate: "False or misleading",
+  other: "Something else",
+};
+export async function reportReview(id, reason, note) {
+  return api(`/api/reviews/${encodeURIComponent(id)}/report`, { method: "POST", body: JSON.stringify({ reason, note }) });
+}
+
+/* ---------------- Admin (site owner) ---------------- */
+export const adminListReviews = () => api("/api/admin/reviews");
+export const adminAct = (id, action) => api("/api/admin/reviews", { method: "POST", body: JSON.stringify({ id, action }) });
+export const adminGetSettings = () => api("/api/admin/settings");
+export async function adminSaveSettings(patch) {
+  const s = await api("/api/admin/settings", { method: "POST", body: JSON.stringify(patch) });
+  serverReviewsDisabled = s.reviewsDisabled || [];
+  return s;
+}
+export { reloadReviews };
 
 /* ---------------- Saved homes ---------------- */
 export function getSaved() { return new Set(read(KEYS.saved, [])); }

@@ -858,3 +858,57 @@ body.on-search .globalfoot { display: none; }
 .county-list { max-height: 320px; overflow-y: auto; }
 .dd-panel .county-list { min-width: 240px; }
 .county-list .muted { font-size: 12px; margin-left: 4px; }
+
+/* Review prompts: what the photos don't show */
+.obs { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; margin: 16px 0 4px; }
+.obs legend { font-weight: 700; padding: 0 6px; }
+.obs-help { font-size: 13px; margin: 0 0 6px; }
+.obs-row { padding: 10px 0; border-top: 1px solid var(--line-2, #eef1f3); display: grid; gap: 6px; }
+.obs-row:first-of-type { border-top: 0; }
+.obs-q b { display: block; font-size: 14px; }
+.obs-q small { color: var(--ink-3); font-size: 12px; }
+.obs-levels { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; width: max-content; max-width: 100%; }
+.obs-levels label { position: relative; }
+.obs-levels input { position: absolute; opacity: 0; }
+.obs-levels span { display: block; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.obs-levels input:checked + span { background: var(--brand); color: #fff; }
+.obs-levels input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: -2px; }
+.obs-note { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 14px; }
+.review-obs { margin-top: 10px; }
+.obs-list { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.obs-list .obs-significant b { color: #a1361f; }
+.tag-good { background: #e7f5ee; color: #17603f; }
+.pos-note { font-size: 13px; }
+.noticed { margin: 14px 0 6px; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.noticed h3 { margin: 0 0 8px; font-size: 15px; }
+.noticed ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.noticed-bad { color: #8a3a1c; }
+.noticed-good { color: #17603f; }
+.review-held { border-left: 3px solid #f2b544; padding-left: 12px; }
+.held-note { font-size: 13px; color: #6b4e00; background: #fff8e8; padding: 6px 10px; border-radius: 6px; margin: 0 0 8px; }
+.report-link { color: var(--ink-3); font-size: 13px; margin-left: auto; }
+.admin-link { margin-right: 4px; font-weight: 600; }
+
+/* Report dialog + admin page */
+.report-reasons { display: grid; gap: 2px; margin: 10px 0; }
+.admin-settings { display: grid; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; margin: 12px 0 16px; }
+.admin-settings .check { align-items: flex-start; }
+.admin-tabs { margin-bottom: 12px; max-width: 640px; }
+.admin-tabs button { font-size: 14px; }
+.admin-list { display: grid; gap: 12px; }
+.admin-review { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; }
+.admin-review.status-pending { border-left: 4px solid #f2b544; }
+.admin-review.status-hidden { border-left: 4px solid #c9cfd4; opacity: .9; }
+.admin-review-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-weight: 600; }
+.status-badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--line-2, #eef1f3); }
+.status-pending .status-badge { background: #fff1cc; color: #6b4e00; }
+.admin-flags { font-size: 13px; background: #fff3ef; color: #8a3a1c; padding: 6px 10px; border-radius: 6px; }
+.admin-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.linkbtn.danger { color: #b3261e; }
+.admin-optout { margin-top: 28px; }
+.admin-opt-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.admin-opt-form input { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.admin-opt-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.admin-opt-list li { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.admin-settings .field-inline { display: flex; align-items: center; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
+.admin-settings .field-inline select { width: auto; }

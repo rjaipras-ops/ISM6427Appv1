@@ -152,6 +152,7 @@
   <main id="view-saved" class="page" hidden></main>
   <main id="view-myreviews" class="page" hidden></main>
   <main id="view-mlssearch" class="page page-wide" hidden></main>
+  <main id="view-admin" class="page page-wide" hidden></main>
 
   <!-- Agent, brokerage and license on every page (the search page has its own in the results list) -->
   <footer class="globalfoot" id="globalFoot"></footer>
@@ -305,6 +306,21 @@
   <!-- Review modal -->
   <dialog class="modal modal-wide" id="reviewModal" aria-labelledby="reviewTitle">
     <form method="dialog" class="modal-body" id="reviewForm"></form>
+  </dialog>
+
+  <!-- Report a review -->
+  <dialog class="modal" id="reportModal" aria-labelledby="reportTitle">
+    <form method="dialog" class="modal-body" id="reportForm">
+      <h2 id="reportTitle">Report this review</h2>
+      <p class="muted">Tell us what's wrong. Reviews with several reports are hidden until we check them.</p>
+      <div id="reportReasons" class="report-reasons"></div>
+      <label class="field">Details (optional)<textarea name="note" maxlength="300" rows="3"></textarea></label>
+      <p class="muted" id="reportStatus" role="status" style="font-size:13px"></p>
+      <div class="modal-actions">
+        <button class="linkbtn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn" value="ok">Send report</button>
+      </div>
+    </form>
   </dialog>
 
   <!-- About the agent / brokerage (opened from the header) -->

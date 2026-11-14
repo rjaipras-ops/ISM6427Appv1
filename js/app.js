@@ -501,6 +501,12 @@ async function renderGoogleButton(clientId) {
     $("#authStatus").textContent = err.message;
   }
 }
+// Reviews turned off for a home (seller request): site settings file + the admin page's list.
+function reviewsOffFor(key, mls) {
+  const off = new Set([...(SITE.reviewsDisabled || []), ...store.getReviewsDisabled()]);
+  return off.has(key) || (mls ? off.has(mls) : false);
+}
+
 function renderAccount() {
   const el = $("#account");
   if (S.user) {
@@ -508,7 +514,7 @@ function renderAccount() {
     const face = S.user.picture
       ? `<img class="avatar" src="${esc(S.user.picture)}" alt="" referrerpolicy="no-referrer" title="${esc(S.user.email || "")}">`
       : `<span class="avatar" title="${esc(S.user.email || "")}">${esc(initials)}</span>`;
-    el.innerHTML = `${face}<button class="linkbtn" id="signOut" type="button">Sign out</button>`;
+    el.innerHTML = `${S.user.isAdmin ? `<a class="linkbtn admin-link" href="#/admin">Admin</a>` : ""}${face}<button class="linkbtn" id="signOut" type="button">Sign out</button>`;
     $("#signOut").onclick = () => { store.signOut(); toast("Signed out"); };
   } else {
     el.innerHTML = `<button class="btn btn-ghost" id="signIn" type="button">Sign in</button>`;
@@ -682,7 +688,7 @@ const titleCase = (s) => s.replace(/\b\w/g, (m) => m.toUpperCase());
 
 /* ---------------- routing ---------------- */
 function show(id) {
-  for (const v of ["view-search", "view-detail", "view-saved", "view-myreviews", "view-mlssearch"]) $("#" + v).hidden = v !== id;
+  for (const v of ["view-search", "view-detail", "view-saved", "view-myreviews", "view-mlssearch", "view-admin"]) $("#" + v).hidden = v !== id;
   $(".searchbar").hidden = id !== "view-search";
   $$(".mainnav a").forEach((a) => a.classList.toggle("is-active",
     (id === "view-search" && a.getAttribute("href") === "#/") ||
@@ -706,6 +712,7 @@ function route() {
   if (m) toast("That home is no longer available.");
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
+  if (h === "#/admin") { show("view-admin"); renderAdmin(); return; }
   if (h === "#/lookup") { show("view-mlssearch"); renderMlsSearch(); return; }
   if (h === "#/mls-search") {
     // Old links: the Flexmls page is only a backup while the live feed is unavailable.
@@ -737,7 +744,7 @@ function renderDetail(l) {
   const s = S.summaries[l.ListingId];
   const saved = S.saved.has(l.ListingId);
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
-  const reviewsOff = SITE.reviewsDisabled.includes(l.ListingId) || (l.MlsNumber && SITE.reviewsDisabled.includes(l.MlsNumber));
+  const reviewsOff = reviewsOffFor(l.ListingId, l.MlsNumber);
   document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | Toured`;
   // "est." badges mark generated placeholder values; MLS listings never have any.
   const est = mls ? "" : `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
@@ -1082,7 +1089,7 @@ function renderPanelProperty(p) {
   const reviews = store.getReviews(p.key);
   const s = S.summaries[p.key];
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
-  const reviewsOff = SITE.reviewsDisabled.includes(p.key);
+  const reviewsOff = reviewsOffFor(p.key);
   // Is this home also in Toured's own listing data? Link to its full page.
   const match = S.listings.find((x) => normAddr(x.StreetAddress) === normAddr(p.street) && String(x.PostalCode) === String(p.postalCode));
   const facts = [
@@ -1260,6 +1267,15 @@ document.addEventListener("click", async (e) => {
 const fmtTime = (hm) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`; };
 const addHours = (hm, n) => { const [h, m] = hm.split(":").map(Number); return `${h + n}:${String(m).padStart(2, "0")}`; };
 
+// "What touring buyers noticed": how many tours flagged each concern / positive.
+function noticedHTML(s) {
+  const of = (n) => `${n} of ${s.count} tour${s.count > 1 ? "s" : ""}`;
+  const concerns = store.OBSERVATIONS.filter((o) => s.concerns?.[o.key]).map((o) => `<li class="noticed-bad">⚠ ${esc(o.label)} <span class="muted">· ${of(s.concerns[o.key])}</span></li>`);
+  const goods = Object.entries(s.positives || {}).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<li class="noticed-good">✓ ${esc(p)} <span class="muted">· ${of(n)}</span></li>`);
+  if (!concerns.length && !goods.length) return "";
+  return `<div class="noticed"><h3>What touring buyers noticed</h3><ul>${concerns.join("")}${goods.join("")}</ul></div>`;
+}
+
 function reviewSummaryHTML(s) {
   if (!s) return "";
   return `<div class="reviews-head">
@@ -1272,12 +1288,30 @@ function reviewSummaryHTML(s) {
       ${store.RATING_CATEGORIES.filter((c) => c.key !== "overall" && s.cats[c.key] != null).map((c) =>
         `<div class="cat-bar"><span>${c.label}</span><span class="track"><span class="fill" style="width:${(s.cats[c.key] / 5) * 100}%"></span></span><b>${s.cats[c.key].toFixed(1)}</b></div>`).join("")}
     </div>
+  </div>
+  ${noticedHTML(s)}`;
+}
+
+// "What the photos don't show" answers on a review.
+function observationsHTML(r) {
+  const items = store.OBSERVATIONS.filter((o) => r.observations?.[o.key] && r.observations[o.key].level !== "none").map((o) => {
+    const x = r.observations[o.key];
+    return `<li class="obs-${x.level}"><b>${x.level === "significant" ? "⚠" : "•"} ${esc(o.label)}</b> <span class="muted">(${esc(store.OBSERVATION_LEVELS[x.level].toLowerCase())})</span>${x.note ? ` — ${esc(x.note)}` : ""}</li>`;
+  });
+  const pos = (r.positives || []).map((p) => `<span class="tag tag-good">✓ ${esc(p)}</span>`);
+  if (!items.length && !pos.length && !r.positivesNote) return "";
+  return `<div class="review-obs">
+    ${items.length ? `<ul class="obs-list">${items.join("")}</ul>` : ""}
+    ${pos.length || r.positivesNote ? `<div class="review-tags">${pos.join("")}${r.positivesNote ? `<span class="muted pos-note">${esc(r.positivesNote)}</span>` : ""}</div>` : ""}
   </div>`;
 }
 
 function reviewHTML(r) {
   const isMine = S.user && r.userId === S.user.id;
-  return `<article class="review">
+  const pending = isMine && r.status === "pending", hidden = isMine && r.status === "hidden";
+  return `<article class="review${pending || hidden ? " review-held" : ""}">
+    ${pending ? `<p class="held-note">Only you can see this for now: it will appear after a quick check.</p>` : ""}
+    ${hidden ? `<p class="held-note">This review was hidden by the site after a review of its content.</p>` : ""}
     <div class="review-top">
       <span class="avatar" aria-hidden="true">${esc(r.displayName.slice(0, 1).toUpperCase())}</span>
       <div>
@@ -1290,10 +1324,11 @@ function reviewHTML(r) {
     <h4>${esc(r.title)}</h4>
     <p>${esc(r.body)}</p>
     ${r.pros || r.cons ? `<div class="pros-cons">${r.pros ? `<div class="pro"><b>Liked</b>${esc(r.pros)}</div>` : ""}${r.cons ? `<div class="con"><b>Watch out for</b>${esc(r.cons)}</div>` : ""}</div>` : ""}
+    ${observationsHTML(r)}
     ${r.tags?.length ? `<div class="review-tags">${r.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
     <div class="helpful">
-      <button type="button" data-helpful="${r.id}">👍 Helpful${r.helpful ? ` (${r.helpful})` : ""}</button>
-      ${isMine ? `<button type="button" class="linkbtn" data-delete="${r.id}">Delete</button>` : ""}
+      ${r.status && r.status !== "published" ? "" : `<button type="button" data-helpful="${r.id}">👍 Helpful${r.helpful ? ` (${r.helpful})` : ""}</button>`}
+      ${isMine ? `<button type="button" class="linkbtn" data-delete="${r.id}">Delete</button>` : store.isRemote() && !r.sample ? `<button type="button" class="linkbtn report-link" data-report="${r.id}">Report</button>` : ""}
     </div>
   </article>`;
 }
@@ -1341,13 +1376,26 @@ function openReviewForm(l) {
         </span></div>`).join("")}
     </div>
     <label class="field">Headline<input name="title" maxlength="80" required placeholder="e.g. Exactly like the photos, but the street is busy"></label>
-    <label class="field">Your tour, in detail<textarea name="body" maxlength="2000" required placeholder="What did you notice in person that the listing doesn't show? Condition, smells, noise, light, layout, neighbors…"></textarea></label>
+    <fieldset class="obs">
+      <legend>What the photos don't show</legend>
+      <p class="muted obs-help">Things buyers only learn in person. Describe the property, not the people who live nearby.</p>
+      ${store.OBSERVATIONS.map((o) => `<div class="obs-row" data-obs="${o.key}">
+        <div class="obs-q"><b>${esc(o.label)}</b><small>${esc(o.hint)}</small></div>
+        <div class="obs-levels" role="radiogroup" aria-label="${esc(o.label)}">
+          ${Object.entries(store.OBSERVATION_LEVELS).map(([v, t]) => `<label><input type="radio" name="obs-${o.key}" value="${v}" ${v === "none" ? "checked" : ""}><span>${t}</span></label>`).join("")}
+        </div>
+        <input class="obs-note" name="obsnote-${o.key}" maxlength="160" placeholder="Where / what did you see?" hidden>
+      </div>`).join("")}
+      <div class="obs-row">
+        <div class="obs-q"><b>Positive surprises</b><small>What was better in person than the listing suggests?</small></div>
+        <div class="tag-pick">${store.POSITIVES.map((t, i) => `<input type="checkbox" id="pos${i}" name="positives" value="${esc(t)}"><label for="pos${i}">${esc(t)}</label>`).join("")}</div>
+        <input class="obs-note" name="positivesNote" maxlength="160" placeholder="Anything else that impressed you? (optional)">
+      </div>
+    </fieldset>
+    <label class="field">Your tour, in detail<textarea name="body" maxlength="2000" required placeholder="Walk other buyers through it: condition, smells, light at the time you visited, noise, layout, what surprised you…"></textarea></label>
     <div class="field-row">
       <label class="field">What you liked<input name="pros" maxlength="140"></label>
       <label class="field">Watch out for<input name="cons" maxlength="140"></label>
-    </div>
-    <div class="field">Quick tags
-      <div class="tag-pick">${store.REVIEW_TAGS.map((t, i) => `<input type="checkbox" id="tg${i}" name="tags" value="${esc(t)}"><label for="tg${i}">${esc(t)}</label>`).join("")}</div>
     </div>
     <label class="certify"><input type="checkbox" name="certified" required>
       <span>I certify that I personally toured <b>${esc(l.StreetAddress)}</b> in person on the date above, that this review reflects my own experience, and that I am not the owner, listing agent, or affiliated with the seller.</span></label>
@@ -1365,20 +1413,148 @@ function openReviewForm(l) {
     const input = {
       tourDate: fd.get("tourDate"), tourType: fd.get("tourType"), ratings,
       title: fd.get("title"), body: fd.get("body"), pros: fd.get("pros"), cons: fd.get("cons"),
-      tags: fd.getAll("tags"), certified: fd.get("certified") === "on",
+      tags: [], certified: fd.get("certified") === "on",
+      observations: Object.fromEntries(store.OBSERVATIONS.map((o) => [o.key, { level: fd.get(`obs-${o.key}`) || "none", note: fd.get(`obsnote-${o.key}`) || "" }])),
+      positives: fd.getAll("positives"), positivesNote: fd.get("positivesNote") || "",
     };
     try {
-      await store.addReview(input, { listing: l, user: S.user });
+      const saved = await store.addReview(input, { listing: l, user: S.user });
       $("#reviewModal").close();
       S.summaries = store.getReviewSummaries();
       if (l.onReviewChange) l.onReviewChange(l);
       else { renderDetail(l); $("#reviewList").scrollIntoView({ behavior: "smooth" }); }
-      toast("Review posted — thanks for helping other buyers");
+      toast(saved?.held ? "Thanks! Your review will appear after a quick check." : "Review posted — thanks for helping other buyers");
     } catch (err) {
       $("#reviewErr").innerHTML = (err.errors || [err.message]).map(esc).join("<br>");
     }
   };
+  // Show the "where / what" note when a concern is marked Some or Significant.
+  form.addEventListener("change", (e) => {
+    const row = e.target.closest("[data-obs]");
+    if (!row || e.target.type !== "radio") return;
+    const note = $(".obs-note", row);
+    note.hidden = e.target.value === "none";
+    if (!note.hidden) note.focus();
+  });
   $("#reviewModal").showModal();
+}
+
+/* ---------------- report a review ---------------- */
+let reportingId = null;
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-report]");
+  if (!b) return;
+  requireAuth(() => {
+    reportingId = b.dataset.report;
+    $("#reportForm").reset();
+    $("#reportStatus").textContent = "";
+    $("#reportReasons").innerHTML = Object.entries(store.REPORT_REASONS).map(([k, t], i) =>
+      `<label class="check"><input type="radio" name="reason" value="${k}" ${i === 0 ? "" : ""} required> ${esc(t)}</label>`).join("");
+    $("#reportModal").showModal();
+  });
+});
+$("#reportForm").addEventListener("submit", async (e) => {
+  if (e.submitter?.value !== "ok") return;
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  if (!fd.get("reason")) { $("#reportStatus").textContent = "Choose a reason."; return; }
+  try {
+    const r = await store.reportReview(reportingId, fd.get("reason"), fd.get("note"));
+    $("#reportModal").close();
+    toast(r.already ? "You've already reported this review." : "Thanks, we'll take a look.");
+  } catch (err) { $("#reportStatus").textContent = err.message; }
+});
+
+/* ---------------- admin (site owner) ---------------- */
+const admin = { filter: "attention", rows: [], settings: null };
+async function renderAdmin() {
+  const el = $("#view-admin");
+  if (!S.user?.isAdmin) {
+    el.innerHTML = `<h1>Admin</h1><div class="empty"><h2>Sign in with the site owner's account</h2><p>This page is only available to the site owner.</p>${S.user ? "" : `<button class="btn" type="button" id="adminIn">Sign in</button>`}</div>`;
+    $("#adminIn")?.addEventListener("click", () => requireAuth(() => route()));
+    return;
+  }
+  el.innerHTML = `<h1>Review moderation</h1><p class="muted">Loading…</p>`;
+  try {
+    const [list, settings] = await Promise.all([store.adminListReviews(), store.adminGetSettings()]);
+    admin.rows = list.reviews; admin.settings = settings;
+  } catch (err) { el.innerHTML = `<h1>Review moderation</h1><p class="form-error">${esc(err.message)}</p>`; return; }
+  drawAdmin();
+}
+const needsAttention = (r) => r.status === "pending" || (r.reports?.length && r.status !== "hidden") || (r.status === "hidden" && r.moderation?.action === "auto-hidden");
+function drawAdmin() {
+  const el = $("#view-admin");
+  const counts = { attention: admin.rows.filter(needsAttention).length, published: admin.rows.filter((r) => r.status === "published").length,
+    hidden: admin.rows.filter((r) => r.status === "hidden").length, all: admin.rows.length };
+  const rows = admin.rows.filter((r) => admin.filter === "all" ? true : admin.filter === "attention" ? needsAttention(r) : r.status === admin.filter);
+  const st = admin.settings;
+  el.innerHTML = `<h1>Review moderation</h1>
+    <div class="admin-settings">
+      <label class="check"><input type="checkbox" id="admApproveAll" ${st.approveAll ? "checked" : ""}>
+        <span><b>Approve every review before it's published</b><br><small class="muted">Off: reviews publish right away unless screening flags them (contact info, profanity, fair-housing wording).</small></span></label>
+      <label class="field-inline">Hide a review automatically after
+        <select id="admThreshold">${[1, 2, 3, 4, 5].map((n) => `<option ${n === st.reportThreshold ? "selected" : ""}>${n}</option>`).join("")}</select> report(s)</label>
+    </div>
+    <div class="seg admin-tabs">${[["attention", "Needs attention"], ["published", "Published"], ["hidden", "Hidden"], ["all", "All"]].map(([k, t]) =>
+      `<button type="button" data-admtab="${k}" aria-pressed="${admin.filter === k}">${t} (${counts[k]})</button>`).join("")}</div>
+    <div class="admin-list">${rows.length ? rows.map(adminReviewHTML).join("") : `<p class="muted" style="padding:16px 0">Nothing here.</p>`}</div>
+    <section class="admin-optout">
+      <h2>Reviews turned off (seller requests)</h2>
+      <p class="muted">Enter a listing's MLS number (e.g. R11012345) or the listing ID from its page address. Reviews disappear from that home and new ones can't be posted.</p>
+      <form id="admOptForm" class="admin-opt-form"><input id="admOptInput" placeholder="MLS number or listing ID" required><button class="btn" type="submit">Turn off reviews</button></form>
+      <ul class="admin-opt-list">${(st.reviewsDisabled || []).map((k) => {
+        const l = S.listings.find((x) => x.ListingId === k || x.MlsNumber === k);
+        return `<li><span><b>${esc(k)}</b>${l ? ` · ${esc(l.UnparsedAddress)}` : ""}</span><button type="button" class="linkbtn" data-optremove="${esc(k)}">Turn reviews back on</button></li>`;
+      }).join("") || `<li class="muted">None.</li>`}</ul>
+    </section>`;
+  el.onclick = async (e) => {
+    const tab = e.target.closest("[data-admtab]");
+    if (tab) { admin.filter = tab.dataset.admtab; drawAdmin(); return; }
+    const act = e.target.closest("[data-admact]");
+    if (act) {
+      const { admact: action, id } = act.dataset;
+      if (action === "delete" && !confirm("Delete this review permanently?")) return;
+      try {
+        await store.adminAct(id, action);
+        if (action === "delete") admin.rows = admin.rows.filter((r) => r.id !== id);
+        else { const r = admin.rows.find((x) => x.id === id); r.status = action === "hide" ? "hidden" : "published"; if (action === "approve") r.reports = []; r.moderation = { action }; }
+        await store.reloadReviews(); S.summaries = store.getReviewSummaries();
+        drawAdmin(); toast({ approve: "Published", hide: "Hidden", restore: "Published", delete: "Deleted" }[action]);
+      } catch (err) { toast(err.message); }
+      return;
+    }
+    const rm = e.target.closest("[data-optremove]");
+    if (rm) { admin.settings = await store.adminSaveSettings({ reviewsDisabled: admin.settings.reviewsDisabled.filter((k) => k !== rm.dataset.optremove) }); drawAdmin(); toast("Reviews turned back on"); }
+  };
+  $("#admApproveAll").onchange = async (e) => { admin.settings = await store.adminSaveSettings({ approveAll: e.target.checked }); toast(e.target.checked ? "New reviews now wait for your approval" : "Reviews publish automatically unless flagged"); };
+  $("#admThreshold").onchange = async (e) => { admin.settings = await store.adminSaveSettings({ reportThreshold: Number(e.target.value) }); toast("Saved"); };
+  $("#admOptForm").onsubmit = async (e) => {
+    e.preventDefault();
+    const v = $("#admOptInput").value.trim();
+    if (!v) return;
+    admin.settings = await store.adminSaveSettings({ reviewsDisabled: [...admin.settings.reviewsDisabled, v] });
+    drawAdmin(); toast("Reviews turned off for that home");
+  };
+}
+function adminReviewHTML(r) {
+  const home = S.byId.get(r.listingId);
+  const where = home ? `<a href="#/home/${esc(r.listingId)}">${esc(home.UnparsedAddress)}</a>` : esc(r.address || r.listingId);
+  const badge = { published: "Published", pending: "Waiting for approval", hidden: r.moderation?.action === "auto-hidden" ? "Hidden (reports)" : "Hidden" }[r.status];
+  return `<article class="admin-review status-${r.status}">
+    <div class="admin-review-top"><span class="status-badge">${badge}</span> ${where}</div>
+    <div class="review-meta">${esc(r.displayName)}${r.reviewerEmail ? ` · ${esc(r.reviewerEmail)}` : ""} · posted ${fmtDate(r.createdAt.slice(0, 10))} · toured ${fmtDate(r.tour.date)} · ${"★".repeat(r.ratings.overall)}</div>
+    ${r.flags?.length ? `<p class="admin-flags">Screening: ${r.flags.map(esc).join("; ")}</p>` : ""}
+    ${r.reports?.length ? `<p class="admin-flags">Reports (${r.reports.length}): ${r.reports.map((x) => esc(x.reason) + (x.note ? ` — “${esc(x.note)}”` : "")).join("; ")}</p>` : ""}
+    <h4>${esc(r.title)}</h4><p>${esc(r.body)}</p>
+    ${r.pros ? `<p><b>Liked:</b> ${esc(r.pros)}</p>` : ""}${r.cons ? `<p><b>Watch out for:</b> ${esc(r.cons)}</p>` : ""}
+    ${observationsHTML(r)}
+    <div class="admin-actions">
+      ${r.status !== "published" ? `<button class="btn" type="button" data-admact="${r.status === "hidden" ? "restore" : "approve"}" data-id="${r.id}">${r.status === "hidden" ? "Restore" : "Approve"}</button>` : ""}
+      ${r.status === "published" && r.reports?.length ? `<button class="btn btn-ghost" type="button" data-admact="approve" data-id="${r.id}">Keep (clear reports)</button>` : ""}
+      ${r.status !== "hidden" ? `<button class="btn btn-ghost" type="button" data-admact="hide" data-id="${r.id}">Hide</button>` : ""}
+      <button class="linkbtn danger" type="button" data-admact="delete" data-id="${r.id}">Delete</button>
+    </div>
+  </article>`;
 }
 
 /* ---------------- saved / my reviews ---------------- */
