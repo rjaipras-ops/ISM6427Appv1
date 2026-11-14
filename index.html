@@ -2,11 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Toured — South Florida homes reviewed by people who walked through</title>
   <meta name="description" content="Search Florida homes for sale and read reviews from buyers who certify they toured the home in person." />
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Toured" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
@@ -154,11 +160,11 @@
   <main id="view-mlssearch" class="page page-wide" hidden></main>
   <main id="view-admin" class="page page-wide" hidden></main>
 
-  <!-- Agent, brokerage and license on every page (the search page has its own in the results list) -->
-  <footer class="globalfoot" id="globalFoot"></footer>
-
   <!-- Listing detail -->
   <main id="view-detail" class="detail" hidden></main>
+
+  <!-- Agent, brokerage and license on every page (the search page has its own in the results list) -->
+  <footer class="globalfoot" id="globalFoot"></footer>
 
   <!-- More filters drawer -->
   <div class="drawer" id="drawer" hidden>
@@ -393,6 +399,13 @@
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+  <!-- Install prompt (phones only, shown until dismissed) -->
+  <div class="install-bar" id="installBar" hidden>
+    <img src="assets/brand/toured-icon.svg" width="36" height="36" alt="" />
+    <p id="installText"></p>
+    <button class="btn" id="installBtn" type="button" hidden>Install</button>
+    <button class="install-x" id="installX" type="button" aria-label="Dismiss">×</button>
+  </div>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

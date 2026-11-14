@@ -918,3 +918,48 @@ body.on-search .globalfoot { display: none; }
 .write-ideas ul { margin: 6px 0; padding-left: 20px; display: grid; gap: 2px; }
 .write-ideas small { color: var(--ink-3); }
 #reviewBody { width: 100%; min-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; margin-bottom: 12px; }
+
+/* ---- Phone fixes + installable app ---- */
+.avatar-btn { appearance: none; border: 0; background: none; padding: 0; display: inline-flex; cursor: default; border-radius: 50%; }
+.acct-menu { display: flex; align-items: center; gap: 4px; }
+.idx-source > span { min-width: 0; }
+.install-bar { display: none; }
+@media (max-width: 860px) {
+  /* Listing page: never wider than the screen */
+  .detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .detail-grid > * { min-width: 0; }
+  .keyfacts > * { min-width: 0; overflow-wrap: anywhere; }
+  .idx-source { flex-wrap: wrap; }
+  .idx-source > span { flex: 1 1 100%; }
+  /* Signed-in header: tap your picture for Admin / Sign out */
+  .account { position: relative; }
+  .avatar-btn { cursor: pointer; }
+  .acct-menu { display: none; position: absolute; right: 0; top: calc(100% + 8px); z-index: 1200; flex-direction: column; align-items: stretch; gap: 0;
+    background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.16); padding: 6px; min-width: 150px; }
+  .account.open .acct-menu { display: flex; }
+  .acct-menu .linkbtn { text-align: left; padding: 12px 14px; font-size: 16px; text-decoration: none; white-space: nowrap; margin: 0; }
+  /* Install prompt, above the bottom tab bar */
+  .install-bar:not([hidden]) { display: flex; align-items: center; gap: 10px; position: fixed; left: 8px; right: 8px; z-index: 1002;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 8px); background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.18); padding: 10px 8px 10px 12px; }
+  .install-bar p { margin: 0; font-size: 13px; line-height: 1.3; flex: 1; min-width: 0; }
+  .install-bar .btn { padding: 8px 14px; font-size: 14px; white-space: nowrap; }
+  .install-x { appearance: none; border: 0; background: none; font-size: 24px; line-height: 1; color: var(--ink-3); padding: 8px; cursor: pointer; }
+  /* Comfortable touch targets; 16px inputs stop iPhones zooming in when you tap a field */
+  input, select, textarea { font-size: 16px; }
+  .topbar { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+}
+/* Installed app: no browser bar, so keep clear of the phone's status area */
+@media (display-mode: standalone) {
+  html { overscroll-behavior-y: none; }
+}
+@media (max-width: 860px) { body.has-install-bar #mobileMapBtn { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 84px); } }
+/* Form fields never wider than their dialog (small phones) */
+.field, .field-row > * { min-width: 0; }
+.field-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+@media (max-width: 860px) {
+  .field-row, #contactModal .field-row { grid-template-columns: minmax(0, 1fr); }
+  .modal-body { padding: 20px 16px; }
+  .modal { max-height: calc(100dvh - 24px); }
+}

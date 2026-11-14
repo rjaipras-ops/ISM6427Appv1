@@ -33,7 +33,7 @@ import adminSettings from "../netlify/functions/admin-settings.mjs";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
-  ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon" };
+  ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".ico": "image/x-icon", ".webmanifest": "application/manifest+json" };
 const BLOCKED = /^\/(netlify|scripts|node_modules|\.idx-cache|\.env|\.git)(\/|$)/;
 
 const routes = [

@@ -69,6 +69,7 @@ async function init() {
   syncControls();
   observeSearchbar();
   window.addEventListener("hashchange", route);
+  window.addEventListener("hashchange", () => $("#account")?.classList.remove("open"));
   route();
   startBackgroundRefresh();
 }
@@ -507,6 +508,7 @@ function reviewsOffFor(key, mls) {
   return off.has(key) || (mls ? off.has(mls) : false);
 }
 
+document.addEventListener("click", () => { $("#account")?.classList.remove("open"); $("#acctBtn")?.setAttribute("aria-expanded", "false"); });
 function renderAccount() {
   const el = $("#account");
   if (S.user) {
@@ -514,8 +516,12 @@ function renderAccount() {
     const face = S.user.picture
       ? `<img class="avatar" src="${esc(S.user.picture)}" alt="" referrerpolicy="no-referrer" title="${esc(S.user.email || "")}">`
       : `<span class="avatar" title="${esc(S.user.email || "")}">${esc(initials)}</span>`;
-    el.innerHTML = `${S.user.isAdmin ? `<a class="linkbtn admin-link" href="#/admin">Admin</a>` : ""}${face}<button class="linkbtn" id="signOut" type="button">Sign out</button>`;
+    el.innerHTML = `<button class="avatar-btn" id="acctBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">${face}</button>
+      <div class="acct-menu" id="acctMenu">${S.user.isAdmin ? `<a class="linkbtn admin-link" href="#/admin">Admin</a>` : ""}<button class="linkbtn" id="signOut" type="button">Sign out</button></div>`;
     $("#signOut").onclick = () => { store.signOut(); toast("Signed out"); };
+    const setOpen = (on) => { el.classList.toggle("open", on); $("#acctBtn")?.setAttribute("aria-expanded", String(on)); };
+    $("#acctBtn").onclick = (e) => { e.stopPropagation(); setOpen(!el.classList.contains("open")); };
+    $("#acctMenu").onclick = () => setOpen(false);
   } else {
     el.innerHTML = `<button class="btn btn-ghost" id="signIn" type="button">Sign in</button>`;
     $("#signIn").onclick = () => requireAuth(() => {});
@@ -852,7 +858,7 @@ function renderDetail(l) {
         ${features.length ? `<section class="section"><h2>Features ${est}</h2><ul class="feature-list">${features.map((x) => `<li>${x}</li>`).join("")}</ul></section>` : ""}
         <section class="section" style="border:0">
           ${mls ? `
-          <p class="idx-source">${mlsMark()} Listing information provided by BeachesMLS through IDX. Listing courtesy of <b>${esc(l.ListOfficeName)}</b>. MLS #${esc(l.MlsNumber || "—")}. Last updated ${esc(fmtDateTime(l.ModificationTimestamp))}; feed refreshed <span class="feed-refreshed">${esc(fmtDateTime(S.feed.lastSyncTimestamp))}</span>.</p>
+          <p class="idx-source">${mlsMark()}<span>Listing information provided by BeachesMLS through IDX. Listing courtesy of <b>${esc(l.ListOfficeName)}</b>. MLS #${esc(l.MlsNumber || "—")}. Last updated ${esc(fmtDateTime(l.ModificationTimestamp))}; feed refreshed <span class="feed-refreshed">${esc(fmtDateTime(S.feed.lastSyncTimestamp))}</span>.</span></p>
           <p class="idx-disclaimer">${esc(SITE.mlsDisclaimer())}</p>
           <p class="muted" style="font-size:13px">Displayed by ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Public records, tax estimates, satellite imagery and tour reviews on this page are not from BeachesMLS.</p>` : `
           <p class="muted" style="font-size:13px">Listed by <b>${esc(l.ListOfficeName)}</b>. Listing facts retrieved ${fmtDate(l.SourceRetrieved)} from public listing data (<a href="${esc(l.SourceUrl)}" target="_blank" rel="noopener noreferrer">source</a>). Fields marked ${est} are placeholders. Tour reviews are user opinions and are not verified by the listing broker.</p>
@@ -1535,3 +1541,28 @@ function renderMyReviews() {
     ${rows.length ? rows.map((r) => { const l = S.byId.get(r.listingId); return `<div class="side-card" style="position:static;margin-bottom:14px"><a href="#/home/${r.listingId}"><b>${esc(l?.UnparsedAddress || r.listingId)}</b></a>${reviewHTML(r)}</div>`; }).join("")
       : `<div class="empty"><h2>No reviews yet</h2><p>Open a home you've toured and choose “I toured this home”.</p><a class="btn" href="#/" style="text-decoration:none;display:inline-block">Find a home</a></div>`}`;
 }
+
+/* ---------------- installable app (PWA) ---------------- */
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+(() => {
+  const bar = $("#installBar");
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem("toured.install.dismissed") === "1"; } catch { /* private mode */ }
+  if (!bar || standalone || dismissed || !matchMedia("(max-width: 860px)").matches) return;
+  const hide = (remember) => { bar.hidden = true; document.body.classList.remove("has-install-bar"); if (remember) try { localStorage.setItem("toured.install.dismissed", "1"); } catch { /* ignore */ } };
+  const show = (text) => { $("#installText").textContent = text; bar.hidden = false; document.body.classList.add("has-install-bar"); };
+  $("#installX").onclick = () => hide(true);
+  // Android / Chrome: the browser offers a one-tap install.
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    show("Get the Toured app: faster, full screen, one tap from your home screen.");
+    const btn = $("#installBtn"); btn.hidden = false;
+    btn.onclick = async () => { hide(false); e.prompt(); const { outcome } = await e.userChoice; if (outcome !== "accepted") hide(true); };
+  });
+  window.addEventListener("appinstalled", () => hide(true));
+  // iPhone / iPad Safari has no install button: explain the two taps.
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) setTimeout(() => show("Add Toured to your Home Screen: tap the Share button, then “Add to Home Screen”."), 4000);
+})();
