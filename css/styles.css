@@ -912,3 +912,9 @@ body.on-search .globalfoot { display: none; }
 .admin-opt-list li { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
 .admin-settings .field-inline { display: flex; align-items: center; gap: 8px; justify-content: flex-start; flex-wrap: wrap; }
 .admin-settings .field-inline select { width: auto; }
+
+/* Free-form review: writing ideas */
+.write-ideas { background: var(--bg-2, #f5f7f8); border-radius: var(--radius-sm); padding: 10px 14px; margin: 4px 0 8px; font-size: 14px; }
+.write-ideas ul { margin: 6px 0; padding-left: 20px; display: grid; gap: 2px; }
+.write-ideas small { color: var(--ink-3); }
+#reviewBody { width: 100%; min-height: 140px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; margin-bottom: 12px; }

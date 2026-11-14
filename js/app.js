@@ -1267,15 +1267,6 @@ document.addEventListener("click", async (e) => {
 const fmtTime = (hm) => { const [h, m] = hm.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? ":" + String(m).padStart(2, "0") : ""}${h < 12 ? "am" : "pm"}`; };
 const addHours = (hm, n) => { const [h, m] = hm.split(":").map(Number); return `${h + n}:${String(m).padStart(2, "0")}`; };
 
-// "What touring buyers noticed": how many tours flagged each concern / positive.
-function noticedHTML(s) {
-  const of = (n) => `${n} of ${s.count} tour${s.count > 1 ? "s" : ""}`;
-  const concerns = store.OBSERVATIONS.filter((o) => s.concerns?.[o.key]).map((o) => `<li class="noticed-bad">⚠ ${esc(o.label)} <span class="muted">· ${of(s.concerns[o.key])}</span></li>`);
-  const goods = Object.entries(s.positives || {}).sort((a, b) => b[1] - a[1]).map(([p, n]) => `<li class="noticed-good">✓ ${esc(p)} <span class="muted">· ${of(n)}</span></li>`);
-  if (!concerns.length && !goods.length) return "";
-  return `<div class="noticed"><h3>What touring buyers noticed</h3><ul>${concerns.join("")}${goods.join("")}</ul></div>`;
-}
-
 function reviewSummaryHTML(s) {
   if (!s) return "";
   return `<div class="reviews-head">
@@ -1288,21 +1279,6 @@ function reviewSummaryHTML(s) {
       ${store.RATING_CATEGORIES.filter((c) => c.key !== "overall" && s.cats[c.key] != null).map((c) =>
         `<div class="cat-bar"><span>${c.label}</span><span class="track"><span class="fill" style="width:${(s.cats[c.key] / 5) * 100}%"></span></span><b>${s.cats[c.key].toFixed(1)}</b></div>`).join("")}
     </div>
-  </div>
-  ${noticedHTML(s)}`;
-}
-
-// "What the photos don't show" answers on a review.
-function observationsHTML(r) {
-  const items = store.OBSERVATIONS.filter((o) => r.observations?.[o.key] && r.observations[o.key].level !== "none").map((o) => {
-    const x = r.observations[o.key];
-    return `<li class="obs-${x.level}"><b>${x.level === "significant" ? "⚠" : "•"} ${esc(o.label)}</b> <span class="muted">(${esc(store.OBSERVATION_LEVELS[x.level].toLowerCase())})</span>${x.note ? ` — ${esc(x.note)}` : ""}</li>`;
-  });
-  const pos = (r.positives || []).map((p) => `<span class="tag tag-good">✓ ${esc(p)}</span>`);
-  if (!items.length && !pos.length && !r.positivesNote) return "";
-  return `<div class="review-obs">
-    ${items.length ? `<ul class="obs-list">${items.join("")}</ul>` : ""}
-    ${pos.length || r.positivesNote ? `<div class="review-tags">${pos.join("")}${r.positivesNote ? `<span class="muted pos-note">${esc(r.positivesNote)}</span>` : ""}</div>` : ""}
   </div>`;
 }
 
@@ -1324,7 +1300,6 @@ function reviewHTML(r) {
     <h4>${esc(r.title)}</h4>
     <p>${esc(r.body)}</p>
     ${r.pros || r.cons ? `<div class="pros-cons">${r.pros ? `<div class="pro"><b>Liked</b>${esc(r.pros)}</div>` : ""}${r.cons ? `<div class="con"><b>Watch out for</b>${esc(r.cons)}</div>` : ""}</div>` : ""}
-    ${observationsHTML(r)}
     ${r.tags?.length ? `<div class="review-tags">${r.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
     <div class="helpful">
       ${r.status && r.status !== "published" ? "" : `<button type="button" data-helpful="${r.id}">👍 Helpful${r.helpful ? ` (${r.helpful})` : ""}</button>`}
@@ -1376,23 +1351,19 @@ function openReviewForm(l) {
         </span></div>`).join("")}
     </div>
     <label class="field">Headline<input name="title" maxlength="80" required placeholder="e.g. Exactly like the photos, but the street is busy"></label>
-    <fieldset class="obs">
-      <legend>What the photos don't show</legend>
-      <p class="muted obs-help">Things buyers only learn in person. Describe the property, not the people who live nearby.</p>
-      ${store.OBSERVATIONS.map((o) => `<div class="obs-row" data-obs="${o.key}">
-        <div class="obs-q"><b>${esc(o.label)}</b><small>${esc(o.hint)}</small></div>
-        <div class="obs-levels" role="radiogroup" aria-label="${esc(o.label)}">
-          ${Object.entries(store.OBSERVATION_LEVELS).map(([v, t]) => `<label><input type="radio" name="obs-${o.key}" value="${v}" ${v === "none" ? "checked" : ""}><span>${t}</span></label>`).join("")}
-        </div>
-        <input class="obs-note" name="obsnote-${o.key}" maxlength="160" placeholder="Where / what did you see?" hidden>
-      </div>`).join("")}
-      <div class="obs-row">
-        <div class="obs-q"><b>Positive surprises</b><small>What was better in person than the listing suggests?</small></div>
-        <div class="tag-pick">${store.POSITIVES.map((t, i) => `<input type="checkbox" id="pos${i}" name="positives" value="${esc(t)}"><label for="pos${i}">${esc(t)}</label>`).join("")}</div>
-        <input class="obs-note" name="positivesNote" maxlength="160" placeholder="Anything else that impressed you? (optional)">
-      </div>
-    </fieldset>
-    <label class="field">Your tour, in detail<textarea name="body" maxlength="2000" required placeholder="Walk other buyers through it: condition, smells, light at the time you visited, noise, layout, what surprised you…"></textarea></label>
+    <label class="field" for="reviewBody">Your tour, in detail</label>
+    <div class="write-ideas">
+      <b>Not sure what to write? Things buyers only learn in person:</b>
+      <ul>
+        <li>Visible moisture staining, or signs of previous water damage</li>
+        <li>Road noise, or a busier street than you expected</li>
+        <li>Poor workmanship or signs of deferred maintenance</li>
+        <li>An awkward floor plan that the photos hide</li>
+        <li>Positive surprises, like better natural light or a quieter neighborhood than expected</li>
+      </ul>
+      <small>Describe the home and street, not the people who live nearby.</small>
+    </div>
+    <textarea id="reviewBody" name="body" maxlength="2000" required placeholder="Write it in your own words…"></textarea>
     <div class="field-row">
       <label class="field">What you liked<input name="pros" maxlength="140"></label>
       <label class="field">Watch out for<input name="cons" maxlength="140"></label>
@@ -1414,8 +1385,6 @@ function openReviewForm(l) {
       tourDate: fd.get("tourDate"), tourType: fd.get("tourType"), ratings,
       title: fd.get("title"), body: fd.get("body"), pros: fd.get("pros"), cons: fd.get("cons"),
       tags: [], certified: fd.get("certified") === "on",
-      observations: Object.fromEntries(store.OBSERVATIONS.map((o) => [o.key, { level: fd.get(`obs-${o.key}`) || "none", note: fd.get(`obsnote-${o.key}`) || "" }])),
-      positives: fd.getAll("positives"), positivesNote: fd.get("positivesNote") || "",
     };
     try {
       const saved = await store.addReview(input, { listing: l, user: S.user });
@@ -1428,14 +1397,6 @@ function openReviewForm(l) {
       $("#reviewErr").innerHTML = (err.errors || [err.message]).map(esc).join("<br>");
     }
   };
-  // Show the "where / what" note when a concern is marked Some or Significant.
-  form.addEventListener("change", (e) => {
-    const row = e.target.closest("[data-obs]");
-    if (!row || e.target.type !== "radio") return;
-    const note = $(".obs-note", row);
-    note.hidden = e.target.value === "none";
-    if (!note.hidden) note.focus();
-  });
   $("#reviewModal").showModal();
 }
 
@@ -1547,7 +1508,6 @@ function adminReviewHTML(r) {
     ${r.reports?.length ? `<p class="admin-flags">Reports (${r.reports.length}): ${r.reports.map((x) => esc(x.reason) + (x.note ? ` — “${esc(x.note)}”` : "")).join("; ")}</p>` : ""}
     <h4>${esc(r.title)}</h4><p>${esc(r.body)}</p>
     ${r.pros ? `<p><b>Liked:</b> ${esc(r.pros)}</p>` : ""}${r.cons ? `<p><b>Watch out for:</b> ${esc(r.cons)}</p>` : ""}
-    ${observationsHTML(r)}
     <div class="admin-actions">
       ${r.status !== "published" ? `<button class="btn" type="button" data-admact="${r.status === "hidden" ? "restore" : "approve"}" data-id="${r.id}">${r.status === "hidden" ? "Restore" : "Approve"}</button>` : ""}
       ${r.status === "published" && r.reports?.length ? `<button class="btn btn-ghost" type="button" data-admact="approve" data-id="${r.id}">Keep (clear reports)</button>` : ""}
