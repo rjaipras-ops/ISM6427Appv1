@@ -24,6 +24,7 @@ import idxSearch from "../netlify/functions/idx-search.mjs";
 import propertyHistory from "../netlify/functions/property-history.mjs";
 import seoListing from "../netlify/functions/seo-listing.mjs";
 import sitemap from "../netlify/functions/sitemap.mjs";
+import robots from "../netlify/functions/robots.mjs";
 import reviewAction from "../netlify/functions/review-action.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -43,6 +44,7 @@ const routes = [
   [/^\/api\/property\/history$/, propertyHistory],
   [/^\/homes\/.+$/, seoListing],
   [/^\/sitemap\.xml$/, sitemap],
+  [/^\/robots\.txt$/, robots],
   [/^\/api\/auth\/config$/, authConfig],
   [/^\/api\/auth\/me$/, authMe],
   [/^\/api\/auth\/google$/, authGoogle],
