@@ -345,13 +345,15 @@ export function toggleSaved(listingId) {
 // Rebuilds listing objects from the compact column format sent by /api/idx/listings.
 // Same check as the server (netlify/lib/normalize.mjs fixCoords), for listings synced before it existed.
 function fixCoords(lat, lng) {
-  const ok = (a, b) => a >= 24.3 && a <= 28.5 && b >= -82.0 && b <= -79.7;
+  const ok = (a, b) => a >= 24.3 && a <= 31.1 && b >= -87.7 && b <= -79.7; // Florida
   for (const [a, b] of [[lat, lng], [lat, -lng], [-lat, lng], [-lat, -lng], [lng, lat], [lng, -lat], [-lng, lat], [-lng, -lat]]) if (ok(a, b)) return [a, b];
   return null;
 }
 
 function decodeIndex(data) {
   const fi = data.fields.indexOf("_flags");
+  const pi = data.fields.indexOf("primaryPhotoUrl");
+  if (data.photoPrefix && pi >= 0) for (const r of data.rows) if (typeof r[pi] === "string" && r[pi][0] === "~") r[pi] = data.photoPrefix + r[pi].slice(1);
   return data.rows.map((row) => {
     const l = { demo: {} };
     data.fields.forEach((f, i) => {

@@ -6,7 +6,8 @@ export const SQFT_STEPS = [0, 750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 350
 export const LOT_STEPS = [0, 2000, 4500, 6500, 8000, 10890, 21780, 43560, 87120];
 export const LOT_LABELS = { 2000: "2,000 sqft", 4500: "4,500 sqft", 6500: "6,500 sqft", 8000: "8,000 sqft", 10890: "¼ acre", 21780: "½ acre", 43560: "1 acre", 87120: "2 acres" };
 
-export const COUNTIES = ["Broward", "Palm Beach", "St. Lucie"];
+// Counties come from the listings themselves (see buildCountyFilters in js/app.js).
+export const COUNTIES = [];
 export const HOME_TYPES = ["Single Family", "Condo", "Townhouse", "Multi-Family", "Mobile/Manufactured", "Land"];
 
 export const SEGMENTS = {
@@ -161,7 +162,7 @@ export function fromQuery(qs) {
   const p = new URLSearchParams(qs);
   for (const [k, v] of p) {
     if (k === "types") f.types = v.split("|").filter((t) => HOME_TYPES.includes(t));
-    else if (k === "counties") f.counties = v.split("|").filter((t) => COUNTIES.includes(t));
+    else if (k === "counties") f.counties = v.split("|").map((t) => t.trim()).filter((t) => t && t.length < 40);
     else if (BOOL_KEYS.includes(k)) f[k] = v === "1";
     else if (NUM_KEYS.includes(k)) { const n = Number(v); if (Number.isFinite(n)) f[k] = n; }
     else if (k in f) f[k] = v;

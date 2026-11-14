@@ -20,7 +20,7 @@ export const INDEX_FLAGS = [
   "demo.Foreclosure", "demo.ShortSale", "demo.CBS", "demo.ShortTermRental",
   "demo.SolarPanels", "demo.EVCharging",
 ];
-export const INDEX_SCHEMA = 4; // 4: also builds the description search shards
+export const INDEX_SCHEMA = 5; // 5: statewide (all Florida counties) // 4: also builds the description search shards
 
 const get = (o, path) => path.split(".").reduce((v, k) => (v == null ? v : v[k]), o);
 

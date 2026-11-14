@@ -62,8 +62,8 @@ const titleCase = (s) => String(s || "").toLowerCase().replace(/\b([a-z])/g, (m)
 
 // MLS coordinates are typed in by listing agents and are sometimes wrong (a dropped minus sign
 // puts a Florida home in India; swapped lat/long puts it in the ocean). Repair the obvious
-// mistakes, and reject anything still outside South Florida.
-const SOFLA = { minLat: 24.3, maxLat: 28.5, minLng: -82.0, maxLng: -79.7 };
+// mistakes, and reject anything still outside Florida (Keys to the Panhandle).
+const SOFLA = { minLat: 24.3, maxLat: 31.1, minLng: -87.7, maxLng: -79.7 };
 const inSoFla = (lat, lng) => lat >= SOFLA.minLat && lat <= SOFLA.maxLat && lng >= SOFLA.minLng && lng <= SOFLA.maxLng;
 export function fixCoords(lat, lng) {
   lat = Number(lat); lng = Number(lng);

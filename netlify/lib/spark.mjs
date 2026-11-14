@@ -80,13 +80,15 @@ const sparkQuote = (s) => `'${String(s).replace(/'/g, "\\'")}'`;
 function resoAreaFilter(cfg) {
   const counties = cfg.counties.map((c) => `CountyOrParish eq ${odataQuote(c)}`).join(" or ");
   const types = cfg.propertyTypes.map((t) => `PropertyType eq ${odataQuote(t)}`).join(" or ");
-  return [counties && `(${counties})`, types && `(${types})`].filter(Boolean).join(" and ");
+  const state = cfg.state ? `StateOrProvince eq ${odataQuote(cfg.state)}` : "";
+  return [state, counties && `(${counties})`, types && `(${types})`].filter(Boolean).join(" and ");
 }
 
 function sparkAreaFilter(cfg) {
   const counties = cfg.counties.map((c) => `CountyOrParish Eq ${sparkQuote(c)}`).join(" Or ");
   const types = cfg.propertyTypes.map((t) => `PropertyType Eq ${sparkQuote(t)}`).join(" Or ");
-  return [counties && `(${counties})`, types && `(${types})`].filter(Boolean).join(" And ");
+  const state = cfg.state ? `StateOrProvince Eq ${sparkQuote(cfg.state)}` : "";
+  return [state, counties && `(${counties})`, types && `(${types})`].filter(Boolean).join(" And ");
 }
 
 /**

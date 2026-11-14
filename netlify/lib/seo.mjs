@@ -115,19 +115,37 @@ export function renderGonePage(appHtml) {
     .replace(/<body>/i, `<body>\n  <article class="seo-listing" id="seoListing"><h1>This home is no longer for sale</h1><p><a href="/">Search homes for sale</a></p></article>`);
 }
 
-/** sitemap.xml: home page, legal pages and every displayable listing. */
-export async function renderSitemap() {
+const PER_FILE = 40000; // sitemap files are limited to 50,000 URLs
+
+async function listingUrls() {
   const base = siteUrl();
-  const idx = await getIndex();
-  const urls = [`<url><loc>${base}/</loc><changefreq>daily</changefreq></url>`,
-    `<url><loc>${base}/privacy.html</loc><changefreq>monthly</changefreq></url>`,
-    `<url><loc>${base}/terms.html</loc><changefreq>monthly</changefreq></url>`];
-  for (const [key, row] of Object.entries(idx)) {
+  const out = [];
+  for (const [key, row] of Object.entries(await getIndex())) {
     const l = rowToListing(key, row);
     if (l.AddressHidden) continue;
     const lastmod = l.ModificationTimestamp ? `<lastmod>${String(l.ModificationTimestamp).slice(0, 10)}</lastmod>` : "";
-    urls.push(`<url><loc>${base}${esc(listingPath(l))}</loc>${lastmod}</url>`);
-    if (urls.length >= 49000) break; // sitemap limit is 50,000 URLs
+    out.push(`<url><loc>${base}${esc(listingPath(l))}</loc>${lastmod}</url>`);
   }
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+  return out;
+}
+const urlset = (urls) => `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+
+/** /sitemap.xml: an index of /sitemaps/<n>.xml files (main pages + every displayable listing). */
+export async function renderSitemap() {
+  const base = siteUrl();
+  const n = Math.max(1, Math.ceil((await listingUrls()).length / PER_FILE));
+  const items = Array.from({ length: n }, (_, i) => `<sitemap><loc>${base}/sitemaps/${i + 1}.xml</loc></sitemap>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items.join("\n")}\n</sitemapindex>\n`;
+}
+
+/** /sitemaps/<n>.xml (1-based). File 1 also lists the home and legal pages. */
+export async function renderSitemapPart(n) {
+  const base = siteUrl();
+  const all = await listingUrls();
+  const part = all.slice((n - 1) * PER_FILE, n * PER_FILE);
+  if (n > 1 && !part.length) return null;
+  const head = n === 1 ? [`<url><loc>${base}/</loc><changefreq>daily</changefreq></url>`,
+    `<url><loc>${base}/privacy.html</loc><changefreq>monthly</changefreq></url>`,
+    `<url><loc>${base}/terms.html</loc><changefreq>monthly</changefreq></url>`] : [];
+  return urlset([...head, ...part]);
 }

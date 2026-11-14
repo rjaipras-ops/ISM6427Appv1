@@ -1,4 +1,4 @@
-// Property lookup by address, for any home in Broward, Palm Beach or St. Lucie
+// Property lookup by address, for any home in Florida
 // (not just homes in Toured's listing data). Used by the Toured panel on the
 // MLS Search page: a visitor pastes an address from the Flexmls search and gets
 // public records + tour reviews for that home.
@@ -12,7 +12,8 @@
 import { parcelsAt, parcelShape, toParcel, addressKey, fullSitus } from "./parcels.mjs";
 
 const CENSUS = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
-const COUNTY_BY_CO_NO = { 16: "Broward", 60: "Palm Beach", 66: "St. Lucie" };
+// Florida Department of Revenue county numbers.
+const COUNTY_BY_CO_NO = { 11: "Alachua", 12: "Baker", 13: "Bay", 14: "Bradford", 15: "Brevard", 16: "Broward", 17: "Calhoun", 18: "Charlotte", 19: "Citrus", 20: "Clay", 21: "Collier", 22: "Columbia", 23: "Miami-Dade", 24: "DeSoto", 25: "Dixie", 26: "Duval", 27: "Escambia", 28: "Flagler", 29: "Franklin", 30: "Gadsden", 31: "Gilchrist", 32: "Glades", 33: "Gulf", 34: "Hamilton", 35: "Hardee", 36: "Hendry", 37: "Hernando", 38: "Highlands", 39: "Hillsborough", 40: "Holmes", 41: "Indian River", 42: "Jackson", 43: "Jefferson", 44: "Lafayette", 45: "Lake", 46: "Lee", 47: "Leon", 48: "Levy", 49: "Liberty", 50: "Madison", 51: "Manatee", 52: "Marion", 53: "Martin", 54: "Monroe", 55: "Nassau", 56: "Okaloosa", 57: "Okeechobee", 58: "Orange", 59: "Osceola", 60: "Palm Beach", 61: "Pasco", 62: "Pinellas", 63: "Polk", 64: "Putnam", 65: "St. Johns", 66: "St. Lucie", 67: "Santa Rosa", 68: "Sarasota", 69: "Seminole", 70: "Sumter", 71: "Suwannee", 72: "Taylor", 73: "Union", 74: "Volusia", 75: "Wakulla", 76: "Walton", 77: "Washington" };
 const norm = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 const titleCase = (s) => String(s || "").toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase())
   .replace(/\b(Ne|Nw|Se|Sw)\b/g, (m) => m.toUpperCase()); // keep directionals ("SE 9 Ave")
@@ -110,7 +111,7 @@ export async function lookupProperty({ address, parcelKey }) {
     }
     if (pick.status === "matched") {
       const p = pick.parcel;
-      if (!COUNTY_BY_CO_NO[p.CO_NO]) return { status: "outside_area", message: "Toured covers Broward, Palm Beach and St. Lucie counties." };
+      if (!COUNTY_BY_CO_NO[p.CO_NO]) return { status: "outside_area", message: "Toured covers homes in Florida." };
       const { county, parcel } = await summarize(p, m);
       // Unincorporated parcels carry a county name as the city; use the postal city instead.
       const city = !p.PHY_CITY || /COUNTY|UNINCORPORATED/i.test(p.PHY_CITY) ? m.city : p.PHY_CITY;
@@ -131,6 +132,6 @@ export async function lookupProperty({ address, parcelKey }) {
   }
   const outside = lastRows.length && lastRows.every((r) => !COUNTY_BY_CO_NO[r.CO_NO]);
   return outside
-    ? { status: "outside_area", message: "Toured covers Broward, Palm Beach and St. Lucie counties." }
+    ? { status: "outside_area", message: "Toured covers homes in Florida." }
     : { status: "not_found", message: "We found the address but couldn't match it to a county parcel record. Try including the unit number." };
 }

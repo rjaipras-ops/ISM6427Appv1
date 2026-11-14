@@ -4,7 +4,7 @@ import {
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney,
 } from "./filters.js";
 import { monthlyCost, parseMoney } from "./payment.js";
-import { taxBillLink, formatPcn } from "./taxlinks.js";
+import { taxBillLink, formatPcn, SEARCH_ONLY_TAX_SITES } from "./taxlinks.js";
 import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
@@ -223,6 +223,7 @@ function fillSelect(sel, steps, { min, label = shortMoney } = {}) {
 
 function buildControls() {
   buildRanges(); // price, payment, size, lot and HOA sliders (js/ranges.js)
+  buildCountyFilters();
 
   for (const el of $$("[data-seg]")) {
     const key = el.dataset.seg;
@@ -236,6 +237,17 @@ function buildControls() {
   $("#placeList").innerHTML = [...places].sort().map((p) => `<option value="${esc(p)}">`).join("");
 
   drawHistogram();
+}
+
+// County checkboxes from the listings: the busiest counties first, with counts.
+function buildCountyFilters() {
+  const n = new Map();
+  for (const l of S.listings) if (l.County) n.set(l.County, (n.get(l.County) || 0) + 1);
+  for (const c of S.f.counties) if (!n.has(c)) n.set(c, 0);
+  const list = [...n.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  for (const el of $$(".county-list")) {
+    el.innerHTML = list.map(([c, k]) => `<label class="check"><input type="checkbox" name="county" value="${esc(c)}" /> ${esc(c)} <span class="muted">${k ? fmtN(k) : ""}</span></label>`).join("");
+  }
 }
 
 function drawHistogram() {
@@ -661,7 +673,7 @@ function renderResults({ fitMap = false } = {}) {
   const reviewed = rows.filter((l) => S.summaries[l.ListingId]).length;
   $("#resultCount").textContent = `${rows.length} home${rows.length === 1 ? "" : "s"}${reviewed ? ` · ${reviewed} with verified-tour reviews` : ""}`;
   $("#listTitle").textContent = S.f.q ? `${titleCase(S.f.q)} homes for sale`
-    : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "South Florida homes for sale";
+    : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "Florida homes for sale";
   $("#chips").innerHTML = chipsFor(S.f).map((c) =>
     `<button class="chip" type="button" data-clear='${esc(JSON.stringify(c.clear))}' aria-label="Remove filter ${esc(c.label)}">${esc(c.label)} <b>✕</b></button>`).join("");
   renderMarkers(rows, fitMap);
@@ -709,7 +721,7 @@ function route() {
   }
   if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch({ withFlexmls: true }); return; }
   show("view-search");
-  document.title = "Toured — South Florida homes reviewed by people who walked through";
+  document.title = "Toured — Florida homes reviewed by people who walked through";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
   firstSearchRender = false;
   setTimeout(() => map?.invalidateSize(), 0);
@@ -962,7 +974,7 @@ function renderMlsSearch({ withFlexmls = false } = {}) {
   const panelHTML = `<aside class="toured-panel" aria-label="Toured home lookup">
         <form class="tp-form" id="tpForm" role="search">
           <label class="tp-label" for="tpAddr">${withFlexmls ? "Looking at a home?" : "Enter an address"}</label>
-          <p class="tp-help">${withFlexmls ? "Copy its address from the MLS search and paste it here." : "Any home in Broward, Palm Beach or St. Lucie County, for sale or not."}</p>
+          <p class="tp-help">${withFlexmls ? "Copy its address from the MLS search and paste it here." : "Any home in Florida, for sale or not."}</p>
           <div class="searchbox tp-box">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <input id="tpAddr" type="search" placeholder="e.g. 1020 SE 9th Ave, Fort Lauderdale" autocomplete="off" required>
@@ -1019,7 +1031,7 @@ function renderPanelHome() {
         <span class="tp-home-addr">${esc(h.address)}</span>
         ${s ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>` : ""}
       </button></li>`;
-    }).join("")}</ul>` : `<p class="muted tp-empty">Tour reviews, property taxes, sale history and county records for any home in Broward, Palm Beach and St. Lucie counties.</p>`;
+    }).join("")}</ul>` : `<p class="muted tp-empty">Tour reviews, property taxes and county records for any home in Florida.</p>`;
 }
 
 async function panelLookup(address, parcelKey = "") {
@@ -1103,10 +1115,10 @@ function renderPanelProperty(p) {
     <p class="not-mls">County property records · not from BeachesMLS</p>
     <div class="tp-facts">${facts.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
     <div class="tp-links">
-      ${taxBillLink(p.county, pc.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(p.county, pc.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${taxBillLink(p.county, pc.ParcelId, pc.AltKey) ? `<a class="btn" href="${esc(taxBillLink(p.county, pc.ParcelId, pc.AltKey))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
       ${pc.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(pc.Links.appraiser)}" target="_blank" rel="noopener noreferrer">Owner &amp; full property record ↗</a>` : ""}
     </div>
-    ${p.county === "Palm Beach" ? pbcTaxHint(pc.ParcelId) : ""}
+    ${SEARCH_ONLY_TAX_SITES.has(p.county) ? taxHint(p.county, pc.ParcelId) : ""}
 
     <div class="tp-agent">
       <p><b>Want to see it in person?</b><br>A licensed local agent will reach out, usually within the hour.</p>
@@ -1154,7 +1166,8 @@ function publicRecordsHTML(l) {
   const p = l.Parcel;
   if (p) setTimeout(() => loadHistoryFor(l), 0);
   const label = mls ? `<p class="not-mls">County property records · not from BeachesMLS</p>` : "";
-  const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/" }[l.County];
+  const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/",
+    "Miami-Dade": "https://apps.miamidadepa.gov/PropertySearch/" }[l.County];
   const taxSearch = taxBillLink(l.County, "");
   if (mls && (st === undefined || st === "pending")) {
     return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
@@ -1201,10 +1214,10 @@ function publicRecordsHTML(l) {
       This estimate uses ${fmt$(t.newTaxable)} (the higher of the county's market value or 85% of the price) at ${t.millage.toFixed(2)} mills${t.exactMillage ? "" : " (approx.)"}${t.fixed ? ` plus ${fmt$(t.fixed)} in fixed county charges` : ""}.</p>
     ${saleHistoryHTML(h)}
     <div class="records-links">
-      ${taxBillLink(l.County, p.ParcelId) ? `<a class="btn" href="${esc(taxBillLink(l.County, p.ParcelId))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
+      ${taxBillLink(l.County, p.ParcelId, p.AltKey) ? `<a class="btn" href="${esc(taxBillLink(l.County, p.ParcelId, p.AltKey))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
       ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
     </div>
-    ${l.County === "Palm Beach" ? pbcTaxHint(p.ParcelId) : ""}
+    ${SEARCH_ONLY_TAX_SITES.has(l.County) ? taxHint(l.County, p.ParcelId) : ""}
     <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
@@ -1231,11 +1244,12 @@ function loadHistoryFor(l) {
     if (sec && location.hash === `#/home/${l.ListingId}`) sec.outerHTML = publicRecordsHTML(l);
   });
 }
-// Palm Beach's tax site can't open one parcel by link: show the number with a copy button.
-function pbcTaxHint(parcelId) {
-  const pcn = formatPcn(parcelId);
-  return `<p class="pbc-hint">Palm Beach's tax site opens to a search: paste parcel <b>${esc(pcn)}</b>
-    <button type="button" class="linkbtn" data-copy="${esc(String(parcelId || "").replace(/\D/g, ""))}">Copy</button></p>`;
+// Tax sites that can't open one parcel by link (Palm Beach, Martin): show the number with a copy button.
+function taxHint(county, parcelId) {
+  const shown = county === "Palm Beach" ? formatPcn(parcelId) : String(parcelId || "");
+  const copy = county === "Palm Beach" ? String(parcelId || "").replace(/\D/g, "") : String(parcelId || "");
+  return `<p class="pbc-hint">${esc(county)}'s tax site opens to a search: paste parcel <b>${esc(shown)}</b>
+    <button type="button" class="linkbtn" data-copy="${esc(copy)}">Copy</button></p>`;
 }
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-copy]");

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Toured — South Florida homes reviewed by people who walked through</title>
-  <meta name="description" content="Search Broward, Palm Beach and St. Lucie homes for sale and read reviews from buyers who certify they toured the home in person." />
+  <meta name="description" content="Search Florida homes for sale and read reviews from buyers who certify they toured the home in person." />
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,9 +61,7 @@
         <button class="pill" type="button" aria-expanded="false"><span data-label="county">County</span><i class="caret"></i></button>
         <div class="dd-panel" role="dialog" aria-label="County">
           <h4>County</h4>
-          <label class="check"><input type="checkbox" name="county" value="Broward" /> Broward</label>
-          <label class="check"><input type="checkbox" name="county" value="Palm Beach" /> Palm Beach</label>
-          <label class="check"><input type="checkbox" name="county" value="St. Lucie" /> St. Lucie</label>
+          <div class="county-list"></div>
         </div>
       </div>
 
@@ -181,11 +179,7 @@
         </fieldset>
         <fieldset>
           <legend>County</legend>
-          <div class="checks">
-            <label class="check"><input type="checkbox" name="county" value="Broward" /> Broward</label>
-            <label class="check"><input type="checkbox" name="county" value="Palm Beach" /> Palm Beach</label>
-            <label class="check"><input type="checkbox" name="county" value="St. Lucie" /> St. Lucie</label>
-          </div>
+          <div class="checks county-list"></div>
         </fieldset>
         <fieldset>
           <legend>Price</legend>

@@ -64,6 +64,28 @@ export function countyLinks(county, p) {
         // St. Lucie record cards are keyed by the county account number (DOR ALT_KEY).
         appraiser: alt && /^\d+$/.test(alt) ? `https://apps.paslc.gov/rerecordcard/${alt}` : "https://apps.paslc.gov/property-search/",
       };
+    case "Miami-Dade": {
+      const folio = id.replace(/\D/g, "");
+      return {
+        bill: folio.length === 13 ? `https://miamidade.county-taxes.com/public/real_estate/parcels/${folio}/bills` : "https://county-taxes.net/fl-miamidade/property-tax",
+        appraiser: folio.length === 13 ? `https://apps.miamidadepa.gov/PropertySearch/#/?folio=${folio}` : "https://apps.miamidadepa.gov/PropertySearch/",
+      };
+    }
+    case "Indian River":
+      return {
+        bill: id ? `https://indianriver.county-taxes.com/public/real_estate/parcels/${encodeURIComponent(id)}/bills` : null,
+        appraiser: id ? `https://qpublic.schneidercorp.com/Application.aspx?AppID=1109&LayerID=27655&PageTypeID=4&PageID=11279&KeyValue=${encodeURIComponent(id)}` : null,
+      };
+    case "Monroe": {
+      // Monroe's tax site is keyed by the account number (DOR ALT_KEY); the appraiser by the 14-digit RE number.
+      const re = id.replace(/\D/g, "").slice(-14);
+      return {
+        bill: alt && /^\d+$/.test(alt) ? `https://monroe.county-taxes.com/public/real_estate/parcels/${alt}/bills` : "https://county-taxes.net/fl-monroe/property-tax",
+        appraiser: re.length === 14 ? `https://qpublic.schneidercorp.com/Application.aspx?AppID=605&LayerID=9946&PageTypeID=4&KeyValue=${re.slice(0, 8)}-${re.slice(8)}` : null,
+      };
+    }
+    case "Martin":
+      return { bill: "https://county-taxes.net/fl-martin", appraiser: null }; // no per-parcel tax links on Martin's site
     default:
       return { bill: null, appraiser: null };
   }
@@ -90,6 +112,7 @@ export function toParcel(listing, p, { shape = null, includeOwner = true } = {})
   const rate = MILLAGE[listing.County] || MILLAGE.Broward;
   return {
     ParcelId: String(p.PARCEL_ID).trim(),
+    AltKey: String(p.ALT_KEY || "").trim() || null,
     AssessmentYear: p.ASMNT_YR,
     LandUse: DOR_USE[p.DOR_UC] || `DOR code ${p.DOR_UC}`,
     Owner: includeOwner ? (p.OWN_NAME || "").trim() || null : null,

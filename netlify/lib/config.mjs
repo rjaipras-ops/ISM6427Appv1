@@ -39,7 +39,9 @@ export function idxConfig() {
     intervalMinutes: num(process.env.IDX_SYNC_INTERVAL_MINUTES, 15),
     syncSecret: (process.env.IDX_SYNC_SECRET || "").trim(),
     // County names exactly as the MLS spells them in CountyOrParish.
-    counties: (process.env.IDX_COUNTIES || "Broward,Palm Beach,St. Lucie").split(",").map((s) => s.trim()).filter(Boolean),
+    // Empty = every county in the state (set IDX_COUNTIES="Broward,Palm Beach" to narrow it).
+    counties: (process.env.IDX_COUNTIES || "").split(",").map((s) => s.trim()).filter(Boolean),
+    state: (process.env.IDX_STATE || "FL").trim(),
     // RESO PropertyType values to include.
     propertyTypes: (process.env.IDX_PROPERTY_TYPES || "Residential").split(",").map((s) => s.trim()).filter(Boolean),
     pageSize: num(process.env.IDX_PAGE_SIZE, 200),
