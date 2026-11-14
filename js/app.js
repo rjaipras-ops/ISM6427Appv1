@@ -1363,7 +1363,7 @@ function openReviewForm(l) {
       </ul>
       <small>Describe the home and street, not the people who live nearby.</small>
     </div>
-    <textarea id="reviewBody" name="body" maxlength="2000" required placeholder="Write it in your own words…"></textarea>
+    <textarea id="reviewBody" name="body" maxlength="2000" required></textarea>
     <div class="field-row">
       <label class="field">What you liked<input name="pros" maxlength="140"></label>
       <label class="field">Watch out for<input name="cons" maxlength="140"></label>
