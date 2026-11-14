@@ -84,7 +84,8 @@ export async function lookupProperty({ address, parcelKey }) {
   if (!matches.length) return { status: "not_found", message: "We couldn't find that address. Check the spelling, or include the city and ZIP." };
 
   const street = typed.split(",")[0];
-  const unit = unitFrom(typed);
+  // "#702", "Apt 5"… or a unit written right after the street type ("1515 E Broward Blvd 323").
+  const unit = unitFrom(typed) || addressKey({ StreetAddress: street }).unit.toUpperCase();
   let lastRows = [];
   for (const m of matches.slice(0, 3)) {
     // Use the visitor's house number + street word, the geocoder's ZIP.

@@ -676,7 +676,7 @@ function show(id) {
     (id === "view-search" && a.getAttribute("href") === "#/") ||
     (id === "view-saved" && a.getAttribute("href") === "#/saved") ||
     (id === "view-myreviews" && a.getAttribute("href") === "#/my-reviews") ||
-    (id === "view-mlssearch" && a.getAttribute("href") === "#/mls-search")));
+    (id === "view-mlssearch" && a.getAttribute("href") === "#/lookup")));
   $$(".tabbar a").forEach((a) => a.classList.toggle("is-active", a.dataset.view === id || (id === "view-detail" && a.dataset.view === "view-search")));
   document.body.classList.toggle("on-search", id === "view-search");
 }
@@ -694,14 +694,20 @@ function route() {
   if (m) toast("That home is no longer available.");
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
-  if (h === "#/mls-search") { show("view-mlssearch"); renderMlsSearch(); return; }
+  if (h === "#/lookup") { show("view-mlssearch"); renderMlsSearch(); return; }
+  if (h === "#/mls-search") {
+    // Old links: the Flexmls page is only a backup while the live feed is unavailable.
+    if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch({ withFlexmls: true }); return; }
+    history.replaceState(null, "", location.pathname + location.search + "#/lookup");
+    show("view-mlssearch"); renderMlsSearch(); return;
+  }
   if (h === "#/contact") {
     history.replaceState(null, "", location.pathname + location.search + "#/");
     route();
     contactAgent(`Message from Toured`, "", "");
     return;
   }
-  if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch(); return; }
+  if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch({ withFlexmls: true }); return; }
   show("view-search");
   document.title = "Toured — South Florida homes reviewed by people who walked through";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
@@ -945,30 +951,40 @@ function handleGone(l) {
 }
 
 // Your Flexmls IDX Lite search, embedded (BeachesMLS-provided; compliance handled by Flexmls).
-function renderMlsSearch() {
+// "Look up any home": tour reviews, taxes, sale history and county records for any address.
+// withFlexmls = the backup page used only while the live MLS feed is unavailable: the free
+// Flexmls IDX search beside the lookup panel.
+function renderMlsSearch({ withFlexmls = false } = {}) {
   const el = $("#view-mlssearch");
-  if (el.dataset.ready) return; // keep the iframe (and the visitor's search) when coming back
-  el.dataset.ready = "1";
-  el.innerHTML = `<h1>MLS Search</h1>
+  const mode = withFlexmls ? "flexmls" : "lookup";
+  if (el.dataset.mode === mode) return; // keep the visitor's lookup (and the iframe) when coming back
+  el.dataset.mode = mode;
+  const panelHTML = `<aside class="toured-panel" aria-label="Toured home lookup">
+        <form class="tp-form" id="tpForm" role="search">
+          <label class="tp-label" for="tpAddr">${withFlexmls ? "Looking at a home?" : "Enter an address"}</label>
+          <p class="tp-help">${withFlexmls ? "Copy its address from the MLS search and paste it here." : "Any home in Broward, Palm Beach or St. Lucie County, for sale or not."}</p>
+          <div class="searchbox tp-box">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input id="tpAddr" type="search" placeholder="e.g. 1020 SE 9th Ave, Fort Lauderdale" autocomplete="off" required>
+          </div>
+          <button class="btn tp-go" type="submit">Look up</button>
+        </form>
+        <div class="tp-result" id="tpResult" aria-live="polite"></div>
+      </aside>`;
+  el.classList.toggle("lookup-page", !withFlexmls);
+  el.innerHTML = withFlexmls
+    ? `<h1>MLS Search</h1>
     <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Found a home you like? Paste its address in the Toured panel to see tour reviews, taxes and public records.</p>
     <div class="mls-layout">
       <div class="idx-frame-wrap">
         <iframe src="${esc(SITE.idxLiteUrl)}" title="BeachesMLS listing search (Flexmls IDX)" loading="lazy"></iframe>
       </div>
-      <aside class="toured-panel" aria-label="Toured home lookup">
-        <form class="tp-form" id="tpForm" role="search">
-          <label class="tp-label" for="tpAddr">Looking at a home?</label>
-          <p class="tp-help">Copy its address from the MLS search and paste it here.</p>
-          <div class="searchbox tp-box">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <input id="tpAddr" type="search" placeholder="e.g. 1020 SE 9th Ave, Fort Lauderdale" autocomplete="off" required>
-          </div>
-          <button class="btn tp-go" type="submit">Look up on Toured</button>
-        </form>
-        <div class="tp-result" id="tpResult" aria-live="polite"></div>
-      </aside>
+      ${panelHTML}
     </div>
-    <p class="muted" style="font-size:13px;margin-top:10px">Search not loading? <a href="${esc(SITE.idxLiteUrl)}" target="_blank" rel="noopener noreferrer">Open MLS search in a new tab ↗</a></p>`;
+    <p class="muted" style="font-size:13px;margin-top:10px">Search not loading? <a href="${esc(SITE.idxLiteUrl)}" target="_blank" rel="noopener noreferrer">Open MLS search in a new tab ↗</a></p>`
+    : `<h1>Look up any home</h1>
+    <p class="muted" style="margin-bottom:16px">See tour reviews, property taxes, sale history and county records for any home, whether it's for sale or not. Toured a home? You can review it here too.</p>
+    ${panelHTML}`;
   $("#tpForm").addEventListener("submit", (e) => { e.preventDefault(); panelLookup($("#tpAddr").value); });
   $("#tpResult").addEventListener("click", panelClick);
   $("#tpResult").addEventListener("change", (e) => {
@@ -977,7 +993,7 @@ function renderMlsSearch() {
   renderPanelHome();
 }
 
-/* ---------- Toured panel (MLS Search page) ---------- */
+/* ---------- Toured lookup panel (Look up page) ---------- */
 const panel = { property: null, seq: 0 };
 const normAddr = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\b(STREET|ST|AVENUE|AVE|ROAD|RD|DRIVE|DR|LANE|LN|COURT|CT|CIRCLE|CIR|BOULEVARD|BLVD|TERRACE|TER|PLACE|PL|WAY|TRAIL|TRL)\b/g, "").replace(/\b(\d+)(ST|ND|RD|TH)\b/g, "$1").replace(/\s+/g, " ").trim();
 
@@ -1114,7 +1130,7 @@ function panelClick(e) {
   if (act === "clear") { $("#tpAddr").value = ""; renderPanelHome(); $("#tpAddr").focus(); }
   if (act === "review" && p) requireAuth(() => openReviewForm(panelListing(p)));
   if (act === "tour" && p) {
-    contactAgent(`Tour request: ${p.address}`, `I found ${p.address} in your MLS search and I'd like to tour it.`, p.address);
+    contactAgent(`Tour request: ${p.address}`, `I'd like to tour ${p.address}.`, p.address);
   }
   const h = e.target.closest("[data-helpful]");
   if (h && p && store.isRemote() && !S.user) { requireAuth(() => renderPanelProperty(p)); return; }
