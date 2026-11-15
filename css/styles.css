@@ -971,3 +971,10 @@ body.on-search .globalfoot { display: none; }
 .home-about-links { font-size: 13px !important; }
 .seo-reviews article { border-top: 1px solid var(--line); padding: 8px 0; }
 .about-pages { font-size: 15px; font-weight: 600; margin: 10px 0 4px; line-height: 1.9; }
+
+/* Plain-English search: what was understood + the caveat */
+.nl-note { grid-column: 1 / -1; position: relative; background: var(--brand-tint); border: 1px solid #cfe6e2; border-radius: var(--radius-sm); padding: 8px 36px 8px 12px; font-size: 13px; }
+.nl-note p { margin: 2px 0; }
+.nl-note .nl-warn { color: #8a3a1c; }
+.nl-note .nl-caveat { color: var(--ink-3); font-size: 12px; }
+.nl-x { position: absolute; top: 2px; right: 4px; appearance: none; border: 0; background: none; font-size: 22px; line-height: 1; padding: 6px; color: var(--ink-3); cursor: pointer; }

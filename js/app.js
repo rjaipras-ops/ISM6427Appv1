@@ -9,6 +9,7 @@ import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
+import { parseSearch } from "./nlsearch.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
 import { carouselHTML, initCarousel, openLightbox } from "./gallery.js";
 
@@ -68,9 +69,6 @@ async function init() {
   wireEvents();
   syncControls();
   observeSearchbar();
-  // /?q=Miami (links from the city pages) opens the search already filtered.
-  const q0 = new URLSearchParams(location.search).get("q");
-  if (q0) { setFilters({ q: q0.slice(0, 80), bounds: null }); history.replaceState(null, "", `/${location.hash}`); }
   window.addEventListener("hashchange", route);
   window.addEventListener("hashchange", () => $("#account")?.classList.remove("open"));
   route();
@@ -319,6 +317,32 @@ function setFilters(patch, { fromMap = false } = {}) {
   renderResults({ fitMap: !fromMap && !S.f.bounds });
 }
 
+/* ---------------- plain-English search ---------------- */
+// City and county names in the current listings (rebuilt when the listings change).
+let placesCache = { n: -1, v: { cities: [], counties: [] } };
+function searchPlaces() {
+  if (placesCache.n !== S.listings.length) {
+    placesCache = { n: S.listings.length, v: {
+      cities: [...new Set(S.listings.map((l) => l.City).filter(Boolean))],
+      counties: [...new Set(S.listings.map((l) => l.County).filter(Boolean))],
+    } };
+  }
+  return placesCache.v;
+}
+function hideSearchNote() { const n = $("#nlNote"); n.hidden = true; n.dataset.kind = ""; }
+function showSearchNote(r) {
+  const n = $("#nlNote");
+  if (r.hint) { n.dataset.kind = "hint"; n.innerHTML = `<p>Press <b>Enter</b> to search for that.</p>`; n.hidden = false; return; }
+  n.dataset.kind = "result";
+  const blocked = r.blocked ? `<p class="nl-warn">Toured can't search by who lives in an area or by how safe it is. Try home features, price and location instead.</p>` : "";
+  n.innerHTML = `<button class="nl-x" type="button" data-nlclose aria-label="Dismiss">×</button>
+    ${r.understood.length ? `<p><b>Searching for:</b> ${r.understood.map(esc).join(" · ")}</p>` : ""}
+    ${r.skipped.length ? `<p class="nl-warn"><b>Couldn't apply:</b> ${r.skipped.map(esc).join("; ")}</p>` : ""}
+    ${blocked}
+    <p class="nl-caveat">Simple phrase search, not AI: it knows common requests (beds, baths, price, HOA, home type, city, popular features) and can miss or misread others. Check the filters and adjust if needed.</p>`;
+  n.hidden = false;
+}
+
 /* ---------------- events ---------------- */
 function wireEvents() {
   // Dropdown open/close
@@ -370,12 +394,34 @@ function wireEvents() {
     });
   }
 
+  // The search box takes a place (filters as you type) or a plain-English request such as
+  // "3 beds, no HOA, pool under 500k" (applied when you press Enter). See js/nlsearch.js.
   let qTimer;
-  $("#q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => setFilters({ q: e.target.value.trim(), bounds: null }), 250); });
-  $("#searchForm").addEventListener("submit", (e) => { e.preventDefault(); setFilters({ q: $("#q").value.trim(), bounds: null }); if (location.hash.startsWith("#/home")) location.hash = "#/"; });
+  $("#q").addEventListener("input", (e) => {
+    clearTimeout(qTimer);
+    const text = e.target.value.trim();
+    qTimer = setTimeout(() => {
+      if (parseSearch(text, searchPlaces()).isPrompt) { showSearchNote({ hint: true }); return; }
+      hideSearchNote();
+      setFilters({ q: text, bounds: null });
+    }, 250);
+  });
+  $("#searchForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    clearTimeout(qTimer);
+    const text = $("#q").value.trim();
+    const r = parseSearch(text, searchPlaces());
+    if (r.isPrompt) {
+      if (r.understood.length) { S.f = { ...defaults(), ...r.patch }; setFilters({ bounds: null }); }
+      else $("#q").value = S.f.q;
+      showSearchNote(r);
+    } else { hideSearchNote(); setFilters({ q: text, bounds: null }); }
+    if (location.hash.startsWith("#/home")) location.hash = "#/";
+  });
+  $("#nlNote").addEventListener("click", (e) => { if (e.target.closest("[data-nlclose]")) hideSearchNote(); });
   $("#sort").addEventListener("change", (e) => setFilters({ sort: e.target.value }));
 
-  const reset = () => { S.f = defaults(); setFilters({}); };
+  const reset = () => { S.f = defaults(); hideSearchNote(); setFilters({}); };
   $("#resetBtn").addEventListener("click", reset);
   $("#drawerReset").addEventListener("click", reset);
   document.addEventListener("click", (e) => { if (e.target.closest("[data-action=reset]")) reset(); });
@@ -700,7 +746,7 @@ function renderResults({ fitMap = false } = {}) {
   cards.innerHTML = rows.slice(0, 200).map((l) => cardHTML(l)).join("");
   $("#empty").hidden = rows.length > 0;
   const reviewed = rows.filter((l) => S.summaries[l.ListingId]).length;
-  $("#resultCount").textContent = `${rows.length} home${rows.length === 1 ? "" : "s"}${reviewed ? ` · ${reviewed} with verified-tour reviews` : ""}`;
+  $("#resultCount").textContent = `${rows.length} home${rows.length === 1 ? "" : "s"}${reviewed ? ` · ${reviewed} with tour reviews` : ""}`;
   $("#listTitle").textContent = S.f.q ? `${titleCase(S.f.q)} homes for sale`
     : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "South Florida homes for sale";
   $("#chips").innerHTML = chipsFor(S.f).map((c) =>
