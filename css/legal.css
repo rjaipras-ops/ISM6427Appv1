@@ -8,3 +8,21 @@ p, li { font-size: 16px; }
 .muted { color: #5b6b75; font-size: 14px; }
 a { color: #0e6b5c; }
 footer { border-top: 1px solid #e6eaed; margin-top: 40px; padding-top: 16px; font-size: 13px; color: #5b6b75; }
+
+/* Content pages (about, how it works, FAQ, city pages) */
+.legal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.legal-nav { display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: 15px; }
+.legal-nav a { font: 600 15px Inter, system-ui, sans-serif; color: #1d2a33; }
+.legal-nav a:hover { color: #0e6b5c; }
+.lede { font-size: 19px; color: #33434d; }
+ol li, ul li { margin: 6px 0; }
+.cta { margin: 34px 0 0; }
+.cta-btn { display: inline-block; background: #0b6e63; color: #fff; text-decoration: none; font-weight: 600; padding: 12px 22px; border-radius: 999px; }
+footer a { white-space: nowrap; }
+main.wide { max-width: 900px; }
+.city-list { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 20px; }
+.city-list li { margin: 0; }
+.home-list { list-style: none; padding: 0; }
+.home-list li { padding: 10px 0; border-bottom: 1px solid #e6eaed; margin: 0; }
+.idx-note { font-size: 12px; color: #5b6b75; margin-top: 32px; }
+.idx-note img { vertical-align: middle; margin-right: 6px; }

@@ -1,5 +1,5 @@
 // GET /homes/<ListingKey>-<slug> — indexable listing page (see netlify/lib/seo.mjs).
-import { findListing, listingPath, renderListingPage, renderGonePage, siteUrl } from "../lib/seo.mjs";
+import { findListing, listingPath, renderListingPage, renderGonePage, siteUrl, publishedReviewsByListing } from "../lib/seo.mjs";
 
 let shell = { at: 0, html: null };
 async function appShell(req) {
@@ -20,7 +20,8 @@ export default async (req) => {
   const path = listingPath(l);
   // One address per listing: send old or partial slugs to the current one.
   if (u.pathname !== path) return Response.redirect(new URL(path, u.origin).toString(), 301);
-  return new Response(renderListingPage(html, l, { canonical: siteUrl() + path }), { headers });
+  const reviews = (await publishedReviewsByListing().catch(() => new Map())).get(l.ListingKey) || [];
+  return new Response(renderListingPage(html, l, { canonical: siteUrl() + path, reviews }), { headers });
 };
 
 export const config = { path: "/homes/*" };

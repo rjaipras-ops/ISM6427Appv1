@@ -23,6 +23,7 @@ import reviews from "../netlify/functions/reviews.mjs";
 import idxSearch from "../netlify/functions/idx-search.mjs";
 import propertyHistory from "../netlify/functions/property-history.mjs";
 import seoListing from "../netlify/functions/seo-listing.mjs";
+import seoCity from "../netlify/functions/seo-city.mjs";
 import sitemap from "../netlify/functions/sitemap.mjs";
 import robots from "../netlify/functions/robots.mjs";
 import sitemapPart from "../netlify/functions/sitemap-part.mjs";
@@ -46,6 +47,7 @@ const routes = [
   [/^\/api\/property\/lookup$/, propertyLookup],
   [/^\/api\/property\/history$/, propertyHistory],
   [/^\/homes\/.+$/, seoListing],
+  [/^\/fl(\/.*)?$/, seoCity],
   [/^\/sitemap\.xml$/, sitemap],
   [/^\/robots\.txt$/, robots],
   [/^\/sitemaps\/\d+\.xml$/, sitemapPart],
@@ -76,6 +78,7 @@ createServer(async (req, res) => {
     let file = normalize(join(root, decodeURIComponent(url.pathname)));
     if (!file.startsWith(root)) { res.writeHead(403).end(); return; }
     if ((await stat(file).catch(() => null))?.isDirectory()) file = join(file, "index.html");
+    else if (!extname(file) && await stat(file + ".html").catch(() => null)) file += ".html"; // /about -> about.html, as on Netlify
     const data = await readFile(file);
     res.writeHead(200, { "Content-Type": TYPES[extname(file)] || "application/octet-stream" });
     res.end(data);

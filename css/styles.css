@@ -963,3 +963,10 @@ body.on-search .globalfoot { display: none; }
   .modal-body { padding: 20px 16px; }
   .modal { max-height: calc(100dvh - 24px); }
 }
+
+/* Homepage intro (readable by search engines and AI tools) */
+.home-about { margin: 28px 0 8px; padding: 18px 18px 14px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.home-about h2 { font-family: var(--display); font-size: 20px; margin: 0 0 8px; }
+.home-about p { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; }
+.home-about-links { font-size: 13px !important; }
+.seo-reviews article { border-top: 1px solid var(--line); padding: 8px 0; }

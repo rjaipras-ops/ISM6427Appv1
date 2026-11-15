@@ -68,6 +68,9 @@ async function init() {
   wireEvents();
   syncControls();
   observeSearchbar();
+  // /?q=Miami (links from the city pages) opens the search already filtered.
+  const q0 = new URLSearchParams(location.search).get("q");
+  if (q0) { setFilters({ q: q0.slice(0, 80), bounds: null }); history.replaceState(null, "", `/${location.hash}`); }
   window.addEventListener("hashchange", route);
   window.addEventListener("hashchange", () => $("#account")?.classList.remove("open"));
   route();
@@ -175,7 +178,7 @@ function renderFooter() {
   $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""} · Lic. ${esc(SITE.licenseNo)}` +
     (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
   $("#globalFoot").innerHTML = `<p><b>${esc(SITE.agentName)}</b>, Florida real estate sales associate · License ${esc(SITE.licenseNo)} · ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""}</p>
-    <p>${mls ? `${esc(SITE.mlsDisclaimer())} · ` : ""}<a href="#/contact">Contact</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
+    <p>${mls ? `${esc(SITE.mlsDisclaimer())} · ` : ""}<a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="#/contact">Contact</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
 }
 
 // Keep listings fresh while the page is open, without moving the map or closing anything.
@@ -627,13 +630,27 @@ function badgesFor(l) {
   return b.slice(0, 3).join("");
 }
 
+// Real, crawlable address for a listing (same scheme as netlify/lib/seo.mjs listingPath). Clicks
+// stay inside the app: see the a.card handler below.
+const slugify = (s) => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 90);
+const listingHref = (l) => l.Source === "mls"
+  ? `/homes/${l.ListingId}-${slugify(l.AddressHidden ? `${l.City} fl ${l.PostalCode}` : `${l.StreetAddress} ${l.City} fl ${l.PostalCode}`)}`
+  : `#/home/${l.ListingId}`;
+document.addEventListener("click", (e) => {
+  const a = e.target.closest("a.card[data-id]");
+  if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (e.target.closest("button")) return; // save button etc. handle themselves
+  e.preventDefault();
+  location.hash = `#/home/${a.dataset.id}`;
+});
+
 function cardHTML(l, { compact = false } = {}) {
   const s = S.summaries[l.ListingId];
   const saved = S.saved.has(l.ListingId);
   const rating = s
     ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>`
     : `<span class="no-reviews">No tour reviews yet</span>`;
-  return `<a class="card" href="#/home/${l.ListingId}" data-id="${l.ListingId}">
+  return `<a class="card" href="${listingHref(l)}" data-id="${l.ListingId}">
     <div class="card-media">${cardMedia(l)}<div class="badges">${badgesFor(l)}</div>
       ${compact ? "" : `<button class="save-btn" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>`}
     </div>
@@ -685,7 +702,7 @@ function renderResults({ fitMap = false } = {}) {
   const reviewed = rows.filter((l) => S.summaries[l.ListingId]).length;
   $("#resultCount").textContent = `${rows.length} home${rows.length === 1 ? "" : "s"}${reviewed ? ` · ${reviewed} with verified-tour reviews` : ""}`;
   $("#listTitle").textContent = S.f.q ? `${titleCase(S.f.q)} homes for sale`
-    : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "Florida homes for sale";
+    : S.f.counties.length === 1 ? `${S.f.counties[0]} County homes for sale` : "South Florida homes for sale";
   $("#chips").innerHTML = chipsFor(S.f).map((c) =>
     `<button class="chip" type="button" data-clear='${esc(JSON.stringify(c.clear))}' aria-label="Remove filter ${esc(c.label)}">${esc(c.label)} <b>✕</b></button>`).join("");
   renderMarkers(rows, fitMap);
