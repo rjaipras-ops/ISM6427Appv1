@@ -970,3 +970,4 @@ body.on-search .globalfoot { display: none; }
 .home-about p { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; }
 .home-about-links { font-size: 13px !important; }
 .seo-reviews article { border-top: 1px solid var(--line); padding: 8px 0; }
+.about-pages { font-size: 15px; font-weight: 600; margin: 10px 0 4px; line-height: 1.9; }
