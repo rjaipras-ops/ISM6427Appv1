@@ -72,7 +72,9 @@ export function matches(l, f, summary, kwKeys) {
   if (f.counties.length && !f.counties.includes(l.County)) return false;
   if (f.sqftMin != null && l.LivingArea < f.sqftMin) return false;
   if (f.sqftMax != null && l.LivingArea > f.sqftMax) return false;
-  if (f.lotMin != null && d.LotSizeSquareFeet < f.lotMin) return false;
+  // A condo's or townhouse's "lot" in the MLS is usually the whole community's land, so a minimum
+  // lot size only makes sense for homes that own their lot.
+  if (f.lotMin != null && (d.LotSizeSquareFeet < f.lotMin || l.PropertyType === "Condo" || l.PropertyType === "Townhouse")) return false;
   if (f.lotMax != null && d.LotSizeSquareFeet > f.lotMax) return false;
   if (f.yearMin != null && d.YearBuilt < f.yearMin) return false;
   if (f.yearMax != null && d.YearBuilt > f.yearMax) return false;
