@@ -6,7 +6,7 @@
 import { idxConfig, ACTIVE } from "./config.mjs";
 import { sparkGet, RESO_SELECT, qs } from "./spark.mjs";
 import { normalizeListing } from "./normalize.mjs";
-import { getJSON, setJSON, del, getIndex, setIndex, getState, setState } from "./store.mjs";
+import { getJSON, setJSON, del, getIndex, setIndex, getState, setState, readIndex } from "./store.mjs";
 import { lookupParcel } from "./parcels.mjs";
 import { INDEX_FIELDS } from "./index-format.mjs";
 
@@ -53,7 +53,7 @@ const QUEUE = "parcel-queue";
 const MATCH_VERSION = 2;
 
 async function listingFromIndex(key) {
-  const row = (await getIndex())[key];
+  const row = (await readIndex())[key];
   if (!row) return null;
   const o = Object.fromEntries(INDEX_FIELDS.map((f, i) => [f, row[i]]));
   return { ListingKey: key, StreetAddress: o.StreetAddress, UnitNumber: null, PostalCode: o.PostalCode,

@@ -9,7 +9,7 @@
 // required disclaimer are included; listings with the address withheld are noindex and left out
 // of the sitemap; listings not displayable on the internet never reach the index at all.
 
-import { getIndex } from "./store.mjs";
+import { readIndex as getIndex, indexTag } from "./store.mjs";
 import { allReviews, statusOf } from "./reviews.mjs";
 import { INDEX_FIELDS, INDEX_FLAGS } from "./index-format.mjs";
 
@@ -201,7 +201,10 @@ const CITY_PAGE_LISTINGS = 120;
 export const FEATURED_CITIES = ["Miami", "Fort Lauderdale", "Boca Raton", "West Palm Beach", "Hollywood", "Miami Beach", "Coral Springs",
   "Pembroke Pines", "Delray Beach", "Boynton Beach", "Pompano Beach", "Jupiter", "Port St. Lucie", "Hialeah", "Homestead"];
 
+let cityMemo = null;
 async function cityGroups() {
+  const tag = await indexTag();
+  if (cityMemo?.tag === tag) return cityMemo.groups;
   const groups = new Map();
   for (const [key, row] of Object.entries(await getIndex())) {
     const l = rowToListing(key, row);
@@ -214,6 +217,7 @@ async function cityGroups() {
     if (l.County) g.counties[l.County] = (g.counties[l.County] || 0) + 1;
   }
   for (const g of groups.values()) g.county = Object.entries(g.counties).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+  cityMemo = { tag, groups };
   return groups;
 }
 export async function cityList() {

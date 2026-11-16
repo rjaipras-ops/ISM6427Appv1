@@ -5,7 +5,7 @@ export default async (req) => {
   const n = Number((new URL(req.url).pathname.match(/\/sitemaps\/(\d+)\.xml$/) || [])[1]);
   const xml = n >= 1 ? await renderSitemapPart(n) : null;
   if (!xml) return new Response("Not found", { status: 404 });
-  return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
+  return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "Netlify-CDN-Cache-Control": "public, durable, s-maxage=3600, stale-while-revalidate=86400" } });
 };
 
 export const config = { path: "/sitemaps/*" };

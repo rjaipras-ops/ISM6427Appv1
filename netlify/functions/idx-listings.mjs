@@ -11,6 +11,8 @@ const PHOTO_COL = INDEX_FIELDS.indexOf("primaryPhotoUrl");
 // Stream large bodies: buffered function responses are capped at 6 MB.
 const stream = (buf) => new ReadableStream({ start(c) { for (let i = 0; i < buf.length; i += 1 << 20) c.enqueue(buf.subarray(i, i + (1 << 20))); c.close(); } });
 
+let bodyMemo = null; // { etag, json, gz } for the current sync version (reused while this instance is warm)
+
 export default async (req) => {
   const cfg = idxConfig();
   // Before the feed is live, the public site shows no listings at all ("pending").
@@ -28,6 +30,13 @@ export default async (req) => {
   // Index left over from a different mode (e.g. samples from before the feed key was added):
   // don't show it; the first live sync replaces it within a few minutes.
   const current = state.mode === (cfg.mock ? "mock" : "live");
+  const gzipOk = /\bgzip\b/.test(req.headers.get("accept-encoding") || "");
+  const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache", ETag: etag,
+    // Netlify's CDN keeps a copy for a few minutes, so most visitors never start this function.
+    "Netlify-CDN-Cache-Control": "public, durable, s-maxage=300, stale-while-revalidate=600", Vary: "Accept-Encoding" };
+  if (bodyMemo?.etag === etag) {
+    return gzipOk ? new Response(stream(bodyMemo.gz), { headers: { ...headers, "Content-Encoding": "gzip" } }) : new Response(stream(bodyMemo.json), { headers });
+  }
   const index = current ? await getIndex() : {};
   const body = JSON.stringify({
     mode: cfg.mock ? "mock" : "live",
@@ -43,11 +52,9 @@ export default async (req) => {
       return typeof r[i] === "string" && r[i].startsWith(PHOTO_PREFIX) ? [...r.slice(0, i), "~" + r[i].slice(PHOTO_PREFIX.length), ...r.slice(i + 1)] : r;
     }),
   });
-  const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-cache", ETag: etag };
-  if (/\bgzip\b/.test(req.headers.get("accept-encoding") || "")) {
-    return new Response(stream(gzipSync(body)), { headers: { ...headers, "Content-Encoding": "gzip", Vary: "Accept-Encoding" } });
-  }
-  return new Response(stream(Buffer.from(body)), { headers });
+  bodyMemo = { etag, json: Buffer.from(body), gz: gzipSync(body) };
+  if (gzipOk) return new Response(stream(bodyMemo.gz), { headers: { ...headers, "Content-Encoding": "gzip" } });
+  return new Response(stream(bodyMemo.json), { headers });
 };
 
 export const config = { path: "/api/idx/listings" };

@@ -3,7 +3,7 @@ import { renderCityIndex, renderCityPage } from "../lib/seo.mjs";
 
 export default async (req) => {
   const u = new URL(req.url);
-  const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=1800" };
+  const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=1800", "Netlify-CDN-Cache-Control": "public, durable, s-maxage=3600, stale-while-revalidate=86400" };
   const m = u.pathname.match(/^\/fl(?:\/([a-z0-9-]+))?\/?$/);
   if (!m) return new Response("Not found", { status: 404 });
   if (u.pathname.endsWith("/")) return Response.redirect(new URL(u.pathname.replace(/\/+$/, ""), u.origin).toString(), 301);

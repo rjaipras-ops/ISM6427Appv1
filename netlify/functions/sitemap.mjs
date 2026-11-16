@@ -2,7 +2,7 @@
 import { renderSitemap } from "../lib/seo.mjs";
 
 export default async () => new Response(await renderSitemap(), {
-  headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+  headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600", "Netlify-CDN-Cache-Control": "public, durable, s-maxage=3600, stale-while-revalidate=86400" },
 });
 
 export const config = { path: "/sitemap.xml" };

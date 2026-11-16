@@ -13,7 +13,7 @@ export default async (req) => {
   const u = new URL(req.url);
   const m = u.pathname.match(/^\/homes\/([0-9A-Za-z]+)(?:-[a-z0-9-]*)?\/?$/);
   const html = await appShell(req);
-  const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" };
+  const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300", "Netlify-CDN-Cache-Control": "public, durable, s-maxage=3600, stale-while-revalidate=86400" };
   if (!m) return new Response(renderGonePage(html), { status: 404, headers });
   const l = await findListing(m[1]);
   if (!l) return new Response(renderGonePage(html), { status: 410, headers });

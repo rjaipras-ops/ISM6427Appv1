@@ -64,4 +64,15 @@ export async function getState() {
 }
 export const setState = (s) => setJSON("state", s);
 export async function getIndex() { return (await getJSON("index")) || {}; }
+// Read-only copy for pages and APIs: a warm function instance keeps it until the next sync bumps
+// the version, instead of downloading and parsing ~50,000 listings on every request.
+// (Never modify the object it returns; the sync uses getIndex()/setIndex().)
+let indexMemo = null;
+export async function readIndex() {
+  const st = await getState();
+  const tag = `${st.mode}-${st.version || 0}`;
+  if (indexMemo?.tag !== tag) indexMemo = { tag, index: await getIndex() };
+  return indexMemo.index;
+}
+export async function indexTag() { const st = await getState(); return `${st.mode}-${st.version || 0}`; }
 export const setIndex = (idx) => setJSON("index", idx);
