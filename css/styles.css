@@ -981,3 +981,21 @@ body.on-search .globalfoot { display: none; }
 .nl-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #9cc9c2; border-top-color: var(--brand); border-radius: 50%; animation: nlspin .8s linear infinite; vertical-align: -1px; margin-right: 4px; }
 @keyframes nlspin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .nl-spin { animation: none; } }
+
+/* Admin: Reviews | Search insights */
+.admin-switch { max-width: 360px; margin: 4px 0 14px; }
+.ins-range { max-width: 420px; margin: 12px 0; }
+.ins-stats { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.ins-stats div { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 16px; min-width: 130px; }
+.ins-stats b { display: block; font-size: 24px; }
+.ins-stats span { color: var(--ink-3); font-size: 13px; }
+.ins-days { display: flex; align-items: flex-end; gap: 2px; height: 56px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 6px; margin-bottom: 14px; }
+.ins-days span { flex: 1; background: var(--brand); border-radius: 2px 2px 0 0; min-height: 1px; opacity: .8; }
+.ins-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.ins-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; min-width: 0; }
+.ins-card h2 { font-size: 16px; margin: 0 0 6px; }
+.ins-note { font-size: 12px; margin: 0 0 6px; }
+.ins-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 14px; }
+.ins-list li { position: relative; display: flex; justify-content: space-between; gap: 10px; padding: 3px 6px; }
+.ins-bar { position: absolute; inset: 0 auto 0 0; background: var(--brand-tint); border-radius: 4px; z-index: 0; }
+.ins-k, .ins-list b { position: relative; z-index: 1; min-width: 0; overflow-wrap: anywhere; }

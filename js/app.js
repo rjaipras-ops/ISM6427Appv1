@@ -305,8 +305,33 @@ function syncControls() {
   drawHistogram();
 }
 
+// Anonymous search insights for the admin page (netlify/lib/insights.mjs). Filter changes are
+// reported once they've settled for a few seconds; map panning and sorting aren't reported.
+const insight = { timer: 0, last: "", text: "" };
+function sendInsight(ev) {
+  try { fetch("/api/insights", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(ev), keepalive: true }).catch(() => {}); } catch { /* ignore */ }
+}
+function noteSearch(text) {
+  if (text) insight.text = String(text).slice(0, 120);
+  clearTimeout(insight.timer);
+  insight.timer = setTimeout(() => {
+    // Only what changed from the defaults (map position, sort order and payment assumptions left out).
+    const d = defaults(), f = {};
+    for (const [k, v] of Object.entries(S.f)) {
+      if (["bounds", "sort", "payDown", "payRate"].includes(k)) continue;
+      if (JSON.stringify(v) !== JSON.stringify(d[k])) f[k] = v;
+    }
+    const sig = JSON.stringify(f);
+    if (!insight.text && (sig === "{}" || sig === insight.last)) return;
+    insight.last = sig;
+    sendInsight({ kind: "search", f, text: insight.text || undefined });
+    insight.text = "";
+  }, 4000);
+}
+
 function setFilters(patch, { fromMap = false } = {}) {
   Object.assign(S.f, patch);
+  if (!fromMap) noteSearch();
   const qs = toQuery(S.f);
   history.replaceState(null, "", `${location.pathname}${qs ? "?" + qs : ""}${location.hash}`);
   syncControls();
@@ -464,6 +489,7 @@ function wireEvents() {
     e.preventDefault();
     clearTimeout(qTimer);
     const text = $("#q").value.trim();
+    if (text) noteSearch(text);
     const r = parseSearch(text, searchPlaces());
     if (location.hash.startsWith("#/home")) location.hash = "#/";
     // Requests the phrase search can't fully handle go to the AI (when it's switched on); a plain
@@ -841,7 +867,12 @@ function route() {
   }
   const h = location.hash || "#/";
   const m = h.match(/^#\/home\/([\w-]+)/);
-  if (m && S.byId.has(m[1])) { show("view-detail"); renderDetail(S.byId.get(m[1])); window.scrollTo(0, 0); return; }
+  if (m && S.byId.has(m[1])) {
+    const l = S.byId.get(m[1]);
+    show("view-detail"); renderDetail(l); window.scrollTo(0, 0);
+    if (insight.lastView !== l.ListingId) { insight.lastView = l.ListingId; sendInsight({ kind: "view", listingId: l.ListingId, city: l.City }); }
+    return;
+  }
   if (m) toast("That home is no longer available.");
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
@@ -1568,13 +1599,61 @@ async function renderAdmin() {
     $("#adminIn")?.addEventListener("click", () => requireAuth(() => route()));
     return;
   }
-  el.innerHTML = `<h1>Review moderation</h1><p class="muted">Loading…</p>`;
+  if (admin.tab === "insights") return renderInsights();
+  el.innerHTML = `${adminTabs()}<h1>Review moderation</h1><p class="muted">Loading…</p>`;
   try {
     const [list, settings] = await Promise.all([store.adminListReviews(), store.adminGetSettings()]);
     admin.rows = list.reviews; admin.settings = settings;
   } catch (err) { el.innerHTML = `<h1>Review moderation</h1><p class="form-error">${esc(err.message)}</p>`; return; }
   drawAdmin();
 }
+const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["insights", "Search insights"]].map(([k, t]) =>
+  `<button type="button" data-admview="${k}" aria-pressed="${(admin.tab || "reviews") === k}">${t}</button>`).join("")}</div>`;
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-admview]");
+  if (!b) return;
+  admin.tab = b.dataset.admview;
+  renderAdmin();
+});
+
+const FEATURE_LABELS = { pool: "Pool", waterfront: "Waterfront", view: "View", fireplace: "Fireplace", centralAir: "Central air", basement: "Basement",
+  gated: "Gated community", solar: "Solar panels", ev: "EV charging", impactWindows: "Impact windows", boatDock: "Boat dock", oceanAccess: "Ocean access",
+  golf: "Golf community", noFloodZone: "Not in a flood zone", cbs: "CBS construction", str: "Short-term rentals OK", newConstruction: "New construction",
+  priceReduced: "Price reduced", openHouse: "Open house", foreclosure: "Foreclosure", virtualTour: "Virtual tour", hideSenior: "Hide 55+ communities",
+  reviewedOnly: "Has tour reviews", noHoa: "No HOA" };
+async function renderInsights() {
+  const el = $("#view-admin");
+  const days = admin.insightDays || 30;
+  el.innerHTML = `${adminTabs()}<h1>Search insights</h1><p class="muted">Loading…</p>`;
+  let d;
+  try { d = await store.adminInsights(days); } catch (err) { el.innerHTML = `${adminTabs()}<h1>Search insights</h1><p class="form-error">${esc(err.message)}</p>`; return; }
+  const table = (title, rows, label = (k) => k, note = "") => `<section class="ins-card"><h2>${title}</h2>${note ? `<p class="muted ins-note">${note}</p>` : ""}${rows.length
+    ? `<ol class="ins-list">${rows.map(([k, n]) => { const w = Math.max(4, Math.round((n / rows[0][1]) * 100)); return `<li><span class="ins-bar" style="width:${w}%"></span><span class="ins-k">${label(k)}</span><b>${n.toLocaleString("en-US")}</b></li>`; }).join("")}</ol>`
+    : `<p class="muted">No data yet.</p>`}</section>`;
+  const home = (id) => { const l = S.byId.get(id); return l ? `<a href="#/home/${esc(id)}">${esc(l.UnparsedAddress)}</a> <span class="muted">${fmt$(l.ListPrice)}</span>` : `<span class="muted">${esc(id)} (no longer listed)</span>`; };
+  const maxDay = Math.max(1, ...d.byDay.map((x) => x.searches + x.views));
+  el.innerHTML = `${adminTabs()}<h1>Search insights</h1>
+    <p class="muted">What visitors searched for and opened on Toured. Anonymous totals: no names, accounts or IP addresses are kept, and search engines are left out. Counts are approximate.</p>
+    <div class="seg ins-range">${[7, 30, 90].map((n) => `<button type="button" data-insdays="${n}" aria-pressed="${n === days}">Last ${n} days</button>`).join("")}</div>
+    <div class="ins-stats"><div><b>${d.searches.toLocaleString("en-US")}</b><span>searches</span></div><div><b>${d.typedCount.toLocaleString("en-US")}</b><span>typed requests</span></div><div><b>${d.views.toLocaleString("en-US")}</b><span>homes opened</span></div></div>
+    <div class="ins-days" aria-label="Activity per day">${d.byDay.map((x) => `<span title="${x.day}: ${x.searches} searches, ${x.views} homes opened" style="height:${Math.round(((x.searches + x.views) / maxDay) * 100)}%"></span>`).join("")}</div>
+    <div class="ins-grid">
+      ${table("Typed requests", d.typed, esc, "Exactly what people typed in the search box.")}
+      ${table("Places searched", d.places, esc)}
+      ${table("Most-opened homes", d.listings, home)}
+      ${table("Cities of homes opened", d.viewCities, esc)}
+      ${table("Price ranges", d.prices, esc, "Based on the maximum price set.")}
+      ${table("Monthly payment limits", d.payments, esc)}
+      ${table("Bedrooms", d.beds, esc)}
+      ${table("Home types", d.types, esc)}
+      ${table("Features wanted", d.features, (k) => esc(FEATURE_LABELS[k] || k))}
+      ${table("Description keywords", d.keywords, esc)}
+      ${table("Counties", d.counties, esc)}
+      ${table("Bathrooms", d.baths, esc)}
+    </div>`;
+  el.onclick = (e) => { const b = e.target.closest("[data-insdays]"); if (b) { admin.insightDays = Number(b.dataset.insdays); renderInsights(); } };
+}
+
 const needsAttention = (r) => r.status === "pending" || (r.reports?.length && r.status !== "hidden") || (r.status === "hidden" && r.moderation?.action === "auto-hidden");
 function drawAdmin() {
   const el = $("#view-admin");
@@ -1582,7 +1661,7 @@ function drawAdmin() {
     hidden: admin.rows.filter((r) => r.status === "hidden").length, all: admin.rows.length };
   const rows = admin.rows.filter((r) => admin.filter === "all" ? true : admin.filter === "attention" ? needsAttention(r) : r.status === admin.filter);
   const st = admin.settings;
-  el.innerHTML = `<h1>Review moderation</h1>
+  el.innerHTML = `${adminTabs()}<h1>Review moderation</h1>
     <div class="admin-settings">
       <label class="check"><input type="checkbox" id="admApproveAll" ${st.approveAll ? "checked" : ""}>
         <span><b>Approve every review before it's published</b><br><small class="muted">Off: reviews publish right away unless screening flags them (contact info, profanity, fair-housing wording).</small></span></label>

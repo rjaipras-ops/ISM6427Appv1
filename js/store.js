@@ -372,6 +372,7 @@ export async function reportReview(id, reason, note) {
 export const adminListReviews = () => api("/api/admin/reviews");
 export const adminAct = (id, action) => api("/api/admin/reviews", { method: "POST", body: JSON.stringify({ id, action }) });
 export const adminGetSettings = () => api("/api/admin/settings");
+export const adminInsights = (days) => api(`/api/admin/insights?days=${encodeURIComponent(days)}`);
 export async function adminSaveSettings(patch) {
   const s = await api("/api/admin/settings", { method: "POST", body: JSON.stringify(patch) });
   serverReviewsDisabled = s.reviewsDisabled || [];
