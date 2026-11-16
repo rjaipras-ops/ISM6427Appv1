@@ -861,7 +861,7 @@ function route() {
   }
   if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch({ withFlexmls: true }); return; }
   show("view-search");
-  document.title = "Toured — Florida homes reviewed by people who walked through";
+  document.title = "Toured: South Florida homes for sale, reviewed by buyers who toured them";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
   firstSearchRender = false;
   setTimeout(() => map?.invalidateSize(), 0);
