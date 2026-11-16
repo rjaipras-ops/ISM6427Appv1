@@ -24,6 +24,7 @@ import idxSearch from "../netlify/functions/idx-search.mjs";
 import propertyHistory from "../netlify/functions/property-history.mjs";
 import seoListing from "../netlify/functions/seo-listing.mjs";
 import seoCity from "../netlify/functions/seo-city.mjs";
+import aiSearchFn from "../netlify/functions/ai-search.mjs";
 import sitemap from "../netlify/functions/sitemap.mjs";
 import robots from "../netlify/functions/robots.mjs";
 import sitemapPart from "../netlify/functions/sitemap-part.mjs";
@@ -51,6 +52,7 @@ const routes = [
   [/^\/sitemap\.xml$/, sitemap],
   [/^\/robots\.txt$/, robots],
   [/^\/sitemaps\/\d+\.xml$/, sitemapPart],
+  [/^\/api\/search\/ai$/, aiSearchFn],
   [/^\/api\/auth\/config$/, authConfig],
   [/^\/api\/auth\/me$/, authMe],
   [/^\/api\/auth\/google$/, authGoogle],

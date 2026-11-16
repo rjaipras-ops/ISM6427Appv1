@@ -174,6 +174,9 @@ export function fromQuery(qs) {
 const money = (n) => n >= 1e6 ? `$${(n / 1e6).toFixed(n % 1e6 ? 2 : 0).replace(/\.?0+$/, "")}M` : `$${Math.round(n / 1e3)}K`;
 export const shortMoney = money;
 
+// Lot sizes typed or read from a request aren't always one of the slider steps.
+const lotLabel = (v) => v == null ? "Any" : LOT_LABELS[v] ?? (v >= 43560 ? `${+(v / 43560).toFixed(2)} acres` : `${Math.round(v).toLocaleString("en-US")} sqft`);
+
 export function chipsFor(f) {
   const c = [];
   const add = (label, clear) => c.push({ label, clear });
@@ -190,7 +193,7 @@ export function chipsFor(f) {
   if (f.sqftMin != null || f.sqftMax != null)
     add(`${f.sqftMin ?? "Any"}–${f.sqftMax ?? "Any"} sqft`, { sqftMin: null, sqftMax: null });
   if (f.lotMin != null || f.lotMax != null)
-    add(`Lot ${LOT_LABELS[f.lotMin] ?? "Any"}–${LOT_LABELS[f.lotMax] ?? "Any"}`, { lotMin: null, lotMax: null });
+    add(`Lot ${lotLabel(f.lotMin)}–${lotLabel(f.lotMax)}`, { lotMin: null, lotMax: null });
   if (f.yearMin != null || f.yearMax != null) add(`Built ${f.yearMin ?? "…"}–${f.yearMax ?? "…"}`, { yearMin: null, yearMax: null });
   if (f.payMax != null) add(`≤ $${Math.round(f.payMax).toLocaleString()}/mo`, { payMax: null });
   if (f.hoaMax != null) add(f.hoaMax === 0 ? "No HOA" : `HOA ≤ $${f.hoaMax}`, { hoaMax: null });

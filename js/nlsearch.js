@@ -173,5 +173,7 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
   if (rest.length && rest.length <= 4 && filterHits) { patch.keyword = rest.join(" "); understood.push(`Description mentions “${rest.join(" ")}”`); }
   else if (rest.length && filterHits) skipped.push(rest.join(" "));
 
-  return { patch, understood, skipped, blocked, isPrompt: filterHits > 0 || blocked };
+  // `complete`: every part of the request became a filter, so there's nothing for the AI to add.
+  const complete = filterHits > 0 && !skipped.length && !patch.keyword && !blocked;
+  return { patch, understood, skipped, blocked, isPrompt: filterHits > 0 || blocked, complete, words: norm(text).split(" ").filter(Boolean).length };
 }

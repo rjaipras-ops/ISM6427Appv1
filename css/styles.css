@@ -978,3 +978,6 @@ body.on-search .globalfoot { display: none; }
 .nl-note .nl-warn { color: #8a3a1c; }
 .nl-note .nl-caveat { color: var(--ink-3); font-size: 12px; }
 .nl-x { position: absolute; top: 2px; right: 4px; appearance: none; border: 0; background: none; font-size: 22px; line-height: 1; padding: 6px; color: var(--ink-3); cursor: pointer; }
+.nl-spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #9cc9c2; border-top-color: var(--brand); border-radius: 50%; animation: nlspin .8s linear infinite; vertical-align: -1px; margin-right: 4px; }
+@keyframes nlspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .nl-spin { animation: none; } }

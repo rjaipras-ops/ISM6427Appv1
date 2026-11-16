@@ -329,6 +329,41 @@ function searchPlaces() {
   }
   return placesCache.v;
 }
+function applyPhraseSearch(r, { aiFailed = false } = {}) {
+  if (r.understood.length) { S.f = { ...defaults(), ...r.patch }; setFilters({ bounds: null }); }
+  else $("#q").value = S.f.q;
+  showSearchNote({ ...r, aiFailed });
+}
+
+// AI reading of a request (netlify/lib/ai-search.mjs). Falls back to the phrase search on any failure.
+const aiSearch = { enabled: false, seq: 0 };
+fetch("/api/search/ai").then((r) => r.json()).then((d) => { aiSearch.enabled = !!d.enabled; }).catch(() => {});
+async function runAiSearch(text, phrase) {
+  const seq = ++aiSearch.seq;
+  const n = $("#nlNote");
+  n.dataset.kind = "result"; n.hidden = false;
+  n.innerHTML = `<p><span class="nl-spin" aria-hidden="true"></span> Reading your request…</p>`;
+  try {
+    const res = await fetch("/api/search/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }), signal: AbortSignal.timeout(12000) });
+    if (!res.ok) throw new Error(res.status);
+    const ai = await res.json();
+    if (seq !== aiSearch.seq) return; // a newer search replaced this one
+    const patch = { ...ai.patch };
+    // Only keep places that exist in the listings; match county names to the site's spelling.
+    const places = searchPlaces();
+    const same = (a, b) => a.toLowerCase().replace(/[^a-z0-9]/g, "") === b.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (patch.counties) { patch.counties = patch.counties.map((c) => places.counties.find((x) => same(x, c))).filter(Boolean); if (!patch.counties.length) delete patch.counties; }
+    if (!Object.keys(patch).length) { if (phrase.isPrompt) return applyPhraseSearch({ ...phrase, blocked: phrase.blocked || ai.declined }); throw new Error("nothing understood"); }
+    S.f = { ...defaults(), ...patch };
+    setFilters({ bounds: null });
+    showSearchNote({ ai: true, understood: chipsFor(S.f).map((c) => c.label), skipped: ai.unsupported || [], blocked: !!ai.declined || phrase.blocked });
+  } catch {
+    if (seq !== aiSearch.seq) return;
+    if (phrase.isPrompt) applyPhraseSearch(phrase, { aiFailed: true });
+    else { hideSearchNote(); setFilters({ q: text, bounds: null }); }
+  }
+}
+
 function hideSearchNote() { const n = $("#nlNote"); n.hidden = true; n.dataset.kind = ""; }
 function showSearchNote(r) {
   const n = $("#nlNote");
@@ -339,7 +374,9 @@ function showSearchNote(r) {
     ${r.understood.length ? `<p><b>Searching for:</b> ${r.understood.map(esc).join(" · ")}</p>` : ""}
     ${r.skipped.length ? `<p class="nl-warn"><b>Couldn't apply:</b> ${r.skipped.map(esc).join("; ")}</p>` : ""}
     ${blocked}
-    <p class="nl-caveat">Simple phrase search, not AI: it knows common requests (beds, baths, price, HOA, home type, city, popular features) and can miss or misread others. Check the filters and adjust if needed.</p>`;
+    <p class="nl-caveat">${r.ai
+      ? "AI read your request and turned it into filters. It can misread things, so check the filters and adjust if needed."
+      : "Simple phrase search, not AI: it knows common requests (beds, baths, price, HOA, home type, city, popular features) and can miss or misread others. Check the filters and adjust if needed."}</p>`;
   n.hidden = false;
 }
 
@@ -394,6 +431,7 @@ function wireEvents() {
     });
   }
 
+  // (When GEMINI_API_KEY is set, requests the phrase search can't fully handle are read by AI.)
   // The search box takes a place (filters as you type) or a plain-English request such as
   // "3 beds, no HOA, pool under 500k" (applied when you press Enter). See js/nlsearch.js.
   let qTimer;
@@ -401,7 +439,8 @@ function wireEvents() {
     clearTimeout(qTimer);
     const text = e.target.value.trim();
     qTimer = setTimeout(() => {
-      if (parseSearch(text, searchPlaces()).isPrompt) { showSearchNote({ hint: true }); return; }
+      const live = parseSearch(text, searchPlaces());
+      if (live.isPrompt || (aiSearch.enabled && live.words >= 4 && !live.patch.q && !/^\d+\s/.test(text))) { showSearchNote({ hint: true }); return; }
       hideSearchNote();
       setFilters({ q: text, bounds: null });
     }, 250);
@@ -411,12 +450,13 @@ function wireEvents() {
     clearTimeout(qTimer);
     const text = $("#q").value.trim();
     const r = parseSearch(text, searchPlaces());
-    if (r.isPrompt) {
-      if (r.understood.length) { S.f = { ...defaults(), ...r.patch }; setFilters({ bounds: null }); }
-      else $("#q").value = S.f.q;
-      showSearchNote(r);
-    } else { hideSearchNote(); setFilters({ q: text, bounds: null }); }
     if (location.hash.startsWith("#/home")) location.hash = "#/";
+    // Requests the phrase search can't fully handle go to the AI (when it's switched on); a plain
+    // place name, or a request it understood completely, never does.
+    const sentence = !r.isPrompt && r.words >= 4 && !r.patch.q && !/^\d+\s/.test(text);
+    if (aiSearch.enabled && ((r.isPrompt && !r.complete) || sentence)) { runAiSearch(text, r); return; }
+    if (r.isPrompt) applyPhraseSearch(r);
+    else { hideSearchNote(); setFilters({ q: text, bounds: null }); }
   });
   $("#nlNote").addEventListener("click", (e) => { if (e.target.closest("[data-nlclose]")) hideSearchNote(); });
   $("#sort").addEventListener("change", (e) => setFilters({ sort: e.target.value }));
