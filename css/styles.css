@@ -766,7 +766,7 @@ input.money { width: 100%; min-width: 0; }
 
   /* Bottom tab bar replaces the hidden top menu */
   .tabbar {
-    display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 1001;
+    display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 1001;
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
     background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -2px 12px rgba(16,24,32,.06);
   }
