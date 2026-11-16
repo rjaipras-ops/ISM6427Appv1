@@ -234,9 +234,13 @@ function buildControls() {
   for (const g of $$(".type-grid")) g.innerHTML = HOME_TYPES.map((t) =>
     `<label><input type="checkbox" name="type" value="${t}" />${typeIcon(t)}${t}</label>`).join("");
 
-  const places = new Set();
-  S.listings.forEach((l) => { places.add(l.Neighborhood); places.add(l.City); places.add(l.PostalCode); places.add(l.County + " County"); });
-  $("#placeList").innerHTML = [...places].sort().map((p) => `<option value="${esc(p)}">`).join("");
+  // Suggestions: counties and cities only, busiest first. (Neighborhood names in the MLS are
+  // free text, with thousands of subdivisions and junk like "N/A"; they and ZIP codes still work
+  // when typed.)
+  const tally = (key) => { const n = new Map(); for (const l of S.listings) if (l[key]) n.set(l[key], (n.get(l[key]) || 0) + 1); return n; };
+  const top = (n, min, max) => [...n].filter(([k, c]) => c >= min && /[a-z]{3}/i.test(k) && !/^(n\/?a|none|other|unknown|county)$/i.test(k.trim())).sort((a, b) => b[1] - a[1]).slice(0, max).map(([k]) => k);
+  const places = [...top(tally("City"), 10, 120), ...top(tally("County"), 10, 12).map((c) => `${c} County`)];
+  $("#placeList").innerHTML = places.map((p) => `<option value="${esc(p)}">`).join("");
 
   drawHistogram();
 }
