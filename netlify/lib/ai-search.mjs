@@ -45,11 +45,11 @@ Allowed keys (omit any that the request doesn't mention; never guess):
 - true/false features, set to true only when the buyer asks for them: ${BOOLS.join(", ")}.
   Meanings: hideSenior = exclude 55+ communities; noFloodZone = not in a flood zone; cbs = concrete block construction; str = short-term rentals allowed; ev = EV charging; view = has a view; reviewedOnly = has tour reviews; statusPending = include pending listings.
 - "sort": one of ${JSON.stringify(SORTS)} (priceAsc = cheapest first, sqft = largest first).
-- "keyword": at most 3 words to look for in listing descriptions, for a wish no filter covers (e.g. "updated kitchen", "fenced yard", "in-law suite"). Use the wording a listing agent would write.
+- "keyword": ONE or TWO words to look for in listing descriptions, for the single most important wish that no filter covers. Every word must appear in the description, so choose the plainest distinctive word a listing agent would write: "fenced" (not "fenced yard"), "renovated" or "updated" (not "updated kitchen"), "in-law", "corner lot". Use only one wish here; put any other such wishes in "unsupported".
 - "unsupported": array of short phrases for parts of the request you could not turn into a filter or keyword (e.g. "no pool", "near good schools", "close to my office").
 - "declined": true if any part of the request is about who lives in an area or about safety (race, ethnicity, religion, nationality, sex, family status, disability, age of neighbors, crime, "safe"). Never create a filter or keyword for those parts; still fill in the rest.
 
-Rules: the site can require a feature but cannot exclude one, so "no pool" goes in "unsupported". Do not invent locations. Numbers must be plain numbers.`;
+Rules: the site can require a feature but cannot exclude one, so "no pool" goes in "unsupported". If you created a filter or keyword for a wish, do NOT also list that wish in "unsupported". Only set lotMin when the buyer gives a size or clearly asks for a large lot. Do not invent locations. Numbers must be plain numbers.`;
 
 const clean = (s, n) => String(s ?? "").replace(/[^\p{L}\p{N} .,'&/+-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, n);
 
@@ -67,7 +67,7 @@ export function sanitize(raw) {
   if (raw.stories === "single" || raw.stories === "multi") patch.stories = raw.stories;
   if (SORTS.includes(raw.sort) && raw.sort !== "relevant") patch.sort = raw.sort;
   const q = clean(raw.q, 60); if (q) patch.q = q;
-  const kw = clean(raw.keyword, 40).split(" ").slice(0, 4).join(" "); if (kw) patch.keyword = kw;
+  const kw = clean(raw.keyword, 40).split(" ").slice(0, 2).join(" "); if (kw) patch.keyword = kw;
   if (patch.priceMin && patch.priceMax && patch.priceMin > patch.priceMax) [patch.priceMin, patch.priceMax] = [patch.priceMax, patch.priceMin];
   const unsupported = Array.isArray(raw.unsupported) ? raw.unsupported.map((x) => clean(x, 60)).filter(Boolean).slice(0, 5) : [];
   return { patch, unsupported, declined: raw.declined === true };

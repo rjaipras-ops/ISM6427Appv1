@@ -334,6 +334,13 @@ function applyPhraseSearch(r, { aiFailed = false } = {}) {
 // AI reading of a request (netlify/lib/ai-search.mjs). Falls back to the phrase search on any failure.
 const aiSearch = { enabled: false, seq: 0 };
 fetch("/api/search/ai").then((r) => r.json()).then((d) => { aiSearch.enabled = !!d.enabled; }).catch(() => {});
+// How many listings a set of filters would return (including the server-side description search).
+async function countMatches(f) {
+  const keys = f.keyword && S.feed.mode !== "demo" ? await store.searchDescriptions(f.keyword) : null;
+  let n = 0;
+  for (const l of S.listings) if (matches(l, f, S.summaries[l.ListingId], keys)) n++;
+  return n;
+}
 async function runAiSearch(text, phrase) {
   const seq = ++aiSearch.seq;
   const n = $("#nlNote");
@@ -350,9 +357,20 @@ async function runAiSearch(text, phrase) {
     const same = (a, b) => a.toLowerCase().replace(/[^a-z0-9]/g, "") === b.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (patch.counties) { patch.counties = patch.counties.map((c) => places.counties.find((x) => same(x, c))).filter(Boolean); if (!patch.counties.length) delete patch.counties; }
     if (!Object.keys(patch).length) { if (phrase.isPrompt) return applyPhraseSearch({ ...phrase, blocked: phrase.blocked || ai.declined }); throw new Error("nothing understood"); }
-    S.f = { ...defaults(), ...patch };
+    // If nothing matches every part of the request, drop the "nice to have" parts one at a time
+    // (description keyword first, then lot and size minimums) and say which were left out.
+    let f = { ...defaults(), ...patch };
+    const dropped = [];
+    const label = (k) => chipsFor({ ...defaults(), [k]: f[k] }).map((c) => c.label)[0] || k;
+    for (const k of [null, "keyword", "lotMin", "sqftMin", "yearMin", "garageMin"]) {
+      if (k) { if (f[k] == null || f[k] === "") continue; dropped.push(label(k)); f = { ...f, [k]: defaults()[k] }; }
+      if (await countMatches(f)) break;
+    }
+    if (seq !== aiSearch.seq) return;
+    if (dropped.length && !(await countMatches(f))) { f = { ...defaults(), ...patch }; dropped.length = 0; } // relaxing didn't help: show what was asked
+    S.f = f;
     setFilters({ bounds: null });
-    showSearchNote({ ai: true, understood: chipsFor(S.f).map((c) => c.label), skipped: ai.unsupported || [], blocked: !!ai.declined || phrase.blocked });
+    showSearchNote({ ai: true, understood: chipsFor(S.f).map((c) => c.label), skipped: ai.unsupported || [], dropped, blocked: !!ai.declined || phrase.blocked });
   } catch {
     if (seq !== aiSearch.seq) return;
     if (phrase.isPrompt) applyPhraseSearch(phrase, { aiFailed: true });
@@ -368,6 +386,7 @@ function showSearchNote(r) {
   const blocked = r.blocked ? `<p class="nl-warn">Toured can't search by who lives in an area or by how safe it is. Try home features, price and location instead.</p>` : "";
   n.innerHTML = `<button class="nl-x" type="button" data-nlclose aria-label="Dismiss">×</button>
     ${r.understood.length ? `<p><b>Searching for:</b> ${r.understood.map(esc).join(" · ")}</p>` : ""}
+    ${r.dropped?.length ? `<p class="nl-warn"><b>No homes matched everything, so these were left out:</b> ${r.dropped.map(esc).join("; ")}</p>` : ""}
     ${r.skipped.length ? `<p class="nl-warn"><b>Couldn't apply:</b> ${r.skipped.map(esc).join("; ")}</p>` : ""}
     ${blocked}
     <p class="nl-caveat">${r.ai
