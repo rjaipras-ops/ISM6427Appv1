@@ -30,6 +30,8 @@ export const SITE = {
   idxLiteUrl: "https://link.flexmls.com/1zf04nqdby09,15",
 
   // Default map view covering Broward, Palm Beach and St. Lucie counties.
+  // South Florida: [south, west, north, east]. The map opens here when a search names no place.
+  focusBounds: [25.1, -80.95, 27.6, -79.9],
   mapCenter: [26.65, -80.2],
   mapZoom: 9,
 };

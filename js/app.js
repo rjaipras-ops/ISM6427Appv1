@@ -234,14 +234,6 @@ function buildControls() {
   for (const g of $$(".type-grid")) g.innerHTML = HOME_TYPES.map((t) =>
     `<label><input type="checkbox" name="type" value="${t}" />${typeIcon(t)}${t}</label>`).join("");
 
-  // Suggestions: counties and cities only, busiest first. (Neighborhood names in the MLS are
-  // free text, with thousands of subdivisions and junk like "N/A"; they and ZIP codes still work
-  // when typed.)
-  const tally = (key) => { const n = new Map(); for (const l of S.listings) if (l[key]) n.set(l[key], (n.get(l[key]) || 0) + 1); return n; };
-  const top = (n, min, max) => [...n].filter(([k, c]) => c >= min && /[a-z]{3}/i.test(k) && !/^(n\/?a|none|other|unknown|county)$/i.test(k.trim())).sort((a, b) => b[1] - a[1]).slice(0, max).map(([k]) => k);
-  const places = [...top(tally("City"), 10, 120), ...top(tally("County"), 10, 12).map((c) => `${c} County`)];
-  $("#placeList").innerHTML = places.map((p) => `<option value="${esc(p)}">`).join("");
-
   drawHistogram();
 }
 
@@ -649,7 +641,16 @@ function fitToResults() {
   if (!el.offsetWidth || !el.offsetHeight) { needsFit = true; return; }
   needsFit = false;
   map.invalidateSize();
-  if (S.results.length) map.fitBounds(L.latLngBounds(S.results.map((l) => [l.Latitude, l.Longitude])), { padding: [40, 40], maxZoom: 14 });
+  if (!S.results.length) return;
+  // With no place in the search, frame South Florida (Homestead to Port St. Lucie) instead of
+  // zooming out to every listing in the state. Homes elsewhere are still there if you pan or search.
+  let rows = S.results;
+  if (!S.f.q && !S.f.counties.length) {
+    const [s, w, n, e] = SITE.focusBounds;
+    const local = rows.filter((l) => l.Latitude >= s && l.Latitude <= n && l.Longitude >= w && l.Longitude <= e);
+    if (local.length) rows = local;
+  }
+  map.fitBounds(L.latLngBounds(rows.map((l) => [l.Latitude, l.Longitude])), { padding: [40, 40], maxZoom: 14 });
 }
 let map, markerLayer, markers = new Map(), galleryMaps = [];
 function initMap() {

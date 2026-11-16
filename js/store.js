@@ -64,6 +64,7 @@ const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) 
 let remote = false;      // true once /api/reviews answered
 let remoteUser = null;   // { id, displayName, email, picture } from the session
 let reviewCache = [];    // all reviews, loaded once at startup
+const MIN_HOME_PRICE = 10000;
 let authCfg = { googleClientId: null, devLogin: false };
 let serverReviewsDisabled = [];
 
@@ -426,6 +427,8 @@ function decodeIndex(data) {
     const c = fixCoords(Number(l.Latitude), Number(l.Longitude));
     if (!c) return null;
     [l.Latitude, l.Longitude] = c;
+    // A "home for sale" under $10,000 is almost always a rental entered as a sale. Land can be that cheap.
+    if (l.ListPrice < MIN_HOME_PRICE && l.PropertyType !== "Land") return null;
     return l;
   }).filter(Boolean);
 }

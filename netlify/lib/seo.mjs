@@ -48,6 +48,9 @@ export async function publishedReviewsByListing() {
 const avgRating = (rows) => rows.reduce((a, r) => a + (r.ratings?.overall || 0), 0) / rows.length;
 const TOUR_TYPE = { open_house: "open house", private_showing: "private showing", builder_tour: "builder tour" };
 
+// Homes "for sale" under $10,000 are almost always rentals entered as sales (the app hides them too).
+const mispriced = (l) => l.ListPrice < 10000 && l.PropertyType !== "Land";
+
 export const listingPath = (l) => `/homes/${l.ListingKey}-${slugify(l.AddressHidden ? `${l.City} fl ${l.PostalCode}` : `${l.StreetAddress} ${l.City} fl ${l.PostalCode}`)}`;
 
 export async function findListing(key) {
@@ -160,7 +163,7 @@ async function listingUrls() {
   const out = [];
   for (const [key, row] of Object.entries(await getIndex())) {
     const l = rowToListing(key, row);
-    if (l.AddressHidden) continue;
+    if (l.AddressHidden || mispriced(l)) continue;
     const lastmod = l.ModificationTimestamp ? `<lastmod>${String(l.ModificationTimestamp).slice(0, 10)}</lastmod>` : "";
     out.push(`<url><loc>${base}${esc(listingPath(l))}</loc>${lastmod}</url>`);
   }
@@ -202,7 +205,7 @@ async function cityGroups() {
   const groups = new Map();
   for (const [key, row] of Object.entries(await getIndex())) {
     const l = rowToListing(key, row);
-    if (!l.City || l.AddressHidden || !l.ListPrice) continue;
+    if (!l.City || l.AddressHidden || !l.ListPrice || mispriced(l)) continue;
     const slug = slugify(l.City);
     if (!slug) continue;
     let g = groups.get(slug);
