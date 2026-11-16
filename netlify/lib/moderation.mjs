@@ -42,7 +42,7 @@ const CONTACT = [
 const FAIR_HOUSING = [
   /\b(white|black|hispanic|latino|latina|asian|african[- ]american|caucasian|mexican|haitian|cuban|jewish|muslim|christian|catholic|hindu|arab|immigrants?|foreigners?)\s+(neighbo(u)?rs?|neighbo(u)?rhood|area|families|people|community|residents|tenants|owners)\b/i,
   /\b(neighbo(u)?rhood|area|community|building|street)\s+(is|was|seems|feels)\s+(mostly|all|very|too)\s+(white|black|hispanic|latino|asian|jewish|muslim|christian|ethnic|foreign)\b/i,
-  /\b(ghetto|hood|bad element|those people|undesirables?|sketchy people|section 8 crowd)\b/i,
+  /\b(ghetto|hood|bad element|those people|undesirables?|sketchy people|section ?8|section eight)\b/i,
   /\b(no|not for|not good for|bad for|avoid if you have)\s+(kids|children|families|families with children)\b/i,
   /\b(perfect|ideal|great)\s+for\s+(a\s+)?(young\s+)?(christian|jewish|muslim|white|black|hispanic|single (man|woman)|couple without kids)\b/i,
   /\b(handicap(ped)?|wheelchair[- ]bound|crippled?|disabled people)\b/i,
