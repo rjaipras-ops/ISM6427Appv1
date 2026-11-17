@@ -4,7 +4,11 @@
 
 const SQFT_PER_ACRE = 43560;
 const WORD_NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, a: 1, single: 1 };
-const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+// One spelling for common abbreviations, applied to both the search and the listing ("ft lauderdale",
+// "port saint lucie", "pt st lucie" all match the feed's "Fort Lauderdale" / "Port St. Lucie").
+const CANON = { saint: "st", ft: "fort", pt: "port", mt: "mount" };
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim()
+  .split(" ").map((w) => CANON[w] || w).join(" ");
 const money = (n) => n >= 1e6 ? `$${(n / 1e6).toFixed(2).replace(/\.?0+$/, "")}M` : n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n}`;
 
 // "$500k", "500,000", "1.2m", "1.2 million", "450 thousand"
@@ -25,7 +29,7 @@ const BLOCKED = /\b(safe(st|r)?|safety|(low |no |high )?crime|dangerous|sketchy|
 const FEATURES = [
   // [pattern, filter key, label]
   [/\b(private |swimming |heated |salt ?water )?pool\b/, "pool", "Pool"],
-  [/\b(water ?front|on the water|canal ?front|lake ?front|ocean ?front|intracoastal)\b/, "waterfront", "Waterfront"],
+  [/\b(water ?front|on the water|canal ?front|lake ?front|ocean ?front|river ?front|bay ?front|intracoastal|on (a |the )?(canal|lake|river|bay))\b/, "waterfront", "Waterfront"],
   [/\b(ocean|gulf) access\b/, "oceanAccess", "Ocean access"],
   [/\b(boat )?dock\b|\bboat (slip|lift)\b/, "boatDock", "Boat dock"],
   [/\bgolf( course| community)?\b/, "golf", "Golf community"],
@@ -50,14 +54,21 @@ const TYPES = [
   [/\bsingle[- ]family( homes?| houses?)?\b|\bdetached (homes?|houses?)\b/, "Single Family"],
   [/\bcondos?\b|\bcondominiums?\b|\bapartments?\b/, "Condo"],
   [/\btown ?(houses?|homes?)\b|\bvillas?\b/, "Townhouse"],
-  [/\b(duplex(es)?|triplex(es)?|fourplex|multi[- ]?family)\b/, "Multi-Family"],
+  [/\b(duplex(es)?|triplex(es)?|fourplex|quadplex|multi[- ]?family|investment propert(y|ies)|income propert(y|ies)|rental propert(y|ies))\b/, "Multi-Family"],
   [/\b(mobile|manufactured)( homes?)?\b/, "Mobile/Manufactured"],
-  [/\b(vacant )?(land|lots?)( for sale)?\b|\bacreage\b/, "Land"],
+  [/\b(vacant|empty|buildable|building|residential) (land|lots?|parcels?)\b|\b(land|lots?) for sale\b|\bvacant\b|\bland\b/, "Land"],
+];
+
+const SHORT_NAMES = [
+  [/\bpsl\b/, "Port St. Lucie"], [/\bwpb\b/, "West Palm Beach"], [/\bpbg\b/, "Palm Beach Gardens"], [/\b(ftl|fort laud|ft laud)\b/, "Fort Lauderdale"],
+  [/\bdelray\b/, "Delray Beach"], [/\bboynton\b/, "Boynton Beach"], [/\bpompano\b/, "Pompano Beach"], [/\bdeerfield\b/, "Deerfield Beach"],
+  [/\bhallandale\b/, "Hallandale Beach"], [/\bdania\b/, "Dania Beach"], [/\bsunny isles\b/, "Sunny Isles Beach"], [/\bjensen\b/, "Jensen Beach"],
+  [/\bvero\b/, "Vero Beach"], [/\bboca\b/, "Boca Raton"], [/\bpembroke\b/, "Pembroke Pines"], [/\bpalm beach gardens\b/, "Palm Beach Gardens"],
 ];
 
 const STOP = new Set(("find show me give get see list listings listing homes home houses house properties property places place for sale with and a an the in that have has having i we want need looking look search "
   + "please at least or more of to near around is are which any some all my our us on it this these those something anything be can you would like there who where do does also but only just "
-  + "really neighborhood neighbourhood community communities area areas payment payments story stories built bedroom bedrooms bathroom bathrooms nice good great not no without minimum maximum max min under over above below than less up price priced cost costs asking").split(" "));
+  + "really nearby close by within miles neighborhood neighbourhood community communities area areas payment payments story stories built bedroom bedrooms bathroom bathrooms nice good great not no without minimum maximum max min under over above below than less up price priced cost costs asking").split(" "));
 
 /**
  * @param {string} text  what the user typed
@@ -67,7 +78,11 @@ const STOP = new Set(("find show me give get see list listings listing homes hom
 export function parseSearch(text, { cities = [], counties = [] } = {}) {
   // Keep $ , . / + - (they matter for "$3,000/mo" and "55+"); everything else becomes a space.
   let t = ` ${String(text || "").toLowerCase().replace(/[^a-z0-9 $,./+\-]/g, " ").replace(/(\d),(?=\d{3})/g, "$1").replace(/,/g, " ").replace(/\s+/g, " ")} `;
-  const placeRe = (name, tail = "") => new RegExp(`\\b${norm(name).split(" ").join("[ .\\-]+")}\\.?${tail}(?![a-z0-9])`);
+  // Same abbreviations as the listings; "w palm beach" / "n miami" style directions spelled out.
+  t = t.replace(/(?<!\bsq\.? ?)\b(saint|ft|pt|mt)\b\.?/g, (w, a) => CANON[a])
+    .replace(/\b(w|n|s|e)\.? (?=(palm|miami|lauderdale|fort|boca|hollywood|delray|jupiter|naples|palm beach))/g, (m, d) => ({ w: "west ", n: "north ", s: "south ", e: "east " })[d]);
+  // A place name as typed; not part of a longer hyphenated name ("Miami" in "Miami-Dade") and not a county.
+  const placeRe = (name, tail = "") => new RegExp(`\\b${norm(name).split(" ").join("[ .\\-]+")}\\.?${tail}(?![a-z0-9-])${tail ? "" : "(?!\\s+county)"}`);
   const patch = {}, understood = [], skipped = [];
   let filterHits = 0;
   // Replace the first match of `re` with a space and return the match (so text isn't read twice).
@@ -77,9 +92,22 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
   const blocked = BLOCKED.test(t);
   if (blocked) t = t.replace(new RegExp(BLOCKED.source, "g"), " ");
 
-  // ----- location: ZIP, county, city (before numbers are read as prices) -----
+  // ----- location: ZIP, city, county (before numbers are read as prices) -----
+  // Cities first, longest name first, so "Port St. Lucie" isn't read as St. Lucie County and
+  // "West Palm Beach" isn't read as Palm Beach.
   let m;
   if ((m = take(/\b(3[0-4]\d{3})\b/))) { patch.q = m[1]; understood.push(`ZIP ${m[1]}`); }
+  if (!patch.q) {
+    const city = [...cities].filter((c) => c && c.length > 2).sort((a, b) => b.length - a.length).find((c) => placeRe(c).test(t));
+    if (city) { t = t.replace(placeRe(city), " "); patch.q = city; understood.push(city); }
+  }
+  // Short names locals use ("Delray", "PSL", "WPB"), when the full name is in the listings.
+  if (!patch.q) {
+    for (const [re, full] of SHORT_NAMES) {
+      const real = cities.find((c) => norm(c) === norm(full));
+      if (real && re.test(t)) { t = t.replace(re, " "); patch.q = real; understood.push(real); break; }
+    }
+  }
   for (const c of [...counties].sort((a, b) => b.length - a.length)) {
     const n = norm(c);
     if (!n) continue;
@@ -90,10 +118,6 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
       t = t.replace(re, " ");
       patch.counties = [...(patch.counties || []), c]; understood.push(`${c} County`); filterHits++;
     }
-  }
-  if (!patch.q) {
-    const city = [...cities].filter((c) => c && c.length > 2).sort((a, b) => b.length - a.length).find((c) => placeRe(c).test(t));
-    if (city) { t = t.replace(placeRe(city), " "); patch.q = city; understood.push(city); }
   }
 
   // ----- monthly payment -----
@@ -119,10 +143,12 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
   const SQ = String.raw`(?:sq\.? ?ft\.?|sqft|square (?:feet|foot)|sf)`;
   if ((m = take(new RegExp(String.raw`\b(under|below|less than|up to|max(?:imum)?)\s?(\d[\d,]{2,})\s?${SQ}`)))) { const n = +m[2].replace(/,/g, ""); hit({ sqftMax: n }, `Up to ${n.toLocaleString("en-US")} sq ft`); }
   else if ((m = take(new RegExp(String.raw`\b(?:over|above|more than|at least|min(?:imum)?)?\s?(\d[\d,]{2,})\s?\+?\s?${SQ}`)))) { const n = +m[1].replace(/,/g, ""); hit({ sqftMin: n }, `${n.toLocaleString("en-US")}+ sq ft`); }
-  if ((m = take(/\b(half|quarter|\d+(?:\.\d+)?|one|two|three|four|five)\s?\+?\s?(an )?acres?\b/))) {
+  if ((m = take(/\b(half|quarter|\d+(?:\.\d+)?|one|two|three|four|five)\s?\+?\s?(an )?acres?( lots?| parcels?| of land| property| properties)?\b/))) {
     const a = m[1] === "half" ? 0.5 : m[1] === "quarter" ? 0.25 : num(m[1]);
     if (a > 0) hit({ lotMin: Math.round(a * SQFT_PER_ACRE) }, `Lot ${a}+ acre${a > 1 ? "s" : ""}`);
   }
+  if (patch.lotMin == null && take(/\b(on |with |some |large |lots of )?(acreage|acres)\b/)) hit({ lotMin: SQFT_PER_ACRE }, "Lot 1+ acre");
+  if (patch.lotMin == null && take(/\b(big|large|huge|oversized|deep|spacious) (lot|yard|back ?yard|property)\b/)) hit({ lotMin: 10890 }, "Lot ¼+ acre");
   if ((m = take(/\b(?:built|constructed)?\s?(after|since|newer than|in or after|from)\s((?:19|20)\d{2})\b/))) hit({ yearMin: +m[2] }, `Built ${m[2]} or later`);
   if ((m = take(/\b(?:built|constructed)?\s?(before|older than|prior to)\s((?:19|20)\d{2})\b/))) hit({ yearMax: +m[2] }, `Built ${m[2]} or earlier`);
   if ((m = take(new RegExp(String.raw`\b${NUM}\s?\+?[- ]?car garage\b`)))) { const n = Math.floor(num(m[1])); hit({ garageMin: n }, `${n}+ car garage`); }

@@ -29,14 +29,14 @@ export const aiSearchEnabled = () => Boolean(process.env.GEMINI_API_KEY);
 const INSTRUCTIONS = `You convert a home buyer's search request into filters for a South Florida real estate site. Reply with ONE JSON object and nothing else.
 
 Allowed keys (omit any that the request doesn't mention; never guess):
-- "q": a city, ZIP code or neighborhood name the buyer named (string). Not a county.
+- "q": the city, ZIP code or neighborhood the buyer named, spelled the usual way ("Port St. Lucie", "Fort Lauderdale", "West Palm Beach"). Not a county. "Port St. Lucie" is a city, not St. Lucie County. "The Acreage" is a community in Palm Beach County.
 - "counties": array of county names without the word County, e.g. ["Broward"], ["Miami-Dade"], ["Palm Beach"].
-- "types": array from ${JSON.stringify(HOME_TYPES)}. "house" means Single Family. Omit if the buyer just says "home" or "listing".
+- "types": array from ${JSON.stringify(HOME_TYPES)}. "house" means Single Family; "land", "lot for sale", "vacant lot" or "build my own home" means Land; "duplex", "investment property" or "income property" means Multi-Family. Omit if the buyer just says "home", "property" or "listing", or only asks for acreage (that is a lot size, not a type).
 - "priceMin", "priceMax": dollars (numbers). "under 500k" -> priceMax 500000.
 - "payMax": maximum total monthly payment in dollars.
 - "bedsMin", "bathsMin": minimum counts (whole numbers).
 - "sqftMin", "sqftMax": living area in square feet.
-- "lotMin", "lotMax": lot size in square feet (1 acre = 43560). "big yard" -> lotMin 10000.
+- "lotMin", "lotMax": lot size in square feet (1 acre = 43560). "big yard" -> lotMin 10890 (a quarter acre). "acreage", "on acreage" or "some land" -> lotMin 43560 (1 acre) unless a size is given; "5 acres" -> lotMin 217800.
 - "yearMin", "yearMax": year built.
 - "hoaMax": maximum monthly HOA fee in dollars. "no HOA" -> 0. "low HOA" -> 300.
 - "garageMin": minimum garage spaces.

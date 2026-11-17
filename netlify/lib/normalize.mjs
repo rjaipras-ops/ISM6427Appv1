@@ -42,7 +42,8 @@ const SUBTYPE = [
   [/villa/i, "Townhouse"],
   [/duplex|triplex|quadruplex|multi/i, "Multi-Family"],
   [/manufactured|mobile/i, "Mobile/Manufactured"],
-  [/land|lot/i, "Land"],
+  [/land|lot|acreage|farm|ranch|agricultur|grove|pasture/i, "Land"],
+  [/income|apartment|plex\b|units?\b/i, "Multi-Family"],
   [/single|detached|residential/i, "Single Family"],
 ];
 const mapType = (sub, type) => (SUBTYPE.find(([re]) => re.test(sub || "")) || SUBTYPE.find(([re]) => re.test(type || "")) || [null, "Other"])[1];

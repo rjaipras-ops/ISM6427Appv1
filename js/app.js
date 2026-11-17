@@ -780,6 +780,15 @@ document.addEventListener("click", (e) => {
   location.hash = `#/home/${a.dataset.id}`;
 });
 
+// Beds/baths/size for homes; lot size for land (and anything without a house on it).
+const lotText = (sq) => !sq ? null : sq >= 21780 ? `<b>${+(sq / 43560).toFixed(sq >= 435600 ? 0 : 2)}</b> acres` : `<b>${fmtN(sq)}</b> sqft lot`;
+function factsHTML(l, where) {
+  const lot = lotText(l.demo.LotSizeSquareFeet);
+  if (l.PropertyType === "Land" || (!l.BedroomsTotal && !l.LivingArea)) return lot ? `<span>${lot}</span>` : `<span>Vacant land</span>`;
+  const b = where === "detail" ? ["beds", "baths"] : ["bd", "ba"];
+  return `<span><b>${l.BedroomsTotal}</b> ${b[0]}</span><span><b>${l.BathroomsTotalInteger}</b> ${b[1]}</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span>`;
+}
+
 function cardHTML(l, { compact = false } = {}) {
   const s = S.summaries[l.ListingId];
   const saved = S.saved.has(l.ListingId);
@@ -792,7 +801,7 @@ function cardHTML(l, { compact = false } = {}) {
     </div>
     <div class="card-body">
       <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}${compact ? "" : `<span class="est-pay" title="Estimated monthly cost: ${S.f.payDown ?? 20}% down, ${S.f.payRate ?? 6.4}% 30-yr, plus est. taxes, insurance and HOA">Est. ${fmt$(monthlyCost(l, { down: S.f.payDown, rate: S.f.payRate }).total)}/mo</span>`}</div>
-      <div class="facts"><span><b>${l.BedroomsTotal}</b> bd</span><span><b>${l.BathroomsTotalInteger}</b> ba</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span>${compact ? "" : `<span>${l.PropertyType}</span>`}</div>
+      <div class="facts">${factsHTML(l, "card")}${compact ? "" : `<span>${l.PropertyType}</span>`}</div>
       <p class="addr">${esc(l.UnparsedAddress)}</p>
       ${isMls(l) ? `<p class="courtesy">${mlsMark()}<span>Courtesy of ${esc(l.ListOfficeName)}</span></p>` : ""}
       ${compact ? `<div style="margin-top:6px">${rating}</div>`
@@ -994,7 +1003,7 @@ function renderDetail(l) {
       <div>
         <div class="badges" style="position:static;margin-bottom:8px">${badgesFor(l)}</div>
         <p class="d-price">${fmt$(l.ListPrice)}${d.PriceReduced ? ` <s style="font-size:16px;color:var(--ink-3);font-weight:500">${fmt$(d.OriginalListPrice)}</s>` : ""}</p>
-        <div class="d-facts"><span><b>${l.BedroomsTotal}</b> beds</span><span><b>${l.BathroomsTotalInteger}</b> baths</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span></div>
+        <div class="d-facts">${factsHTML(l, "detail")}</div>
         <p class="d-addr">${esc(l.UnparsedAddress)}</p>
         <div class="status-line">
           <span><span class="dot ${statusDot}"></span> ${d.StandardStatus} ${est}</span>

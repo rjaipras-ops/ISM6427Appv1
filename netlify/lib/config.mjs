@@ -43,7 +43,9 @@ export function idxConfig() {
     counties: (process.env.IDX_COUNTIES || "").split(",").map((s) => s.trim()).filter(Boolean),
     state: (process.env.IDX_STATE || "FL").trim(),
     // RESO PropertyType values to include.
-    propertyTypes: (process.env.IDX_PROPERTY_TYPES || "Residential").split(",").map((s) => s.trim()).filter(Boolean),
+    // Everything a buyer might purchase: homes, 2-4 unit income properties, vacant land and farms
+    // (commercial property and rentals are left out). Types the feed doesn't have simply match nothing.
+    propertyTypes: (process.env.IDX_PROPERTY_TYPES || "Residential,Residential Income,Land,Farm").split(",").map((s) => s.trim()).filter(Boolean),
     pageSize: num(process.env.IDX_PAGE_SIZE, 200),
     // Each run stops after this long and resumes next run (scheduled functions are cut off at 30 s).
     budgetMs: num(process.env.IDX_SYNC_BUDGET_MS, 22000),

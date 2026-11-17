@@ -65,13 +65,17 @@ function describe(l) {
   if (l.BedroomsTotal) parts.push(`${l.BedroomsTotal} bed`);
   if (l.BathroomsTotalInteger) parts.push(`${l.BathroomsTotalInteger} bath`);
   if (l.LivingArea) parts.push(`${Number(l.LivingArea).toLocaleString("en-US")} sq ft`);
+  else if (l.demo?.LotSizeSquareFeet) parts.push(`${+(l.demo.LotSizeSquareFeet / 43560).toFixed(2)} acre`);
   const kind = (l.PropertyType || "home").toLowerCase();
   return `${parts.join(", ")} ${kind} for sale in ${l.City}, FL ${l.PostalCode}${l.Neighborhood && l.Neighborhood !== l.City ? ` (${l.Neighborhood})` : ""}, listed at ${money(l.ListPrice)}.`;
 }
 
 /** Full HTML for a listing page: the app's index.html with SEO head tags and a readable summary. */
 export function renderListingPage(appHtml, l, { canonical, reviews = [] }) {
-  const title = `${l.Address} | ${money(l.ListPrice)} | ${l.BedroomsTotal || 0} bd ${l.BathroomsTotalInteger || 0} ba | Toured`;
+  const lotAcres = l.demo.LotSizeSquareFeet ? +(l.demo.LotSizeSquareFeet / 43560).toFixed(2) : 0;
+  const title = l.PropertyType === "Land" || !l.BedroomsTotal
+    ? `${l.Address} | ${money(l.ListPrice)} | ${lotAcres ? `${lotAcres} acre ` : ""}land | Toured`
+    : `${l.Address} | ${money(l.ListPrice)} | ${l.BedroomsTotal || 0} bd ${l.BathroomsTotalInteger || 0} ba | Toured`;
   const n = reviews.length;
   const desc = n
     ? `${describe(l)} ${n} tour review${n > 1 ? "s" : ""} from buyers who walked through it, rated ${avgRating(reviews).toFixed(1)} out of 5.`

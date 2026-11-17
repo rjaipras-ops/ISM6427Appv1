@@ -50,7 +50,11 @@ export const DRAWER_KEYS = [
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
 ];
 
-const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+// One spelling for common abbreviations, applied to both the search and the listing ("ft lauderdale",
+// "port saint lucie", "pt st lucie" all match the feed's "Fort Lauderdale" / "Port St. Lucie").
+const CANON = { saint: "st", ft: "fort", pt: "port", mt: "mount" };
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim()
+  .split(" ").map((w) => CANON[w] || w).join(" ");
 
 // `kwKeys`: listings whose description matched the keyword search on the server (a Set), if any.
 export function matches(l, f, summary, kwKeys) {
