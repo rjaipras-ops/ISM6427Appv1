@@ -8,7 +8,9 @@
 // Reviewers always see their own reviews, with a note when they're pending or hidden.
 
 import { randomUUID } from "node:crypto";
-import { getJSON, setJSON } from "./store.mjs";
+import { getJSON, setJSON, readIndex } from "./store.mjs";
+import { INDEX_FIELDS } from "./index-format.mjs";
+import { homeKey, reviewHomeKey } from "../../js/homekey.js";
 import { getSettings, screen } from "./moderation.mjs";
 
 const KEY = "reviews/all";
@@ -46,14 +48,38 @@ function cleanObservations(input) {
   return out;
 }
 
+/**
+ * Homes with reviews turned off (seller/owner requests on the admin page). Entries can be a listing
+ * key, an MLS number or a street address with ZIP; addresses match every listing of that home.
+ */
+export function offList(settings) {
+  const s = new Set();
+  for (const e of settings.reviewsDisabled || []) { s.add(e); const hk = homeKey(e); if (hk) s.add(hk); }
+  return s;
+}
+export const isOff = (off, { listingId, mlsNumber, hk } = {}) => off.has(listingId) || (mlsNumber && off.has(mlsNumber)) || (hk && off.has(hk));
+
+const COL = (f) => INDEX_FIELDS.indexOf(f);
+/** The home key for a review: from the MLS index for listings (trusted), else from the address sent. */
+async function homeKeyFor(listingId, input) {
+  const row = (await readIndex().catch(() => ({})))[listingId];
+  if (row) {
+    const hidden = Boolean((row[INDEX_FIELDS.length] || 0) & 1); // AddressHidden is flag bit 0
+    return hidden ? null : homeKey(`${row[COL("StreetAddress")]}, ${row[COL("City")]}, FL ${row[COL("PostalCode")]}`, row[COL("PostalCode")]);
+  }
+  return homeKey(input.address, input.postalCode);
+}
+export { reviewHomeKey };
+
 export async function createReview(input, user) {
   const errors = [];
   const settings = await getSettings();
   const listingId = clip(input.listingId, 80);
   const address = clip(input.address, 200);
   if (!listingId) errors.push("Missing home.");
-  if (settings.reviewsDisabled.includes(listingId) || (input.mlsNumber && settings.reviewsDisabled.includes(clip(input.mlsNumber, 40)))) {
-    errors.push("Reviews are turned off for this home at the seller's request.");
+  const hk = listingId ? await homeKeyFor(listingId, input) : null;
+  if (isOff(offList(settings), { listingId, mlsNumber: clip(input.mlsNumber, 40), hk })) {
+    errors.push("Reviews are turned off for this home at the owner's request.");
   }
   if (input.certified !== true) errors.push("You must certify that you toured this home in person.");
   if (!TOUR_TYPES.has(input.tourType)) errors.push("Choose how you toured the home.");
@@ -94,6 +120,7 @@ export async function createReview(input, user) {
     id: randomUUID(),
     listingId,
     address: address || null,
+    homeKey: hk, // the house, not the listing: reviews follow it to later listings and stay after it sells
     userId: user.id,
     displayName: user.displayName,
     createdAt: now,

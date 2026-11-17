@@ -10,6 +10,7 @@ import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
 import { parseSearch } from "./nlsearch.js";
+import { homeKey, homeSlug, reviewHomeKey } from "./homekey.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
 import { carouselHTML, initCarousel, openLightbox } from "./gallery.js";
 
@@ -59,7 +60,7 @@ init().catch((e) => {
 async function init() {
   const [feed] = await Promise.all([store.loadFeed(), store.initBackend()]);
   S.user = store.getUser();
-  S.summaries = store.getReviewSummaries();
+  S.summaries = store.getReviewSummaries(S.listings);
   applyFeed(feed);
   buildControls();
   initMap();
@@ -633,9 +634,11 @@ async function renderGoogleButton(clientId) {
   }
 }
 // Reviews turned off for a home (seller request): site settings file + the admin page's list.
-function reviewsOffFor(key, mls) {
-  const off = new Set([...(SITE.reviewsDisabled || []), ...store.getReviewsDisabled()]);
-  return off.has(key) || (mls ? off.has(mls) : false);
+// Entries can be a listing key, an MLS number or a street address with ZIP (matches every listing of it).
+function reviewsOffFor(key, mls, hk) {
+  const off = new Set();
+  for (const e of [...(SITE.reviewsDisabled || []), ...store.getReviewsDisabled()]) { off.add(e); const k = homeKey(e); if (k) off.add(k); }
+  return off.has(key) || (mls ? off.has(mls) : false) || (hk ? off.has(hk) : false);
 }
 
 document.addEventListener("click", () => { $("#account")?.classList.remove("open"); $("#acctBtn")?.setAttribute("aria-expanded", "false"); });
@@ -837,7 +840,7 @@ function keywordKeys() {
 }
 
 function renderResults({ fitMap = false } = {}) {
-  S.summaries = store.getReviewSummaries();
+  S.summaries = store.getReviewSummaries(S.listings);
   const kwKeys = keywordKeys();
   const rows = sortListings(S.listings.filter((l) => matches(l, S.f, S.summaries[l.ListingId], kwKeys)), S.f.sort, S.summaries);
   S.results = rows;
@@ -882,7 +885,13 @@ function route() {
     if (insight.lastView !== l.ListingId) { insight.lastView = l.ListingId; sendInsight({ kind: "view", listingId: l.ListingId, city: l.City }); }
     return;
   }
-  if (m) toast("That home is no longer available.");
+  if (m) {
+    // No longer listed: if it has tour reviews, they live on at the home's review page.
+    const r = store.getReviews(m[1]).find((x) => !x.status || x.status === "published");
+    const hk = r && reviewHomeKey(r);
+    if (hk) { location.href = `/reviews/${homeSlug(hk)}`; return; }
+    toast("That home is no longer available.");
+  }
   if (h === "#/saved") { show("view-saved"); renderSaved(); return; }
   if (h === "#/my-reviews") { show("view-myreviews"); renderMyReviews(); return; }
   if (h === "#/admin") { show("view-admin"); renderAdmin(); return; }
@@ -913,11 +922,12 @@ function renderDetail(l) {
   const extra = mls ? S.details.get(l.ListingId) : null;
   if (extra) Object.assign(l, extra.fields, { Parcel: extra.parcel ?? l.Parcel });
   const d = l.demo;
-  const reviews = store.getReviews(l.ListingId);
+  // All reviews of this home, including ones from earlier listings (marked as such).
+  const reviews = store.getReviewsForHome(l).map((r) => (r.listingId !== l.ListingId ? { ...r, earlier: true } : r));
   const s = S.summaries[l.ListingId];
   const saved = S.saved.has(l.ListingId);
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
-  const reviewsOff = reviewsOffFor(l.ListingId, l.MlsNumber);
+  const reviewsOff = reviewsOffFor(l.ListingId, l.MlsNumber, store.homeKeyOf(l));
   document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | Toured`;
   // "est." badges mark generated placeholder values; MLS listings never have any.
   const est = mls ? "" : `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
@@ -1054,7 +1064,7 @@ function renderDetail(l) {
     if (h && store.isRemote() && !S.user) { requireAuth(() => renderDetail(l)); return; }
     if (h) { if (store.markHelpful(h.dataset.helpful)) { renderDetail(l); toast("Thanks for the feedback"); } else toast("You already marked this helpful"); }
     const del = e.target.closest("[data-delete]");
-    if (del && confirm("Delete your review?")) { await store.deleteReview(del.dataset.delete, S.user); S.summaries = store.getReviewSummaries(); renderDetail(l); toast("Review deleted"); }
+    if (del && confirm("Delete your review?")) { await store.deleteReview(del.dataset.delete, S.user); S.summaries = store.getReviewSummaries(S.listings); renderDetail(l); toast("Review deleted"); }
   });
   renderCalc(l);
 
@@ -1206,7 +1216,7 @@ function renderPanelHome() {
   $("#tpResult").innerHTML = homes.length ? `
     <h3 class="tp-h">Homes with tour reviews</h3>
     <ul class="tp-list">${homes.map((h) => {
-      const s = S.summaries[h.key] || store.getReviewSummaries()[h.key];
+      const s = S.summaries[h.key] || store.getReviewSummaries(S.listings)[h.key];
       return `<li><button type="button" class="tp-home" data-key="${esc(h.key)}" data-address="${esc(h.address)}">
         <span class="tp-home-addr">${esc(h.address)}</span>
         ${s ? `<span class="rating-mini"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">· ${s.count} tour${s.count > 1 ? "s" : ""}</span></span>` : ""}
@@ -1256,13 +1266,14 @@ function panelListing(p) {
 
 function renderPanelProperty(p) {
   panel.property = p;
-  S.summaries = store.getReviewSummaries();
+  S.summaries = store.getReviewSummaries(S.listings);
   const l = panelListing(p);
   const pc = p.parcel || {};
-  const reviews = store.getReviews(p.key);
-  const s = S.summaries[p.key];
+  // Reviews of this address from any listing of it, as well as ones written here.
+  const reviews = store.getReviewsForHome(l);
+  const s = store.getReviewSummaries([l])[l.ListingId];
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
-  const reviewsOff = reviewsOffFor(p.key);
+  const reviewsOff = reviewsOffFor(p.key, null, store.homeKeyOf(l));
   // Is this home also in Toured's own listing data? Link to its full page.
   const match = S.listings.find((x) => normAddr(x.StreetAddress) === normAddr(p.street) && String(x.PostalCode) === String(p.postalCode));
   const facts = [
@@ -1465,7 +1476,7 @@ function reviewHTML(r) {
       <span class="avatar" aria-hidden="true">${esc(r.displayName.slice(0, 1).toUpperCase())}</span>
       <div>
         <b>${esc(r.displayName)}</b> ${r.sample ? `<span class="sample-flag">Sample</span>` : ""}
-        <div class="review-meta">Toured ${fmtDate(r.tour.date)} · ${esc(store.TOUR_TYPES[r.tour.type] || r.tour.type)} · Posted ${fmtDate(r.createdAt.slice(0, 10))}</div>
+        <div class="review-meta">Toured ${fmtDate(r.tour.date)} · ${esc(store.TOUR_TYPES[r.tour.type] || r.tour.type)} · Posted ${fmtDate(r.createdAt.slice(0, 10))}${r.earlier ? ` · <span class="earlier-tag" title="This review was written when the home was listed earlier, or from Look up a home. Its condition may have changed since.">Earlier tour</span>` : ""}</div>
       </div>
       <span class="verified-pill" title="The reviewer certified they toured this home in person">${CHECK} Certified tour</span>
     </div>
@@ -1562,7 +1573,7 @@ function openReviewForm(l) {
     try {
       const saved = await store.addReview(input, { listing: l, user: S.user });
       $("#reviewModal").close();
-      S.summaries = store.getReviewSummaries();
+      S.summaries = store.getReviewSummaries(S.listings);
       if (l.onReviewChange) l.onReviewChange(l);
       else { renderDetail(l); $("#reviewList").scrollIntoView({ behavior: "smooth" }); }
       toast(saved?.held ? "Thanks! Your review will appear after a quick check." : "Review posted — thanks for helping other buyers");
@@ -1681,9 +1692,9 @@ function drawAdmin() {
       `<button type="button" data-admtab="${k}" aria-pressed="${admin.filter === k}">${t} (${counts[k]})</button>`).join("")}</div>
     <div class="admin-list">${rows.length ? rows.map(adminReviewHTML).join("") : `<p class="muted" style="padding:16px 0">Nothing here.</p>`}</div>
     <section class="admin-optout">
-      <h2>Reviews turned off (seller requests)</h2>
-      <p class="muted">Enter a listing's MLS number (e.g. R11012345) or the listing ID from its page address. Reviews disappear from that home and new ones can't be posted.</p>
-      <form id="admOptForm" class="admin-opt-form"><input id="admOptInput" placeholder="MLS number or listing ID" required><button class="btn" type="submit">Turn off reviews</button></form>
+      <h2>Reviews turned off (seller and owner requests)</h2>
+      <p class="muted">Enter a listing's MLS number (e.g. R11012345), the listing ID from its page address, or the home's street address with ZIP (e.g. 123 SW Main St, Port St. Lucie, FL 34953). An address covers every listing of that home, now and later, and its permanent review page. Reviews disappear and new ones can't be posted.</p>
+      <form id="admOptForm" class="admin-opt-form"><input id="admOptInput" placeholder="MLS number, listing ID or full address with ZIP" required><button class="btn" type="submit">Turn off reviews</button></form>
       <ul class="admin-opt-list">${(st.reviewsDisabled || []).map((k) => {
         const l = S.listings.find((x) => x.ListingId === k || x.MlsNumber === k);
         return `<li><span><b>${esc(k)}</b>${l ? ` · ${esc(l.UnparsedAddress)}` : ""}</span><button type="button" class="linkbtn" data-optremove="${esc(k)}">Turn reviews back on</button></li>`;
@@ -1700,7 +1711,7 @@ function drawAdmin() {
         await store.adminAct(id, action);
         if (action === "delete") admin.rows = admin.rows.filter((r) => r.id !== id);
         else { const r = admin.rows.find((x) => x.id === id); r.status = action === "hide" ? "hidden" : "published"; if (action === "approve") r.reports = []; r.moderation = { action }; }
-        await store.reloadReviews(); S.summaries = store.getReviewSummaries();
+        await store.reloadReviews(); S.summaries = store.getReviewSummaries(S.listings);
         drawAdmin(); toast({ approve: "Published", hide: "Hidden", restore: "Published", delete: "Deleted" }[action]);
       } catch (err) { toast(err.message); }
       return;

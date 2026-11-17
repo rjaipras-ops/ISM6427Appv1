@@ -1,4 +1,5 @@
 // Data access layer.
+import { homeKey, reviewHomeKey } from "./homekey.js";
 //
 // Everything the UI needs from a backend goes through this file, so swapping
 // the browser-only demo for real auth + a database (Supabase, Firebase,
@@ -234,18 +235,32 @@ export function getReviews(listingId) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** The home's key (null for listings with the address withheld). */
+export const homeKeyOf = (l) => (l && !l.AddressHidden ? homeKey(l.UnparsedAddress, l.PostalCode) : null);
+
+/**
+ * Every review of this home: ones written on this listing, plus ones from earlier listings of the
+ * same address and from "Look up a home". Reviews stay with the house, not the MLS number.
+ */
+export function getReviewsForHome(l) {
+  const hk = homeKeyOf(l);
+  return allReviews()
+    .filter((r) => r.listingId === l.ListingId || (hk && reviewHomeKey(r) === hk))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export function getAllReviews() { return allReviews().slice(); }
 
 export function getReviewsByUser(userId) {
   return allReviews().filter((r) => r.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-// Summary per listing: { [listingId]: { count, avg, cats: {key: avg} } }
-export function getReviewSummaries() {
+// Summary per listing: { [listingId]: { count, avg, cats: {key: avg} } }. Pass the current listings
+// so a listing also counts reviews of the same home from earlier listings / "Look up a home".
+export function getReviewSummaries(listings = []) {
   const out = {};
-  for (const r of allReviews()) {
-    if (r.status && r.status !== "published") continue;
-    const s = (out[r.listingId] ||= { count: 0, sum: 0, cats: {}, concerns: {}, positives: {} });
+  const byHome = {};
+  const add = (s, r) => {
     s.count += 1;
     for (const [k, o] of Object.entries(r.observations || {})) if (o.level === "some" || o.level === "significant") s.concerns[k] = (s.concerns[k] || 0) + 1;
     for (const p of r.positives || []) s.positives[p] = (s.positives[p] || 0) + 1;
@@ -255,8 +270,24 @@ export function getReviewSummaries() {
       const c = (s.cats[key] ||= { sum: 0, n: 0 });
       c.sum += r.ratings[key]; c.n += 1;
     }
+  };
+  const blank = () => ({ count: 0, sum: 0, cats: {}, concerns: {}, positives: {} });
+  for (const r of allReviews()) {
+    if (r.status && r.status !== "published") continue;
+    add((out[r.listingId] ||= blank()), r);
+    const hk = reviewHomeKey(r);
+    if (hk) add((byHome[hk] ||= blank()), r);
   }
-  for (const s of Object.values(out)) {
+  // Give each current listing the summary for its whole home (only ZIPs with reviews are checked).
+  const zips = new Set(Object.keys(byHome).map((k) => k.slice(-5)));
+  if (zips.size) {
+    for (const l of listings) {
+      if (!zips.has(String(l.PostalCode || "").slice(0, 5))) continue;
+      const home = byHome[homeKeyOf(l)];
+      if (home && home.count > (out[l.ListingId]?.count || 0)) out[l.ListingId] = home;
+    }
+  }
+  for (const s of new Set([...Object.values(out), ...Object.values(byHome)])) {
     s.avg = s.sum / s.count;
     for (const k of Object.keys(s.cats)) s.cats[k] = s.cats[k].sum / s.cats[k].n;
     delete s.sum;
@@ -289,7 +320,7 @@ export async function addReview(input, { listing, user }) {
   if (remote) {
     const { review, held, heldReasons } = await api("/api/reviews", {
       method: "POST",
-      body: JSON.stringify({ ...input, listingId: listing.ListingId, mlsNumber: listing.MlsNumber || null, address: listing.UnparsedAddress || null }),
+      body: JSON.stringify({ ...input, listingId: listing.ListingId, mlsNumber: listing.MlsNumber || null, address: listing.UnparsedAddress || null, postalCode: listing.PostalCode || null }),
     });
     reviewCache.push(review);
     return Object.assign(review, { held: !!held, heldReasons: heldReasons || [] });
@@ -299,6 +330,7 @@ export async function addReview(input, { listing, user }) {
     id: uid(),
     listingId: listing.ListingId,
     address: listing.UnparsedAddress || null, // lets reviews of any home (not just listings) be listed
+    homeKey: homeKeyOf(listing),
     userId: user.id,
     displayName: user.displayName,
     createdAt: now,

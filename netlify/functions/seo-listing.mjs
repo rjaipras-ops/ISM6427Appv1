@@ -1,5 +1,5 @@
 // GET /homes/<ListingKey>-<slug> — indexable listing page (see netlify/lib/seo.mjs).
-import { findListing, listingPath, renderListingPage, renderGonePage, siteUrl, publishedReviewsByListing } from "../lib/seo.mjs";
+import { findListing, listingPath, renderListingPage, renderGonePage, siteUrl, publishedReviews, reviewsForListing, reviewPageForListing } from "../lib/seo.mjs";
 
 let shell = { at: 0, html: null };
 async function appShell(req) {
@@ -16,11 +16,16 @@ export default async (req) => {
   const headers = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300", "Netlify-CDN-Cache-Control": "public, durable, s-maxage=3600, stale-while-revalidate=86400" };
   if (!m) return new Response(renderGonePage(html), { status: 404, headers });
   const l = await findListing(m[1]);
-  if (!l) return new Response(renderGonePage(html), { status: 410, headers });
+  if (!l) {
+    // Off the market: its tour reviews live on at the home's permanent review page.
+    const page = await reviewPageForListing(m[1]).catch(() => null);
+    if (page) return Response.redirect(new URL(page, u.origin).toString(), 301);
+    return new Response(renderGonePage(html), { status: 410, headers });
+  }
   const path = listingPath(l);
   // One address per listing: send old or partial slugs to the current one.
   if (u.pathname !== path) return Response.redirect(new URL(path, u.origin).toString(), 301);
-  const reviews = (await publishedReviewsByListing().catch(() => new Map())).get(l.ListingKey) || [];
+  const reviews = await publishedReviews().then((pr) => reviewsForListing(l, pr)).catch(() => []);
   return new Response(renderListingPage(html, l, { canonical: siteUrl() + path, reviews }), { headers });
 };
 

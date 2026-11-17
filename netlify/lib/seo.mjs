@@ -10,7 +10,9 @@
 // of the sitemap; listings not displayable on the internet never reach the index at all.
 
 import { readIndex as getIndex, indexTag } from "./store.mjs";
-import { allReviews, statusOf } from "./reviews.mjs";
+import { allReviews, statusOf, reviewHomeKey, offList, isOff } from "./reviews.mjs";
+import { getSettings } from "./moderation.mjs";
+import { homeKey, homeSlug } from "../../js/homekey.js";
 import { INDEX_FIELDS, INDEX_FLAGS } from "./index-format.mjs";
 
 export const siteUrl = () => (process.env.URL || "https://toured.netlify.app").replace(/\/+$/, "");
@@ -36,14 +38,45 @@ export function rowToListing(key, row) {
   return l;
 }
 
-/** Published reviews grouped by listing key. */
+/** Published reviews grouped by listing key (excluding homes with reviews turned off). */
 export async function publishedReviewsByListing() {
-  const out = new Map();
-  for (const r of await allReviews()) {
+  return (await publishedReviews()).byListing;
+}
+/** Published reviews by listing key and by home (address) key. */
+export async function publishedReviews() {
+  const [rows, settings] = await Promise.all([allReviews(), getSettings()]);
+  const off = offList(settings);
+  const byListing = new Map(), byHome = new Map();
+  const push = (m, k, r) => (m.get(k) || m.set(k, []).get(k)).push(r);
+  for (const r of rows) {
     if (statusOf(r) !== "published") continue;
-    (out.get(r.listingId) || out.set(r.listingId, []).get(r.listingId)).push(r);
+    const hk = reviewHomeKey(r);
+    if (isOff(off, { listingId: r.listingId, hk })) continue;
+    push(byListing, r.listingId, r);
+    if (hk) push(byHome, hk, r);
   }
-  return out;
+  for (const list of [...byListing.values(), ...byHome.values()]) list.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  return { byListing, byHome };
+}
+/** Every review of a listing's home (earlier listings and "Look up a home" included). */
+export function reviewsForListing(l, { byListing, byHome }) {
+  const hk = l.AddressHidden ? null : homeKey(l.Address, l.PostalCode);
+  return (hk && byHome.get(hk)) || byListing.get(l.ListingKey) || [];
+}
+// Home key -> active listing, rebuilt when the index changes.
+let activeMemo = null;
+async function activeHomes() {
+  const tag = await indexTag();
+  if (activeMemo?.tag === tag) return activeMemo.map;
+  const map = new Map();
+  for (const [key, row] of Object.entries(await getIndex())) {
+    const l = rowToListing(key, row);
+    if (l.AddressHidden) continue;
+    const hk = homeKey(l.Address, l.PostalCode);
+    if (hk) map.set(hk, l);
+  }
+  activeMemo = { tag, map };
+  return map;
 }
 const avgRating = (rows) => rows.reduce((a, r) => a + (r.ratings?.overall || 0), 0) / rows.length;
 const TOUR_TYPE = { open_house: "open house", private_showing: "private showing", builder_tour: "builder tour" };
@@ -193,6 +226,7 @@ export async function renderSitemapPart(n) {
     ...["/about", "/how-it-works", "/faq"].map((u) => `<url><loc>${base}${u}</loc><changefreq>monthly</changefreq></url>`),
     `<url><loc>${base}/fl</loc><changefreq>daily</changefreq></url>`,
     ...(await cityList()).map((c) => `<url><loc>${base}/fl/${c.slug}</loc><changefreq>daily</changefreq></url>`),
+    ...(await reviewPageUrls()).map((u) => `<url><loc>${base}${u}</loc><changefreq>weekly</changefreq></url>`),
     `<url><loc>${base}/privacy.html</loc><changefreq>monthly</changefreq></url>`,
     `<url><loc>${base}/terms.html</loc><changefreq>monthly</changefreq></url>`] : [];
   return urlset([...head, ...part]);
@@ -231,7 +265,7 @@ export async function cityList() {
 }
 
 const ORG_LD = { "@type": "Organization", "@id": "https://itoured.com/#organization", name: "Toured", url: "https://itoured.com/" };
-function contentPage({ path, title, desc, h1, body, ld }) {
+function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = false }) {
   const base = siteUrl();
   const year = new Date().getFullYear();
   return `<!doctype html>
@@ -242,6 +276,7 @@ function contentPage({ path, title, desc, h1, body, ld }) {
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <link rel="canonical" href="${base}${path}">
+  ${noindex ? '<meta name="robots" content="noindex">' : ""}
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Toured">
   <meta property="og:title" content="${esc(title)}">
@@ -262,7 +297,7 @@ function contentPage({ path, title, desc, h1, body, ld }) {
   <main class="wide">
     <h1>${esc(h1)}</h1>
 ${body}
-    <p class="idx-note"><img src="/assets/beachesmls-logo.jpg" alt="BeachesMLS" height="22"> All listings featuring the BMLS logo are provided by BeachesMLS, Inc. This information is not verified for authenticity or accuracy and is not guaranteed. Copyright ©${year} BeachesMLS, Inc. Displayed by Rajesh Jaiprashad, LoKation Real Estate.</p>
+    ${mls ? `<p class="idx-note"><img src="/assets/beachesmls-logo.jpg" alt="BeachesMLS" height="22"> All listings featuring the BMLS logo are provided by BeachesMLS, Inc. This information is not verified for authenticity or accuracy and is not guaranteed. Copyright ©${year} BeachesMLS, Inc. Displayed by Rajesh Jaiprashad, LoKation Real Estate.</p>` : ""}
     <footer>Toured (itoured.com) is operated by Rajesh Jaiprashad, Florida real estate sales associate, license SL3403530, LoKation Real Estate. · <a href="/">Search homes</a> · <a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></footer>
   </main>
 </body>
@@ -295,20 +330,21 @@ export async function renderCityIndex() {
 export async function renderCityPage(slug) {
   const g = (await cityGroups()).get(slug);
   if (!g || g.listings.length < MIN_CITY_LISTINGS) return null;
-  const reviews = await publishedReviewsByListing();
+  const pr = await publishedReviews();
+  const rv = (l) => reviewsForListing(l, pr);
   const ls = g.listings;
   const prices = ls.map((l) => l.ListPrice).sort((a, b) => a - b);
   const median = prices[Math.floor(prices.length / 2)];
-  const reviewed = ls.filter((l) => reviews.has(l.ListingKey));
-  const newest = ls.filter((l) => !reviews.has(l.ListingKey))
+  const reviewed = ls.filter((l) => rv(l).length);
+  const newest = ls.filter((l) => !rv(l).length)
     .sort((a, b) => String(b.ModificationTimestamp || "").localeCompare(String(a.ModificationTimestamp || ""))).slice(0, CITY_PAGE_LISTINGS);
   const types = {};
   for (const l of ls) types[l.PropertyType || "Home"] = (types[l.PropertyType || "Home"] || 0) + 1;
   const typeText = Object.entries(types).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t, c]) => `${c.toLocaleString("en-US")} ${t.toLowerCase()}`).join(", ");
   const where = `${g.name}, FL`;
   const row = (l) => {
-    const rv = reviews.get(l.ListingKey);
-    return `<li><a href="${esc(listingPath(l))}">${esc(l.StreetAddress)}</a> · <b>${money(l.ListPrice)}</b> · ${l.BedroomsTotal || 0} bd, ${l.BathroomsTotalInteger || 0} ba${l.LivingArea ? `, ${Number(l.LivingArea).toLocaleString("en-US")} sq ft` : ""}${l.PropertyType ? ` · ${esc(l.PropertyType)}` : ""}${rv ? ` · <b>★ ${avgRating(rv).toFixed(1)}</b> (${rv.length} tour review${rv.length > 1 ? "s" : ""})` : ""}<br><small class="muted">Listing courtesy of ${esc(l.ListOfficeName || "the listing brokerage")}</small></li>`;
+    const rvs = rv(l).length ? rv(l) : null;
+    return `<li><a href="${esc(listingPath(l))}">${esc(l.StreetAddress)}</a> · <b>${money(l.ListPrice)}</b> · ${l.BedroomsTotal || 0} bd, ${l.BathroomsTotalInteger || 0} ba${l.LivingArea ? `, ${Number(l.LivingArea).toLocaleString("en-US")} sq ft` : ""}${l.PropertyType ? ` · ${esc(l.PropertyType)}` : ""}${rvs ? ` · <b>★ ${avgRating(rvs).toFixed(1)}</b> (${rvs.length} tour review${rvs.length > 1 ? "s" : ""})` : ""}<br><small class="muted">Listing courtesy of ${esc(l.ListOfficeName || "the listing brokerage")}</small></li>`;
   };
   const body = `    <p class="lede">There are ${ls.length.toLocaleString("en-US")} homes for sale in ${esc(where)}${g.county ? ` (${esc(g.county)} County)` : ""} on Toured, priced from ${money(prices[0])} to ${money(prices[prices.length - 1])} with a median asking price of ${money(median)}${typeText ? `: ${esc(typeText)}` : ""}.</p>
     <p>Toured (itoured.com) shows what listing photos can't: reviews from buyers who walked through the home in person. ${reviewed.length ? `${reviewed.length} ${esc(g.name)} home${reviewed.length > 1 ? "s have" : " has"} tour reviews so far.` : `No ${esc(g.name)} homes have tour reviews yet. If you've toured one, <a href="/how-it-works">post the first review</a>.`}</p>
@@ -327,4 +363,60 @@ export async function renderCityPage(slug) {
         { "@type": "ListItem", position: 1, name: "Toured", item: siteUrl() + "/" },
         { "@type": "ListItem", position: 2, name: "Cities", item: siteUrl() + "/fl" },
         { "@type": "ListItem", position: 3, name: g.name, item: `${siteUrl()}/fl/${slug}` }] }] });
+}
+
+/* ---------------- Permanent review pages: /reviews/<home> ----------------
+ * Tour reviews belong to the house, not the listing. When a reviewed home isn't for sale on Toured
+ * (sold, pending, withdrawn, or reviewed from "Look up a home"), its reviews live on here. No MLS
+ * data appears on these pages (IDX covers active listings only): just the address, the reviews and
+ * a link to the home's public county records.
+ */
+async function reviewPageUrls() {
+  const [{ byHome }, active] = await Promise.all([publishedReviews(), activeHomes()]);
+  return [...byHome.keys()].filter((hk) => !active.has(hk)).map((hk) => `/reviews/${homeSlug(hk)}`);
+}
+
+/** Where an old listing link should go: its home's review page, if the home has reviews. */
+export async function reviewPageForListing(listingKey) {
+  const { byListing } = await publishedReviews();
+  const r = byListing.get(listingKey)?.[0];
+  const hk = r && reviewHomeKey(r);
+  return hk ? `/reviews/${homeSlug(hk)}` : null;
+}
+
+/** { redirect } when the home is listed again, { html } for its review page, or null. */
+export async function renderHomeReviewsPage(slug) {
+  const pr = await publishedReviews();
+  const hk = [...pr.byHome.keys()].find((k) => homeSlug(k) === slug);
+  if (!hk) return null;
+  const listed = (await activeHomes()).get(hk);
+  if (listed) return { redirect: listingPath(listed) };
+  const reviews = pr.byHome.get(hk);
+  const address = String(reviews.find((r) => r.address)?.address || hk).replace(/\s+/g, " ").trim();
+  const n = reviews.length, avg = avgRating(reviews);
+  const last = reviews.map((r) => r.tour?.date).filter(Boolean).sort().pop();
+  const body = `    <p class="lede">${n} tour review${n > 1 ? "s" : ""} of ${esc(address)}, rated ${avg.toFixed(1)} out of 5 by people who toured it in person.</p>
+    <p class="muted">This home isn't listed for sale on Toured right now. These reviews were written by buyers who toured it${last ? `, most recently in ${esc(new Date(last + "T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" }))}` : ""}. A home's condition can change after a tour, so check each review's date.</p>
+    <section class="seo-reviews">
+      ${reviews.slice(0, 50).map((r) => `<article>
+        <h2>${esc(r.title)}</h2>
+        <p><b>${r.ratings?.overall || ""} out of 5</b> · ${esc(r.displayName)} · toured ${esc(r.tour?.date || "")}${TOUR_TYPE[r.tour?.type] ? ` (${TOUR_TYPE[r.tour.type]})` : ""}</p>
+        <p>${esc(r.body)}</p>
+        ${r.pros ? `<p><b>Liked:</b> ${esc(r.pros)}</p>` : ""}${r.cons ? `<p><b>Watch out for:</b> ${esc(r.cons)}</p>` : ""}
+      </article>`).join("")}
+    </section>
+    <p><small>Tour reviews are opinions of Toured users who certified they toured the home in person. If you own this home and would like its reviews hidden, <a href="/#/contact">contact us</a>.</small></p>
+    <p class="cta"><a class="cta-btn" href="/#/lookup">Look up this home's public records</a></p>
+    <p><a href="/">Search homes for sale</a> · <a href="/fl">Homes by city</a> · <a href="/faq">FAQ</a></p>`;
+  const html = contentPage({
+    path: `/reviews/${slug}`, mls: false,
+    title: `${address} tour reviews | Toured`,
+    desc: `${n} review${n > 1 ? "s" : ""} of ${address} from people who toured it in person, rated ${avg.toFixed(1)} out of 5. Read what buyers noticed on Toured.`,
+    h1: `Tour reviews: ${address}`, body,
+    ld: [{ "@type": "Residence", name: address, url: `${siteUrl()}/reviews/${slug}`,
+      aggregateRating: { "@type": "AggregateRating", ratingValue: Number(avg.toFixed(1)), reviewCount: n, bestRating: 5, worstRating: 1 },
+      review: reviews.slice(0, 20).map((r) => ({ "@type": "Review", name: r.title, reviewBody: r.body, datePublished: String(r.createdAt).slice(0, 10),
+        author: { "@type": "Person", name: r.displayName }, reviewRating: { "@type": "Rating", ratingValue: r.ratings?.overall, bestRating: 5, worstRating: 1 } })) }],
+  });
+  return { html };
 }

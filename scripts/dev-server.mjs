@@ -24,6 +24,7 @@ import idxSearch from "../netlify/functions/idx-search.mjs";
 import propertyHistory from "../netlify/functions/property-history.mjs";
 import seoListing from "../netlify/functions/seo-listing.mjs";
 import seoCity from "../netlify/functions/seo-city.mjs";
+import seoReviews from "../netlify/functions/seo-reviews.mjs";
 import aiSearchFn from "../netlify/functions/ai-search.mjs";
 import insightsFn from "../netlify/functions/insights.mjs";
 import adminInsightsFn from "../netlify/functions/admin-insights.mjs";
@@ -51,6 +52,7 @@ const routes = [
   [/^\/api\/property\/history$/, propertyHistory],
   [/^\/homes\/.+$/, seoListing],
   [/^\/fl(\/.*)?$/, seoCity],
+  [/^\/reviews\/.+$/, seoReviews],
   [/^\/sitemap\.xml$/, sitemap],
   [/^\/robots\.txt$/, robots],
   [/^\/sitemaps\/\d+\.xml$/, sitemapPart],
