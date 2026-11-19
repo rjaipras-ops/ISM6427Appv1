@@ -1,5 +1,5 @@
 // Property lookup by address, for any home in Florida
-// (not just homes in Toured's listing data). Used by the Toured panel on the
+// (not just homes in iToured's listing data). Used by the iToured panel on the
 // MLS Search page: a visitor pastes an address from the Flexmls search and gets
 // public records + tour reviews for that home.
 //
@@ -22,7 +22,7 @@ export const propertyKey = (coNo, parcelId) => `P-${Number(coNo)}-${String(parce
 
 async function geocode(address) {
   const q = new URLSearchParams({ address, benchmark: "Public_AR_Current", format: "json" });
-  const res = await fetch(`${CENSUS}?${q}`, { headers: { "User-Agent": "Toured property lookup" } });
+  const res = await fetch(`${CENSUS}?${q}`, { headers: { "User-Agent": "iToured property lookup" } });
   if (!res.ok) throw new Error(`Address lookup failed (${res.status})`);
   const j = await res.json();
   return (j.result?.addressMatches || []).map((m) => ({
@@ -111,7 +111,7 @@ export async function lookupProperty({ address, parcelKey }) {
     }
     if (pick.status === "matched") {
       const p = pick.parcel;
-      if (!COUNTY_BY_CO_NO[p.CO_NO]) return { status: "outside_area", message: "Toured covers homes in Florida." };
+      if (!COUNTY_BY_CO_NO[p.CO_NO]) return { status: "outside_area", message: "iToured covers homes in Florida." };
       const { county, parcel } = await summarize(p, m);
       // Unincorporated parcels carry a county name as the city; use the postal city instead.
       const city = !p.PHY_CITY || /COUNTY|UNINCORPORATED/i.test(p.PHY_CITY) ? m.city : p.PHY_CITY;
@@ -132,6 +132,6 @@ export async function lookupProperty({ address, parcelKey }) {
   }
   const outside = lastRows.length && lastRows.every((r) => !COUNTY_BY_CO_NO[r.CO_NO]);
   return outside
-    ? { status: "outside_area", message: "Toured covers homes in Florida." }
+    ? { status: "outside_area", message: "iToured covers homes in Florida." }
     : { status: "not_found", message: "We found the address but couldn't match it to a county parcel record. Try including the unit number." };
 }

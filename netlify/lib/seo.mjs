@@ -107,8 +107,8 @@ function describe(l) {
 export function renderListingPage(appHtml, l, { canonical, reviews = [] }) {
   const lotAcres = l.demo.LotSizeSquareFeet ? +(l.demo.LotSizeSquareFeet / 43560).toFixed(2) : 0;
   const title = l.PropertyType === "Land" || !l.BedroomsTotal
-    ? `${l.Address} | ${money(l.ListPrice)} | ${lotAcres ? `${lotAcres} acre ` : ""}land | Toured`
-    : `${l.Address} | ${money(l.ListPrice)} | ${l.BedroomsTotal || 0} bd ${l.BathroomsTotalInteger || 0} ba | Toured`;
+    ? `${l.Address} | ${money(l.ListPrice)} | ${lotAcres ? `${lotAcres} acre ` : ""}land | iToured`
+    : `${l.Address} | ${money(l.ListPrice)} | ${l.BedroomsTotal || 0} bd ${l.BathroomsTotalInteger || 0} ba | iToured`;
   const n = reviews.length;
   const desc = n
     ? `${describe(l)} ${n} tour review${n > 1 ? "s" : ""} from buyers who walked through it, rated ${avgRating(reviews).toFixed(1)} out of 5.`
@@ -146,8 +146,8 @@ export function renderListingPage(appHtml, l, { canonical, reviews = [] }) {
         <p>${esc(r.body)}</p>
         ${r.pros ? `<p><b>Liked:</b> ${esc(r.pros)}</p>` : ""}${r.cons ? `<p><b>Watch out for:</b> ${esc(r.cons)}</p>` : ""}
       </article>`).join("")}
-      <p><small>Tour reviews are opinions of Toured users, not information from BeachesMLS or the listing broker.</small></p>
-    </section>` : `<p>No tour reviews yet. If you toured this home, you can be the first to review it on Toured.</p>`;
+      <p><small>Tour reviews are opinions of iToured users, not information from BeachesMLS or the listing broker.</small></p>
+    </section>` : `<p>No tour reviews yet. If you toured this home, you can be the first to review it on iToured.</p>`;
   const cityLink = l.City ? `<a href="/fl/${slugify(l.City)}">More homes in ${esc(l.City)}</a> · ` : "";
   const head = `<base href="/">
   <title>${esc(title)}</title>
@@ -176,7 +176,7 @@ export function renderListingPage(appHtml, l, { canonical, reviews = [] }) {
     <p>MLS # ${esc(l.MlsNumber || "")} · Listing courtesy of ${esc(l.ListOfficeName || "the listing brokerage")}${l.ListOfficePhone ? ` · ${esc(l.ListOfficePhone)}` : ""}</p>
     <p><small>All listings featuring the BMLS logo are provided by BeachesMLS, Inc. This information is not verified for authenticity or accuracy and is not guaranteed. Copyright ©${year} BeachesMLS, Inc.</small></p>
     ${reviewsHtml}
-    <p><a href="/#/home/${esc(l.ListingKey)}">View photos, taxes, sale history and tour reviews</a> · ${cityLink}<a href="/">Search homes</a> · <a href="/about">About Toured</a></p>
+    <p><a href="/#/home/${esc(l.ListingKey)}">View photos, taxes, sale history and tour reviews</a> · ${cityLink}<a href="/">Search homes</a> · <a href="/about">About iToured</a></p>
   </article>`;
   return stripHomeSeo(appHtml)
     .replace(/<title>[\s\S]*?<\/title>/i, "")
@@ -264,7 +264,7 @@ export async function cityList() {
     .sort((a, b) => b.count - a.count);
 }
 
-const ORG_LD = { "@type": "Organization", "@id": "https://itoured.com/#organization", name: "Toured", url: "https://itoured.com/" };
+const ORG_LD = { "@type": "Organization", "@id": "https://itoured.com/#organization", name: "iToured", url: "https://itoured.com/" };
 function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = false }) {
   const base = siteUrl();
   const year = new Date().getFullYear();
@@ -278,7 +278,7 @@ function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = fa
   <link rel="canonical" href="${base}${path}">
   ${noindex ? '<meta name="robots" content="noindex">' : ""}
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Toured">
+  <meta property="og:site_name" content="iToured">
   <meta property="og:title" content="${esc(title)}">
   <meta property="og:description" content="${esc(desc)}">
   <meta property="og:url" content="${base}${path}">
@@ -292,13 +292,13 @@ function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = fa
   <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [ORG_LD, ...ld] }).replace(/</g, "\\u003c")}</script>
 </head>
 <body>
-  <header class="legal-head"><a href="/"><img src="/assets/brand/toured-icon.svg" width="28" height="28" alt="">Toured</a>
+  <header class="legal-head"><a href="/"><img src="/assets/brand/toured-icon.svg" width="28" height="28" alt="">iToured</a>
     <nav class="legal-nav" aria-label="Site"><a href="/">Search homes</a><a href="/about">About</a><a href="/how-it-works">How it works</a><a href="/faq">FAQ</a><a href="/fl">Cities</a></nav></header>
   <main class="wide">
     <h1>${esc(h1)}</h1>
 ${body}
     ${mls ? `<p class="idx-note"><img src="/assets/beachesmls-logo.jpg" alt="BeachesMLS" height="22"> All listings featuring the BMLS logo are provided by BeachesMLS, Inc. This information is not verified for authenticity or accuracy and is not guaranteed. Copyright ©${year} BeachesMLS, Inc. Displayed by Rajesh Jaiprashad, LoKation Real Estate.</p>` : ""}
-    <footer>Toured (itoured.com) is operated by Rajesh Jaiprashad, Florida real estate sales associate, license SL3403530, LoKation Real Estate. · <a href="/">Search homes</a> · <a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></footer>
+    <footer>iToured (itoured.com) is operated by Rajesh Jaiprashad, Florida real estate sales associate, license SL3403530, LoKation Real Estate. · <a href="/">Search homes</a> · <a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></footer>
   </main>
 </body>
 </html>
@@ -316,12 +316,12 @@ export async function renderCityIndex() {
   const order = ["Miami-Dade", "Broward", "Palm Beach"];
   const counties = [...byCounty.keys()].sort((a, b) => ((order.indexOf(a) + 1) || 99) - ((order.indexOf(b) + 1) || 99) || byCounty.get(b).length - byCounty.get(a).length);
   const li = (c) => `<li><a href="/fl/${c.slug}">${esc(c.name)}</a> <span class="muted">${c.count.toLocaleString("en-US")} homes</span></li>`;
-  const body = `    <p class="lede">Toured lists ${total.toLocaleString("en-US")} homes for sale across South Florida and shows reviews from buyers who toured them in person. Choose a city to see its homes and any tour reviews.</p>
+  const body = `    <p class="lede">iToured lists ${total.toLocaleString("en-US")} homes for sale across South Florida and shows reviews from buyers who toured them in person. Choose a city to see its homes and any tour reviews.</p>
     ${featured.length ? `<h2>Popular South Florida cities</h2><ul class="city-list">${featured.map(li).join("")}</ul>` : ""}
     ${counties.map((k) => `<h2>${esc(k)}${k === "Other" ? "" : " County"}</h2><ul class="city-list">${byCounty.get(k).sort((a, b) => a.name.localeCompare(b.name)).map(li).join("")}</ul>`).join("\n    ")}
     <p class="cta"><a class="cta-btn" href="/">Search all homes</a></p>`;
-  return contentPage({ path: "/fl", title: "South Florida homes for sale by city, with tour reviews | Toured",
-    desc: `Browse ${total.toLocaleString("en-US")} South Florida homes for sale by city on Toured (itoured.com), with reviews from buyers who toured them in person.`,
+  return contentPage({ path: "/fl", title: "South Florida homes for sale by city, with tour reviews | iToured",
+    desc: `Browse ${total.toLocaleString("en-US")} South Florida homes for sale by city on iToured (itoured.com), with reviews from buyers who toured them in person.`,
     h1: "South Florida homes for sale by city", body,
     ld: [{ "@type": "CollectionPage", name: "South Florida homes for sale by city", url: siteUrl() + "/fl" }] });
 }
@@ -346,27 +346,27 @@ export async function renderCityPage(slug) {
     const rvs = rv(l).length ? rv(l) : null;
     return `<li><a href="${esc(listingPath(l))}">${esc(l.StreetAddress)}</a> · <b>${money(l.ListPrice)}</b> · ${l.BedroomsTotal || 0} bd, ${l.BathroomsTotalInteger || 0} ba${l.LivingArea ? `, ${Number(l.LivingArea).toLocaleString("en-US")} sq ft` : ""}${l.PropertyType ? ` · ${esc(l.PropertyType)}` : ""}${rvs ? ` · <b>★ ${avgRating(rvs).toFixed(1)}</b> (${rvs.length} tour review${rvs.length > 1 ? "s" : ""})` : ""}<br><small class="muted">Listing courtesy of ${esc(l.ListOfficeName || "the listing brokerage")}</small></li>`;
   };
-  const body = `    <p class="lede">There are ${ls.length.toLocaleString("en-US")} homes for sale in ${esc(where)}${g.county ? ` (${esc(g.county)} County)` : ""} on Toured, priced from ${money(prices[0])} to ${money(prices[prices.length - 1])} with a median asking price of ${money(median)}${typeText ? `: ${esc(typeText)}` : ""}.</p>
-    <p>Toured (itoured.com) shows what listing photos can't: reviews from buyers who walked through the home in person. ${reviewed.length ? `${reviewed.length} ${esc(g.name)} home${reviewed.length > 1 ? "s have" : " has"} tour reviews so far.` : `No ${esc(g.name)} homes have tour reviews yet. If you've toured one, <a href="/how-it-works">post the first review</a>.`}</p>
+  const body = `    <p class="lede">There are ${ls.length.toLocaleString("en-US")} homes for sale in ${esc(where)}${g.county ? ` (${esc(g.county)} County)` : ""} on iToured, priced from ${money(prices[0])} to ${money(prices[prices.length - 1])} with a median asking price of ${money(median)}${typeText ? `: ${esc(typeText)}` : ""}.</p>
+    <p>iToured (itoured.com) shows what listing photos can't: reviews from buyers who walked through the home in person. ${reviewed.length ? `${reviewed.length} ${esc(g.name)} home${reviewed.length > 1 ? "s have" : " has"} tour reviews so far.` : `No ${esc(g.name)} homes have tour reviews yet. If you've toured one, <a href="/how-it-works">post the first review</a>.`}</p>
     ${reviewed.length ? `<h2>${esc(g.name)} homes with tour reviews</h2><ul class="home-list">${reviewed.map(row).join("")}</ul>` : ""}
     <h2>${reviewed.length ? "More" : "Newest"} homes for sale in ${esc(g.name)}</h2>
     <ul class="home-list">${newest.map(row).join("")}</ul>
     ${ls.length > reviewed.length + newest.length ? `<p class="muted">Showing ${(reviewed.length + newest.length).toLocaleString("en-US")} of ${ls.length.toLocaleString("en-US")} homes.</p>` : ""}
     <p class="cta"><a class="cta-btn" href="/?q=${encodeURIComponent(g.name)}">Search all ${esc(g.name)} homes on the map</a></p>
-    <p><a href="/fl">Other South Florida cities</a> · <a href="/about">About Toured</a> · <a href="/faq">FAQ</a></p>`;
-  return contentPage({ path: `/fl/${slug}`, title: `${g.name}, FL homes for sale with tour reviews | Toured`,
-    desc: `${ls.length.toLocaleString("en-US")} homes for sale in ${where}, median asking price ${money(median)}. Read reviews from buyers who toured them in person on Toured.`,
+    <p><a href="/fl">Other South Florida cities</a> · <a href="/about">About iToured</a> · <a href="/faq">FAQ</a></p>`;
+  return contentPage({ path: `/fl/${slug}`, title: `${g.name}, FL homes for sale with tour reviews | iToured`,
+    desc: `${ls.length.toLocaleString("en-US")} homes for sale in ${where}, median asking price ${money(median)}. Read reviews from buyers who toured them in person on iToured.`,
     h1: `${where} homes for sale and tour reviews`, body,
     ld: [{ "@type": "CollectionPage", name: `Homes for sale in ${where}`, url: `${siteUrl()}/fl/${slug}`,
       about: { "@type": "City", name: g.name, containedInPlace: { "@type": "State", name: "Florida" } } },
       { "@type": "BreadcrumbList", itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Toured", item: siteUrl() + "/" },
+        { "@type": "ListItem", position: 1, name: "iToured", item: siteUrl() + "/" },
         { "@type": "ListItem", position: 2, name: "Cities", item: siteUrl() + "/fl" },
         { "@type": "ListItem", position: 3, name: g.name, item: `${siteUrl()}/fl/${slug}` }] }] });
 }
 
 /* ---------------- Permanent review pages: /reviews/<home> ----------------
- * Tour reviews belong to the house, not the listing. When a reviewed home isn't for sale on Toured
+ * Tour reviews belong to the house, not the listing. When a reviewed home isn't for sale on iToured
  * (sold, pending, withdrawn, or reviewed from "Look up a home"), its reviews live on here. No MLS
  * data appears on these pages (IDX covers active listings only): just the address, the reviews and
  * a link to the home's public county records.
@@ -396,7 +396,7 @@ export async function renderHomeReviewsPage(slug) {
   const n = reviews.length, avg = avgRating(reviews);
   const last = reviews.map((r) => r.tour?.date).filter(Boolean).sort().pop();
   const body = `    <p class="lede">${n} tour review${n > 1 ? "s" : ""} of ${esc(address)}, rated ${avg.toFixed(1)} out of 5 by people who toured it in person.</p>
-    <p class="muted">This home isn't listed for sale on Toured right now. These reviews were written by buyers who toured it${last ? `, most recently in ${esc(new Date(last + "T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" }))}` : ""}. A home's condition can change after a tour, so check each review's date.</p>
+    <p class="muted">This home isn't listed for sale on iToured right now. These reviews were written by buyers who toured it${last ? `, most recently in ${esc(new Date(last + "T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" }))}` : ""}. A home's condition can change after a tour, so check each review's date.</p>
     <section class="seo-reviews">
       ${reviews.slice(0, 50).map((r) => `<article>
         <h2>${esc(r.title)}</h2>
@@ -405,13 +405,13 @@ export async function renderHomeReviewsPage(slug) {
         ${r.pros ? `<p><b>Liked:</b> ${esc(r.pros)}</p>` : ""}${r.cons ? `<p><b>Watch out for:</b> ${esc(r.cons)}</p>` : ""}
       </article>`).join("")}
     </section>
-    <p><small>Tour reviews are opinions of Toured users who certified they toured the home in person. If you own this home and would like its reviews hidden, <a href="/#/contact">contact us</a>.</small></p>
+    <p><small>Tour reviews are opinions of iToured users who certified they toured the home in person. If you own this home and would like its reviews hidden, <a href="/#/contact">contact us</a>.</small></p>
     <p class="cta"><a class="cta-btn" href="/#/lookup">Look up this home's public records</a></p>
     <p><a href="/">Search homes for sale</a> · <a href="/fl">Homes by city</a> · <a href="/faq">FAQ</a></p>`;
   const html = contentPage({
     path: `/reviews/${slug}`, mls: false,
-    title: `${address} tour reviews | Toured`,
-    desc: `${n} review${n > 1 ? "s" : ""} of ${address} from people who toured it in person, rated ${avg.toFixed(1)} out of 5. Read what buyers noticed on Toured.`,
+    title: `${address} tour reviews | iToured`,
+    desc: `${n} review${n > 1 ? "s" : ""} of ${address} from people who toured it in person, rated ${avg.toFixed(1)} out of 5. Read what buyers noticed on iToured.`,
     h1: `Tour reviews: ${address}`, body,
     ld: [{ "@type": "Residence", name: address, url: `${siteUrl()}/reviews/${slug}`,
       aggregateRating: { "@type": "AggregateRating", ratingValue: Number(avg.toFixed(1)), reviewCount: n, bestRating: 5, worstRating: 1 },

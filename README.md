@@ -1,4 +1,4 @@
-# Toured
+# iToured
 
 A Zillow-style home search with Realtor.com-style filters for **Broward, Palm Beach and St. Lucie counties** (BeachesMLS territory). The difference: signed-in users who **certify they toured a home in person** can post reviews of it, so buyers learn what the listing photos leave out.
 
@@ -26,7 +26,7 @@ Static site with no build step. Netlify serves the repo root (`netlify.toml`).
 
 ## Filters
 
-County (Broward / Palm Beach / St. Lucie), location (address, neighborhood, city, ZIP), price, beds, baths, home type, listing status (active / contingent / pending), home size, lot size, year built, max HOA, days listed, stories, garage spaces, open house, price reduced, new construction, foreclosure, virtual tour, hide 55+, pool, waterfront, ocean access, boat dock, impact windows, golf community, outside flood zone, view, fireplace, gated, solar, EV charging, keyword. Toured-only filters: **has tour reviews** and **minimum tour rating**. Also "search as I move the map" and nine sort orders.
+County (Broward / Palm Beach / St. Lucie), location (address, neighborhood, city, ZIP), price, beds, baths, home type, listing status (active / contingent / pending), home size, lot size, year built, max HOA, days listed, stories, garage spaces, open house, price reduced, new construction, foreclosure, virtual tour, hide 55+, pool, waterfront, ocean access, boat dock, impact windows, golf community, outside flood zone, view, fireplace, gated, solar, EV charging, keyword. iToured-only filters: **has tour reviews** and **minimum tour rating**. Also "search as I move the map" and nine sort orders.
 
 ## Public records and taxes
 

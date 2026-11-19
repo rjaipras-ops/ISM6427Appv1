@@ -1,4 +1,4 @@
--- Toured — database schema (PostgreSQL / Supabase-compatible)
+-- iToured — database schema (PostgreSQL / Supabase-compatible)
 -- Mirrors the objects used in js/store.js so the localStorage demo can be
 -- swapped for a real backend. Listing columns follow RESO Data Dictionary names.
 

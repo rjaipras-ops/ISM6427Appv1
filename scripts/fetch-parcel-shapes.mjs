@@ -22,7 +22,7 @@ const wanted = Object.entries(parcels)
 async function post(params) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(LAYER, { method: "POST", body: new URLSearchParams(params), headers: { "User-Agent": "Toured listing enrichment" } });
+      const res = await fetch(LAYER, { method: "POST", body: new URLSearchParams(params), headers: { "User-Agent": "iToured listing enrichment" } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const j = await res.json();
       if (j.error) throw new Error(JSON.stringify(j.error));

@@ -129,7 +129,7 @@ function renderBrokerage() {
     $(".about-firm").innerHTML = `${esc(SITE.brokerage)} · Florida real estate license ${esc(SITE.licenseNo)}${SITE.phone ? `<br>${phoneLink().replace(/^ · /, "")}` : ""}`;
     $("#aboutModal").showModal();
   };
-  $("#aboutContact").onclick = () => { $("#aboutModal").close(); contactAgent("Message from Toured", "", ""); };
+  $("#aboutContact").onclick = () => { $("#aboutModal").close(); contactAgent("Message from iToured", "", ""); };
 }
 
 /* ---------------- feed (BeachesMLS IDX) ---------------- */
@@ -409,7 +409,7 @@ function showSearchNote(r) {
   const n = $("#nlNote");
   if (r.hint) { n.dataset.kind = "hint"; n.innerHTML = `<p>Press <b>Enter</b> to search for that.</p>`; n.hidden = false; return; }
   n.dataset.kind = "result";
-  const blocked = r.blocked ? `<p class="nl-warn">Toured can't search by who lives in an area or by how safe it is. Try home features, price and location instead.</p>` : "";
+  const blocked = r.blocked ? `<p class="nl-warn">iToured can't search by who lives in an area or by how safe it is. Try home features, price and location instead.</p>` : "";
   n.innerHTML = `<button class="nl-x" type="button" data-nlclose aria-label="Dismiss">×</button>
     ${r.understood.length ? `<p><b>Searching for:</b> ${r.understood.map(esc).join(" · ")}</p>` : ""}
     ${r.dropped?.length ? `<p class="nl-warn"><b>No homes matched everything, so these were left out:</b> ${r.dropped.map(esc).join("; ")}</p>` : ""}
@@ -905,12 +905,12 @@ function route() {
   if (h === "#/contact") {
     history.replaceState(null, "", location.pathname + location.search + "#/");
     route();
-    contactAgent(`Message from Toured`, "", "");
+    contactAgent(`Message from iToured`, "", "");
     return;
   }
   if (S.feed.mode === "pending") { show("view-mlssearch"); renderMlsSearch({ withFlexmls: true }); return; }
   show("view-search");
-  document.title = "Toured: South Florida homes for sale, reviewed by buyers who toured them";
+  document.title = "iToured: South Florida homes for sale, reviewed by buyers who toured them";
   renderResults({ fitMap: firstSearchRender && !S.f.bounds });
   firstSearchRender = false;
   setTimeout(() => map?.invalidateSize(), 0);
@@ -928,7 +928,7 @@ function renderDetail(l) {
   const saved = S.saved.has(l.ListingId);
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
   const reviewsOff = reviewsOffFor(l.ListingId, l.MlsNumber, store.homeKeyOf(l));
-  document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | Toured`;
+  document.title = `${l.StreetAddress} — ${fmt$(l.ListPrice)} | iToured`;
   // "est." badges mark generated placeholder values; MLS listings never have any.
   const est = mls ? "" : `<span class="est" title="Placeholder until an MLS feed is connected">est.</span>`;
   const pr = `<span class="est est-pr" title="From the county property appraiser's tax roll (FL Dept. of Revenue)">public record</span>`;
@@ -1000,7 +1000,7 @@ function renderDetail(l) {
             ${mine ? "" : `<button class="btn" type="button" id="writeReview">Write a tour review</button>`}
           </div>
           <div id="reviewList">${reviews.length ? reviews.map(reviewHTML).join("") : `<p class="muted" style="padding:12px 0">No reviews yet. Reviews can only be written by signed-in users who certify they toured the home in person.</p>`}</div>
-          ${mls ? `<p class="muted not-mls">Tour reviews are opinions of Toured users, not information from BeachesMLS or the listing broker.</p>` : ""}
+          ${mls ? `<p class="muted not-mls">Tour reviews are opinions of iToured users, not information from BeachesMLS or the listing broker.</p>` : ""}
         </section>`;
 
   $("#view-detail").innerHTML = `
@@ -1161,7 +1161,7 @@ function renderMlsSearch({ withFlexmls = false } = {}) {
   const mode = withFlexmls ? "flexmls" : "lookup";
   if (el.dataset.mode === mode) return; // keep the visitor's lookup (and the iframe) when coming back
   el.dataset.mode = mode;
-  const panelHTML = `<aside class="toured-panel" aria-label="Toured home lookup">
+  const panelHTML = `<aside class="toured-panel" aria-label="iToured home lookup">
         <form class="tp-form" id="tpForm" role="search">
           <label class="tp-label" for="tpAddr">${withFlexmls ? "Looking at a home?" : "Enter an address"}</label>
           <p class="tp-help">${withFlexmls ? "Copy its address from the MLS search and paste it here." : "Any home in Florida, for sale or not."}</p>
@@ -1176,7 +1176,7 @@ function renderMlsSearch({ withFlexmls = false } = {}) {
   el.classList.toggle("lookup-page", !withFlexmls);
   el.innerHTML = withFlexmls
     ? `<h1>MLS Search</h1>
-    <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Found a home you like? Paste its address in the Toured panel to see tour reviews, taxes and public records.</p>
+    <p class="muted" style="margin-bottom:14px">Search every active BeachesMLS listing with photos, powered by Flexmls IDX for ${esc(SITE.agentName)}, ${esc(SITE.brokerage)}. Found a home you like? Paste its address in the iToured panel to see tour reviews, taxes and public records.</p>
     <div class="mls-layout">
       <div class="idx-frame-wrap">
         <iframe src="${esc(SITE.idxLiteUrl)}" title="BeachesMLS listing search (Flexmls IDX)" loading="lazy"></iframe>
@@ -1195,7 +1195,7 @@ function renderMlsSearch({ withFlexmls = false } = {}) {
   renderPanelHome();
 }
 
-/* ---------- Toured lookup panel (Look up page) ---------- */
+/* ---------- iToured lookup panel (Look up page) ---------- */
 const panel = { property: null, seq: 0 };
 const normAddr = (s) => String(s || "").toUpperCase().replace(/[^A-Z0-9 ]/g, " ").replace(/\b(STREET|ST|AVENUE|AVE|ROAD|RD|DRIVE|DR|LANE|LN|COURT|CT|CIRCLE|CIR|BOULEVARD|BLVD|TERRACE|TER|PLACE|PL|WAY|TRAIL|TRL)\b/g, "").replace(/\b(\d+)(ST|ND|RD|TH)\b/g, "$1").replace(/\s+/g, " ").trim();
 
@@ -1274,7 +1274,7 @@ function renderPanelProperty(p) {
   const s = store.getReviewSummaries([l])[l.ListingId];
   const mine = S.user && reviews.find((r) => r.userId === S.user.id);
   const reviewsOff = reviewsOffFor(p.key, null, store.homeKeyOf(l));
-  // Is this home also in Toured's own listing data? Link to its full page.
+  // Is this home also in iToured's own listing data? Link to its full page.
   const match = S.listings.find((x) => normAddr(x.StreetAddress) === normAddr(p.street) && String(x.PostalCode) === String(p.postalCode));
   const facts = [
     ["Land use", esc(pc.LandUse || "—")],
@@ -1293,7 +1293,7 @@ function renderPanelProperty(p) {
     <div class="tp-media">${satelliteThumb(l, { fallback: houseSVG({ ...l, PropertyType: /condo|co-op/i.test(pc.LandUse || "") ? "Condo" : "Single Family", demo: {} }) })}</div>
     <p class="tp-addr">${esc(p.address)}</p>
     <p class="muted tp-sub">${esc(p.county)} County · Parcel ${esc(pc.ParcelId || "—")}${p.building ? " · building record (add a unit # for a specific unit)" : ""}</p>
-    ${match ? `<a class="btn btn-ghost tp-full" href="#/home/${esc(match.ListingId)}" target="_blank" rel="noopener">See the full Toured listing ↗</a>` : ""}
+    ${match ? `<a class="btn btn-ghost tp-full" href="#/home/${esc(match.ListingId)}" target="_blank" rel="noopener">See the full iToured listing ↗</a>` : ""}
 
     <h3 class="tp-h">Tour reviews</h3>
     ${reviewsOff ? `<p class="muted">Reviews are turned off for this home at the seller's request.</p>` : `
@@ -1653,7 +1653,7 @@ async function renderInsights() {
   const home = (id) => { const l = S.byId.get(id); return l ? `<a href="#/home/${esc(id)}">${esc(l.UnparsedAddress)}</a> <span class="muted">${fmt$(l.ListPrice)}</span>` : `<span class="muted">${esc(id)} (no longer listed)</span>`; };
   const maxDay = Math.max(1, ...d.byDay.map((x) => x.searches + x.views));
   el.innerHTML = `${adminTabs()}<h1>Search insights</h1>
-    <p class="muted">What visitors searched for and opened on Toured. Anonymous totals: no names, accounts or IP addresses are kept, and search engines are left out. Counts are approximate.</p>
+    <p class="muted">What visitors searched for and opened on iToured. Anonymous totals: no names, accounts or IP addresses are kept, and search engines are left out. Counts are approximate.</p>
     <div class="seg ins-range">${[7, 30, 90].map((n) => `<button type="button" data-insdays="${n}" aria-pressed="${n === days}">Last ${n} days</button>`).join("")}</div>
     <div class="ins-stats"><div><b>${d.searches.toLocaleString("en-US")}</b><span>searches</span></div><div><b>${d.typedCount.toLocaleString("en-US")}</b><span>typed requests</span></div><div><b>${d.views.toLocaleString("en-US")}</b><span>homes opened</span></div></div>
     <div class="ins-days" aria-label="Activity per day">${d.byDay.map((x) => `<span title="${x.day}: ${x.searches} searches, ${x.views} homes opened" style="height:${Math.round(((x.searches + x.views) / maxDay) * 100)}%"></span>`).join("")}</div>
@@ -1782,7 +1782,7 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => navigato
   // Android / Chrome: the browser offers a one-tap install.
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
-    show("Get the Toured app: faster, full screen, one tap from your home screen.");
+    show("Get the iToured app: faster, full screen, one tap from your home screen.");
     const btn = $("#installBtn"); btn.hidden = false;
     btn.onclick = async () => { hide(false); e.prompt(); const { outcome } = await e.userChoice; if (outcome !== "accepted") hide(true); };
   });
@@ -1790,5 +1790,5 @@ if ("serviceWorker" in navigator) window.addEventListener("load", () => navigato
   // iPhone / iPad Safari has no install button: explain the two taps.
   const ua = navigator.userAgent;
   const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  if (ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) setTimeout(() => show("Add Toured to your Home Screen: tap the Share button, then “Add to Home Screen”."), 4000);
+  if (ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) setTimeout(() => show("Add iToured to your Home Screen: tap the Share button, then “Add to Home Screen”."), 4000);
 })();

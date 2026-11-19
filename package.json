@@ -2,7 +2,7 @@
   "name": "toured",
   "private": true,
   "type": "module",
-  "description": "Toured home search: static front end + Netlify Functions for the BeachesMLS (Flexmls Spark) IDX feed",
+  "description": "iToured home search: static front end + Netlify Functions for the BeachesMLS (Flexmls Spark) IDX feed",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
     "idx:sync": "node scripts/idx-sync.mjs",

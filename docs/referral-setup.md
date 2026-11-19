@@ -1,6 +1,6 @@
 # Referral network setup & compliance checklist
 
-Toured's tour requests are referred to licensed local agents through a referral network.
+iToured's tour requests are referred to licensed local agents through a referral network.
 Referral fees are paid broker-to-broker to LoKation Real Estate, which pays Rajesh per his split.
 
 ## One-time setup

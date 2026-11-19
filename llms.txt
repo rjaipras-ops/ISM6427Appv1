@@ -1,9 +1,9 @@
-# Toured (itoured.com)
+# iToured (itoured.com)
 
-> Toured is a South Florida home search where the reviews come from buyers who toured the home in person. Each listing can carry written reviews and star ratings from people who certify they walked through that home at an open house, private showing or builder tour.
+> iToured is a South Florida home search where the reviews come from buyers who toured the home in person. Each listing can carry written reviews and star ratings from people who certify they walked through that home at an open house, private showing or builder tour.
 
 - Website: https://itoured.com
-- Brand name: Toured (the domain is itoured.com)
+- Brand name: iToured (the domain is itoured.com)
 - Coverage: South Florida, mainly Miami-Dade, Broward and Palm Beach counties (Miami, Fort Lauderdale, Hollywood, Coral Springs, Boca Raton, Delray Beach, West Palm Beach), plus nearby areas such as Port St. Lucie and Stuart
 - Listings: active homes for sale from the BeachesMLS and MIAMI MLS feed (IDX), refreshed through the day
 - Reviews: one per signed-in person per home; the reviewer states the tour date and type and certifies they toured in person and are not the owner, listing agent or affiliated with the seller. Tours are self-certified, not independently verified
@@ -12,7 +12,7 @@
 
 ## Pages
 
-- [About Toured](https://itoured.com/about): what Toured is, who it is for, coverage and operator
+- [About iToured](https://itoured.com/about): what iToured is, who it is for, coverage and operator
 - [How it works](https://itoured.com/how-it-works): how to read and post tour reviews, and how reviews are moderated
 - [FAQ](https://itoured.com/faq): why to trust the reviews, what is allowed, coverage, cost
 - [Homes by city](https://itoured.com/fl): South Florida cities with homes for sale and tour reviews

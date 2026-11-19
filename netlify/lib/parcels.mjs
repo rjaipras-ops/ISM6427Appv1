@@ -197,7 +197,7 @@ export function pickParcel(l, rows) {
 async function layerQuery(params) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(PARCEL_LAYER, { method: "POST", body: new URLSearchParams({ ...params, f: "json" }), headers: { "User-Agent": "Toured parcel lookup" } });
+      const res = await fetch(PARCEL_LAYER, { method: "POST", body: new URLSearchParams({ ...params, f: "json" }), headers: { "User-Agent": "iToured parcel lookup" } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const j = await res.json();
       if (j.error) throw new Error(JSON.stringify(j.error));

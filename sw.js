@@ -1,6 +1,6 @@
-// Toured service worker: makes the site installable and lets the app shell open on a weak
+// iToured service worker: makes the site installable and lets the app shell open on a weak
 // connection. Listings, reviews and sign-in always come from the network (never cached here).
-const CACHE = "toured-shell-v1";
+const CACHE = "toured-shell-v2";
 const SHELL = ["/", "/css/styles.css", "/js/app.js", "/assets/brand/toured-icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

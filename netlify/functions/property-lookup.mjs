@@ -1,6 +1,6 @@
 // GET /api/property/lookup?address=...[&parcel=P-16-...]
 // Public records for any home in Broward, Palm Beach or St. Lucie, found by address.
-// Used by the Toured panel on the MLS Search page.
+// Used by the iToured panel on the MLS Search page.
 import { createHash } from "node:crypto";
 import { lookupProperty } from "../lib/property.mjs";
 import { getJSON, setJSON } from "../lib/store.mjs";

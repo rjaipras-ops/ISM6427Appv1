@@ -12,6 +12,6 @@
     <path d="M84 238 256 96l172 142" fill="none" stroke="#f2b544" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="m180 300 52 52 104-108" fill="none" stroke="#0b6e63" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <text x="208" y="122" font-family="Fraunces, Georgia, serif" font-weight="700" font-size="96" fill="#12322e" letter-spacing="-1">Toured</text>
+  <text x="208" y="122" font-family="Fraunces, Georgia, serif" font-weight="700" font-size="96" fill="#12322e" letter-spacing="-1">iToured</text>
   <text x="212" y="160" font-family="Inter, Arial, sans-serif" font-weight="500" font-size="22" fill="#4f6763" letter-spacing="1.5">HOMES REVIEWED BY PEOPLE WHO TOURED</text>
 </svg>

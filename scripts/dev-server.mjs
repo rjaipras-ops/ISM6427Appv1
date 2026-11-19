@@ -96,7 +96,7 @@ createServer(async (req, res) => {
     res.writeHead(500).end("Server error");
   }
 }).listen(PORT, () => {
-  console.log(`Toured dev server: http://localhost:${PORT}`);
+  console.log(`iToured dev server: http://localhost:${PORT}`);
   console.log(process.env.SPARK_API_BEARER_TOKEN ? "IDX: live mode (Spark token set)" : "IDX: MOCK MODE (no SPARK_API_BEARER_TOKEN)");
 });
 
