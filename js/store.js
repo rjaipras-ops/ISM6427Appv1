@@ -518,6 +518,15 @@ export function loadHistory(county, parcelId) {
 }
 
 /** Server-side keyword search over listing descriptions. Returns a Set of ListingKeys, or null if unavailable. */
+/** Listing keys whose description contains any of the phrases (motivated-seller wording etc.). */
+export async function searchDescriptionsAny(phrases) {
+  try {
+    const res = await fetch(`/api/idx/search?any=1&q=${encodeURIComponent(phrases.join("|"))}`);
+    if (!res.ok || !(res.headers.get("content-type") || "").includes("json")) return null;
+    return new Set((await res.json()).keys || []);
+  } catch { return null; }
+}
+
 export async function searchDescriptions(q) {
   try {
     const res = await fetch(`/api/idx/search?q=${encodeURIComponent(q)}`);

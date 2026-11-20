@@ -10,7 +10,7 @@ const KEEP_DAYS = 120;
 const MAX_KEYS = 300; // per table per day
 const BOOLS = ["pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev", "impactWindows",
   "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str", "newConstruction", "priceReduced", "openHouse",
-  "foreclosure", "virtualTour", "hideSenior", "reviewedOnly"];
+  "foreclosure", "virtualTour", "hideSenior", "reviewedOnly", "belowArea", "motivated", "hideOverpriced"];
 const TYPES = ["Single Family", "Condo", "Townhouse", "Multi-Family", "Mobile/Manufactured", "Land"];
 const PRICE_BUCKETS = [[300e3, "Under $300K"], [500e3, "$300K–$500K"], [750e3, "$500K–$750K"], [1e6, "$750K–$1M"], [2e6, "$1M–$2M"], [Infinity, "$2M+"]];
 // Automated visitors (search engines, link previews, scripts) aren't counted.

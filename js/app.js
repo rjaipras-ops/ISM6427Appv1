@@ -1,7 +1,7 @@
 import * as store from "./store.js";
 import {
   PRICE_STEPS, SQFT_STEPS, LOT_STEPS, LOT_LABELS, HOME_TYPES, SEGMENTS, DRAWER_KEYS,
-  defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney,
+  defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney, cutPct, annotateArea, MOTIVATED_PHRASES,
 } from "./filters.js";
 import { monthlyCost, parseMoney } from "./payment.js";
 import { taxBillLink, formatPcn, SEARCH_ONLY_TAX_SITES } from "./taxlinks.js";
@@ -137,6 +137,7 @@ function applyFeed(feed) {
   S.feed = { mode: feed.mode, lastSyncTimestamp: feed.lastSyncTimestamp, version: feed.version };
   S.listings = feed.listings;
   S.byId = new Map(S.listings.map((l) => [l.ListingId, l]));
+  annotateArea(S.listings); // price per sq ft vs. the area (seller signals)
   renderFeedBanner();
   renderFooter();
 }
@@ -295,6 +296,8 @@ function syncControls() {
   setPill("beds", bb ? [f.bedsMin != null && `${f.bedsMin}+ bd`, f.bathsMin != null && `${f.bathsMin}+ ba`].filter(Boolean).join(", ") : "Beds & baths", bb);
   setPill("county", f.counties.length ? (f.counties.length === 1 ? f.counties[0] : `${f.counties.length} counties`) : "County", f.counties.length > 0);
   setPill("type", f.types.length ? (f.types.length === 1 ? f.types[0] : `Home type (${f.types.length})`) : "Home type", f.types.length > 0);
+  const sigN = [f.cutMin != null, f.belowArea, f.motivated, f.hideOverpriced].filter(Boolean).length;
+  setPill("signals", sigN ? `Seller signals (${sigN})` : "Seller signals", sigN > 0);
   const st = !(f.statusActive && f.statusContingent && !f.statusPending);
   setPill("status", st ? (f.statusPending ? "Incl. pending" : "Status (custom)") : "For sale", st);
   const d = defaults();
@@ -364,7 +367,9 @@ fetch("/api/search/ai").then((r) => r.json()).then((d) => { aiSearch.enabled = !
 async function countMatches(f) {
   const keys = f.keyword && S.feed.mode !== "demo" ? await store.searchDescriptions(f.keyword) : null;
   let n = 0;
-  for (const l of S.listings) if (matches(l, f, S.summaries[l.ListingId], keys)) n++;
+  if (f.motivated && !motivated.keys && S.feed.mode !== "demo") { motivatedKeys(f); await motivated.pending; }
+  const mk = motivatedKeys(f);
+  for (const l of S.listings) if (matches(l, f, S.summaries[l.ListingId], keys, mk)) n++;
   return n;
 }
 async function runAiSearch(text, phrase) {
@@ -388,7 +393,7 @@ async function runAiSearch(text, phrase) {
     let f = { ...defaults(), ...patch };
     const dropped = [];
     const label = (k) => chipsFor({ ...defaults(), [k]: f[k] }).map((c) => c.label)[0] || k;
-    for (const k of [null, "keyword", "lotMin", "sqftMin", "yearMin", "garageMin"]) {
+    for (const k of [null, "keyword", "motivated", "lotMin", "sqftMin", "yearMin", "garageMin"]) {
       if (k) { if (f[k] == null || f[k] === "") continue; dropped.push(label(k)); f = { ...f, [k]: defaults()[k] }; }
       if (await countMatches(f)) break;
     }
@@ -759,12 +764,24 @@ function hot(id, scroll = false) {
 }
 
 /* ---------------- cards ---------------- */
+// Listing page: price cuts and price per sq ft vs. the area, in plain numbers.
+function sellerSignalsHTML(l) {
+  const d = l.demo, items = [], cut = cutPct(l);
+  if (cut >= 1) items.push(`Price cut <b>${cut.toFixed(1)}%</b> from the original ${fmt$(d.OriginalListPrice)}`);
+  if (d.DaysOnMarket != null) items.push(`<b>${d.DaysOnMarket}</b> day${d.DaysOnMarket === 1 ? "" : "s"} on market`);
+  if (l.areaDiff != null) items.push(`${fmt$(l.ListPrice / l.LivingArea)}/sqft vs. ${fmt$(l.areaMedian.ppsf)} median for ${esc(l.PropertyType.toLowerCase())} homes in ${esc(l.areaMedian.by)} (<b>${l.areaDiff > 0 ? "+" : ""}${l.areaDiff}%</b>)`);
+  if (!items.length) return "";
+  return `<p class="seller-signals" title="Calculated by iToured from the listing's prices and other active listings nearby">${items.join(" · ")}</p>`;
+}
+
 function badgesFor(l) {
   const d = l.demo, b = [];
   if (d.StandardStatus === "Pending") b.push(`<span class="badge badge-pending">Pending</span>`);
   else if (d.StandardStatus === "Active Under Contract") b.push(`<span class="badge badge-pending">Under contract</span>`);
   if (d.DaysOnMarket <= 7) b.push(`<span class="badge badge-new">New · ${d.DaysOnMarket === 0 ? "today" : d.DaysOnMarket + "d"}</span>`);
-  if (d.PriceReduced) b.push(`<span class="badge badge-reduced">↓ ${shortMoney(d.OriginalListPrice - l.ListPrice)}</span>`);
+  const cut = cutPct(l);
+  if (d.PriceReduced || cut >= 1) b.push(`<span class="badge badge-reduced" title="Down ${cut.toFixed(1)}% from the original list price">↓ ${shortMoney(d.OriginalListPrice - l.ListPrice)}${cut >= 1 ? ` · ${Math.round(cut)}%` : ""}</span>`);
+  if (l.areaDiff != null && l.areaDiff <= -10) b.push(`<span class="badge badge-below" title="Price per sq ft is ${-l.areaDiff}% below the median for ${esc(l.PropertyType)} homes in ${esc(l.areaMedian.by)}">${-l.areaDiff}% below area</span>`);
   if (d.OpenHouse) b.push(`<span class="badge badge-open">Open ${weekday(d.OpenHouse.date).split(",")[0]}</span>`);
   return b.slice(0, 3).join("");
 }
@@ -826,6 +843,20 @@ function cardMedia(l) {
 
 // Keyword search: descriptions live on the server, so ask it which listings match, then re-render.
 const kw = { q: "", keys: null, pending: null };
+// Listings with motivated-seller wording in the description (fetched once per feed version, when used).
+const motivated = { version: null, keys: null, pending: null };
+function motivatedKeys(f = S.f) {
+  if (!f.motivated || S.feed.mode === "demo") return null;
+  if (motivated.version === S.feed.version) return motivated.keys;
+  motivated.version = S.feed.version; motivated.keys = null;
+  const p = motivated.pending = store.searchDescriptionsAny(MOTIVATED_PHRASES).then((keys) => {
+    if (motivated.pending !== p) return;
+    motivated.keys = keys || new Set();
+    renderResults();
+  });
+  return null;
+}
+
 function keywordKeys() {
   const q = S.f.keyword || "";
   if (!q || S.feed.mode === "demo") return null;
@@ -842,7 +873,8 @@ function keywordKeys() {
 function renderResults({ fitMap = false } = {}) {
   S.summaries = store.getReviewSummaries(S.listings);
   const kwKeys = keywordKeys();
-  const rows = sortListings(S.listings.filter((l) => matches(l, S.f, S.summaries[l.ListingId], kwKeys)), S.f.sort, S.summaries);
+  const mk = motivatedKeys();
+  const rows = sortListings(S.listings.filter((l) => matches(l, S.f, S.summaries[l.ListingId], kwKeys, mk)), S.f.sort, S.summaries);
   S.results = rows;
   const cards = $("#cards");
   cards.innerHTML = rows.slice(0, 200).map((l) => cardHTML(l)).join("");
@@ -1020,6 +1052,7 @@ function renderDetail(l) {
           <span>·</span><span>${esc(l.Neighborhood)}</span><span>·</span><span>${esc(l.County)} County</span>
           ${s && !reviewsOff ? `<span>·</span><a href="#reviews" class="rating-mini" style="text-decoration:none;color:inherit"><span class="star">★</span>${s.avg.toFixed(1)} <span class="n">(${s.count} verified tour${s.count > 1 ? "s" : ""})</span></a>` : ""}
         </div>
+        ${sellerSignalsHTML(l)}
         ${mls ? idxAttributionHTML(l) : ""}
         ${d.OpenHouse ? `<div class="cta-review" style="background:#fff;border:1.5px solid var(--line)"><p><b>Open house</b> · ${weekday(d.OpenHouse.date)}, ${fmtTime(d.OpenHouse.start)}–${fmtTime(addHours(d.OpenHouse.start, d.OpenHouse.durationHrs))} ${est}</p><span class="muted">Tour it, then come back to review it</span></div>` : ""}
         ${reviewsSection}
@@ -1640,7 +1673,7 @@ const FEATURE_LABELS = { pool: "Pool", waterfront: "Waterfront", view: "View", f
   gated: "Gated community", solar: "Solar panels", ev: "EV charging", impactWindows: "Impact windows", boatDock: "Boat dock", oceanAccess: "Ocean access",
   golf: "Golf community", noFloodZone: "Not in a flood zone", cbs: "CBS construction", str: "Short-term rentals OK", newConstruction: "New construction",
   priceReduced: "Price reduced", openHouse: "Open house", foreclosure: "Foreclosure", virtualTour: "Virtual tour", hideSenior: "Hide 55+ communities",
-  reviewedOnly: "Has tour reviews", noHoa: "No HOA" };
+  reviewedOnly: "Has tour reviews", noHoa: "No HOA", belowArea: "Priced below area", motivated: "Motivated seller wording", hideOverpriced: "Hide likely overpriced" };
 async function renderInsights() {
   const el = $("#view-admin");
   const days = admin.insightDays || 30;

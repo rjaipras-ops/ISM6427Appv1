@@ -16,13 +16,13 @@ const DAILY_LIMIT = () => Number(process.env.AI_SEARCH_DAILY_LIMIT) || 800;
 const PER_VISITOR = () => Number(process.env.AI_SEARCH_PER_VISITOR) || 30; // per day
 
 const HOME_TYPES = ["Single Family", "Condo", "Townhouse", "Multi-Family", "Mobile/Manufactured", "Land"];
-const BOOLS = ["reviewedOnly", "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
+const BOOLS = ["belowArea", "motivated", "hideOverpriced", "reviewedOnly", "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev",
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str", "statusPending"];
 const NUMS = { priceMin: [1000, 5e8], priceMax: [1000, 5e8], payMax: [200, 5e5], bedsMin: [1, 10], bathsMin: [1, 10],
   sqftMin: [100, 1e5], sqftMax: [100, 1e5], lotMin: [100, 5e7], lotMax: [100, 5e7], yearMin: [1850, 2100], yearMax: [1850, 2100],
-  hoaMax: [0, 1e5], garageMin: [1, 10], domMax: [1, 365] };
-const SORTS = ["relevant", "newest", "priceAsc", "priceDesc", "ppsf", "sqft", "lot", "rating", "reviews"];
+  hoaMax: [0, 1e5], garageMin: [1, 10], domMax: [1, 365], cutMin: [1, 80] };
+const SORTS = ["relevant", "newest", "cutPct", "priceAsc", "priceDesc", "ppsf", "sqft", "lot", "rating", "reviews"];
 
 export const aiSearchEnabled = () => Boolean(process.env.GEMINI_API_KEY);
 
@@ -43,8 +43,9 @@ Allowed keys (omit any that the request doesn't mention; never guess):
 - "stories": "single" or "multi".
 - "domMax": listed within this many days (1, 7, 14 or 30).
 - true/false features, set to true only when the buyer asks for them: ${BOOLS.join(", ")}.
+  Seller signals: cutMin = minimum price cut from the original list price, in percent ("price dropped 10%" -> 10; "biggest price drops" -> cutMin 1 and sort "cutPct"); belowArea = price per sq ft at least 10% below similar homes in the ZIP ("below market", "good deal", "underpriced"); motivated = description has motivated-seller wording ("motivated seller", "bring offers", "must sell"); hideOverpriced = hide homes well above the area that have sat 60+ days without a cut ("no overpriced", "realistic sellers", "sellers who actually want to sell").
   Meanings: hideSenior = exclude 55+ communities; noFloodZone = not in a flood zone; cbs = concrete block construction; str = short-term rentals allowed; ev = EV charging; view = has a view; reviewedOnly = has tour reviews; statusPending = include pending listings.
-- "sort": one of ${JSON.stringify(SORTS)} (priceAsc = cheapest first, sqft = largest first).
+- "sort": one of ${JSON.stringify(SORTS)} (priceAsc = cheapest first, sqft = largest first, cutPct = biggest price cut first).
 - "keyword": ONE or TWO words to look for in listing descriptions, for the single most important wish that no filter covers. Every word must appear in the description, so choose the plainest distinctive word a listing agent would write: "fenced" (not "fenced yard"), "renovated" or "updated" (not "updated kitchen"), "in-law", "corner lot". Use only one wish here; put any other such wishes in "unsupported".
 - "unsupported": array of short phrases for parts of the request you could not turn into a filter or keyword (e.g. "no pool", "near good schools", "close to my office").
 - "declined": true if any part of the request is about who lives in an area or about safety (race, ethnicity, religion, nationality, sex, family status, disability, age of neighbors, crime, "safe"). Never create a filter or keyword for those parts; still fill in the rest.

@@ -16,15 +16,55 @@ export const SEGMENTS = {
   domMax: [["", "Any"], ["1", "New (24h)"], ["7", "7 days"], ["14", "14 days"], ["30", "30 days"]],
   stories: [["", "Any"], ["single", "Single story"], ["multi", "Multi-story"]],
   garageMin: [["", "Any"], ["1", "1+"], ["2", "2+"], ["3", "3+"]],
+  cutMin: [["", "Any"], ["5", "5%+"], ["10", "10%+"], ["15", "15%+"], ["20", "20%+"]],
 };
+
+/* ---------- Seller signals ---------- */
+// How far the price has come down from the original list price, in percent (0 when it hasn't).
+// Note: a listing withdrawn and relisted gets a new original price, which hides earlier cuts.
+export function cutPct(l) {
+  const o = Number(l.demo?.OriginalListPrice), p = Number(l.ListPrice);
+  if (!(o > 0 && p > 0) || o <= p || o > p * 3) return 0;
+  return ((o - p) / o) * 100;
+}
+// Description phrases that suggest a seller who wants to sell (any one matches).
+export const MOTIVATED_PHRASES = ["motivated", "bring all offers", "bring your offers", "bring offers", "all offers considered",
+  "priced to sell", "price improvement", "reduced to sell", "must sell", "make an offer", "make offer", "sold as is", "as is",
+  "estate sale", "relocating", "seller financing", "owner financing", "quick close", "below appraisal", "below market"];
+/**
+ * Compares each home's price per sq ft with the median for the same ZIP and home type (falling
+ * back to city + type), and saves the difference on the listing as `areaDiff` (percent; negative =
+ * below the area). Needs at least 6 comparable homes. Land and homes without a living area are skipped.
+ */
+export function annotateArea(listings) {
+  const MIN = 6, groups = new Map();
+  const ok = (l) => l.PropertyType !== "Land" && l.LivingArea >= 300 && l.ListPrice > 0;
+  const keys = (l) => [`z|${String(l.PostalCode || "").slice(0, 5)}|${l.PropertyType}`, `c|${l.City}|${l.PropertyType}`];
+  for (const l of listings) {
+    l.areaDiff = null; l.areaMedian = null;
+    if (!ok(l)) continue;
+    for (const k of keys(l)) (groups.get(k) || groups.set(k, []).get(k)).push(l.ListPrice / l.LivingArea);
+  }
+  const median = new Map();
+  for (const [k, v] of groups) if (v.length >= MIN) { v.sort((a, b) => a - b); median.set(k, v[v.length >> 1]); }
+  for (const l of listings) {
+    if (!ok(l)) continue;
+    const [kz, kc] = keys(l);
+    const m = median.get(kz) ?? median.get(kc);
+    if (!m) continue;
+    l.areaMedian = { ppsf: Math.round(m), by: median.has(kz) ? `ZIP ${String(l.PostalCode).slice(0, 5)}` : l.City };
+    l.areaDiff = Math.round(((l.ListPrice / l.LivingArea) / m - 1) * 100);
+  }
+}
 
 const BOOL_KEYS = [
   "statusActive", "statusContingent", "statusPending", "reviewedOnly",
   "openHouse", "priceReduced", "newConstruction", "foreclosure", "virtualTour", "hideSenior",
   "pool", "waterfront", "view", "fireplace", "centralAir", "basement", "gated", "solar", "ev",
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
+  "belowArea", "motivated", "hideOverpriced",
 ];
-const NUM_KEYS = ["priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating", "payMax", "payDown", "payRate"];
+const NUM_KEYS = ["cutMin", "priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating", "payMax", "payDown", "payRate"];
 
 export function defaults() {
   return {
@@ -38,6 +78,8 @@ export function defaults() {
     pool: false, waterfront: false, view: false, fireplace: false, centralAir: false,
     basement: false, gated: false, solar: false, ev: false,
     impactWindows: false, boatDock: false, oceanAccess: false, golf: false, noFloodZone: false, cbs: false, str: false,
+    // Seller signals
+    cutMin: null, belowArea: false, motivated: false, hideOverpriced: false,
     bounds: null,
   };
 }
@@ -57,7 +99,8 @@ const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").re
   .split(" ").map((w) => CANON[w] || w).join(" ");
 
 // `kwKeys`: listings whose description matched the keyword search on the server (a Set), if any.
-export function matches(l, f, summary, kwKeys) {
+// `motivatedKeys`: listings whose description has motivated-seller wording (a Set), once loaded.
+export function matches(l, f, summary, kwKeys, motivatedKeys) {
   const d = l.demo;
   const status = d.StandardStatus;
   if (status === "Active" && !f.statusActive) return false;
@@ -113,6 +156,12 @@ export function matches(l, f, summary, kwKeys) {
   if (f.cbs && !d.CBS) return false;
   if (f.str && !d.ShortTermRental) return false;
 
+  // Seller signals
+  if (f.cutMin != null && cutPct(l) < f.cutMin) return false;
+  if (f.belowArea && !(l.areaDiff != null && l.areaDiff <= -10)) return false;
+  if (f.hideOverpriced && l.areaDiff != null && l.areaDiff >= 20 && d.DaysOnMarket >= 60 && cutPct(l) < 1) return false;
+  if (f.motivated && !(motivatedKeys && motivatedKeys.has(l.ListingId))) return false;
+
   if (f.reviewedOnly && !summary) return false;
   if (f.minRating != null && (!summary || summary.avg < f.minRating)) return false;
 
@@ -134,6 +183,8 @@ export function sortListings(rows, sort, summaries) {
   const count = (l) => summaries[l.ListingId]?.count ?? 0;
   switch (sort) {
     case "newest": return r.sort((a, b) => a.demo.DaysOnMarket - b.demo.DaysOnMarket);
+    // Biggest cut first; among equal cuts, the more recently listed first.
+    case "cutPct": return r.sort((a, b) => cutPct(b) - cutPct(a) || a.demo.DaysOnMarket - b.demo.DaysOnMarket);
     case "priceAsc": return r.sort((a, b) => a.ListPrice - b.ListPrice);
     case "priceDesc": return r.sort((a, b) => b.ListPrice - a.ListPrice);
     case "ppsf": return r.sort((a, b) => a.PricePerSqFt - b.PricePerSqFt);
@@ -216,6 +267,10 @@ export function chipsFor(f) {
   };
   for (const [k, label] of Object.entries(flags)) if (f[k]) add(label, { [k]: false });
   if (f.minRating != null) add(`${f.minRating}+ ★ tours`, { minRating: null });
+  if (f.cutMin != null) add(`Price cut ${f.cutMin}%+`, { cutMin: null });
+  if (f.belowArea) add("Below area $/sqft", { belowArea: false });
+  if (f.motivated) add("Motivated wording", { motivated: false });
+  if (f.hideOverpriced) add("Hiding likely overpriced", { hideOverpriced: false });
   if (f.keyword) add(`Keyword: ${f.keyword}`, { keyword: "" });
   if (f.bounds) add("Map area", { bounds: null });
   return c;

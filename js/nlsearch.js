@@ -39,7 +39,10 @@ const FEATURES = [
   [/\bsolar( panels?| power(ed)?)?\b/, "solar", "Solar panels"],
   [/\b(ev|electric (car|vehicle)) charg(er|ing)\b/, "ev", "EV charging"],
   [/\b(new construction|newly built|brand new|new build)\b/, "newConstruction", "New construction"],
-  [/\b(price (reduced|reduction|cut|drop)|reduced price|reduced)\b/, "priceReduced", "Price reduced"],
+  [/\b(motivated|eager|desperate|serious) (sellers?|owners?)\b|\bmust sell\b|\bbring (all )?offers\b|\bpriced to sell\b/, "motivated", "Motivated seller wording"],
+  [/\b(below|under) (market|area|value|comps?)\b|\bunder ?priced\b|\bgood deals?\b|\bbargains?\b|\bpriced (low|well)\b/, "belowArea", "Priced below area"],
+  [/\b(no|not|exclude|hide|without) (overpriced|over priced)\b|\bnot overpriced\b|\brealistic(ally)? priced\b/, "hideOverpriced", "Hiding likely overpriced"],
+  [/\b(price (reduced|reduction|cut|drop)s?|reduced price|reduced)\b/, "priceReduced", "Price reduced"],
   [/\bopen house\b/, "openHouse", "Open house"],
   [/\b(foreclosures?|bank owned|reo)\b/, "foreclosure", "Foreclosure"],
   [/\b(virtual|3d) tour\b/, "virtualTour", "Virtual tour"],
@@ -77,7 +80,7 @@ const STOP = new Set(("find show me give get see list listings listing homes hom
  */
 export function parseSearch(text, { cities = [], counties = [] } = {}) {
   // Keep $ , . / + - (they matter for "$3,000/mo" and "55+"); everything else becomes a space.
-  let t = ` ${String(text || "").toLowerCase().replace(/[^a-z0-9 $,./+\-]/g, " ").replace(/(\d),(?=\d{3})/g, "$1").replace(/,/g, " ").replace(/\s+/g, " ")} `;
+  let t = ` ${String(text || "").toLowerCase().replace(/[^a-z0-9 $,./+%\-]/g, " ").replace(/(\d),(?=\d{3})/g, "$1").replace(/,/g, " ").replace(/\s+/g, " ")} `;
   // Same abbreviations as the listings; "w palm beach" / "n miami" style directions spelled out.
   t = t.replace(/(?<!\bsq\.? ?)\b(saint|ft|pt|mt)\b\.?/g, (w, a) => CANON[a])
     .replace(/\b(w|n|s|e)\.? (?=(palm|miami|lauderdale|fort|boca|hollywood|delray|jupiter|naples|palm beach))/g, (m, d) => ({ w: "west ", n: "north ", s: "south ", e: "east " })[d]);
@@ -179,6 +182,13 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
   else if (take(/\b(new listings?|newly listed|just listed|this week|last (7|seven) days|past week)\b/)) hit({ domMax: 7 }, "Listed in the last 7 days");
   else if (take(/\b(last|past) (30 days|month)\b|\bthis month\b/)) hit({ domMax: 30 }, "Listed in the last 30 days");
   if (take(/\b(pending|under contract)\b/)) hit({ statusPending: true }, "Include pending");
+  // "price drop of 10%", "cut 15%+", "biggest price drops"
+  if ((m = take(/\b(?:price )?(?:cut|drop|reduc\w*|down)\w* (?:of |by |at least )?(\d{1,2}) ?(?:%|percent)\+?(?: or more)?|\b(\d{1,2}) ?(?:%|percent)\+? (?:price )?(?:cut|drop|reduc\w*|off|below original)/))) {
+    const n = Number(m[1] || m[2]); if (n > 0 && n < 80) hit({ cutMin: n, sort: "cutPct" }, `Price cut ${n}%+`);
+  }
+  // "biggest price drops" = sort by the cut; "with price cuts" = only homes that have one (and sort).
+  if (take(/\b(biggest|largest|most|steepest) (price )?(cuts|drops|reductions)\b/)) hit({ sort: "cutPct" }, "Biggest price cuts first");
+  else if (take(/\b(with|had|have|having|recent) (a |any )?price (cuts?|drops?|reductions?)\b|\bprice (cuts|drops|reductions)\b/)) hit({ sort: "cutPct", cutMin: patch.cutMin ?? 1 }, "Has a price cut");
   if (take(/\b(cheapest|lowest price(d)?|least expensive)\b/)) hit({ sort: "priceAsc" }, "Cheapest first");
   else if (take(/\b(most expensive|highest price(d)?|priciest)\b/)) hit({ sort: "priceDesc" }, "Most expensive first");
   else if (take(/\b(newest|most recent|latest)\b/)) hit({ sort: "newest" }, "Newest first");
@@ -189,7 +199,7 @@ export function parseSearch(text, { cities = [], counties = [] } = {}) {
 
   // ----- features ("no pool" can't be filtered: say so rather than doing the opposite) -----
   for (const [re, key, label] of FEATURES) {
-    const neg = new RegExp(String.raw`\b(no|not|without|w o)( a| an| any)? ` + re.source.replace(/^\\b/, ""));
+    const neg = new RegExp(String.raw`\b(no|not|without|w o)( a| an| any)? (?:` + re.source.replace(/^\\b/, "") + ")");
     if (take(neg)) { skipped.push(`no ${label.toLowerCase()} (the site can only require a feature, not exclude it)`); while (take(re)); continue; }
     if (take(re)) hit({ [key]: true }, label);
   }

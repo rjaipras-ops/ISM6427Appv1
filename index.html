@@ -113,6 +113,20 @@
         </div>
       </div>
 
+      <div class="dd" data-dd="signals">
+        <button class="pill" type="button" aria-expanded="false"><span data-label="signals">Seller signals</span><i class="caret"></i></button>
+        <div class="dd-panel dd-signals" role="dialog" aria-label="Seller signals">
+          <h4>Price cut from original list price</h4>
+          <div class="seg" data-seg="cutMin"></div>
+          <label class="check"><input type="checkbox" name="belowArea" /> <span>Priced below area <small class="muted">price per sq ft 10%+ under the median for its ZIP and home type</small></span></label>
+          <label class="check"><input type="checkbox" name="motivated" /> <span>Motivated seller wording <small class="muted">"motivated", "bring all offers", "priced to sell", "as is", "estate sale"…</small></span></label>
+          <label class="check"><input type="checkbox" name="hideOverpriced" /> <span>Hide likely overpriced <small class="muted">20%+ above the area, 60+ days on market, no price cut</small></span></label>
+          <h4>Listed within</h4>
+          <div class="seg" data-seg="domMax"></div>
+          <p class="muted sig-tip">Tip: sort by <b>Biggest price cut</b> to see the largest drops first.</p>
+        </div>
+      </div>
+
       <button class="pill pill-strong" type="button" id="moreBtn">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         Filters <span class="count-badge" id="moreCount" hidden></span>
@@ -145,6 +159,7 @@
           <select id="sort">
             <option value="relevant">Recommended</option>
             <option value="newest">Newest listings</option>
+            <option value="cutPct">Biggest price cut (%)</option>
             <option value="priceAsc">Price (low to high)</option>
             <option value="priceDesc">Price (high to low)</option>
             <option value="ppsf">Price per sq ft</option>
@@ -255,8 +270,16 @@
           <div class="rng" data-rng="hoa"></div>
         </fieldset>
         <fieldset>
-          <legend>Days on iToured</legend>
+          <legend>Days on market</legend>
           <div class="seg" data-seg="domMax"></div>
+        </fieldset>
+        <fieldset class="signals-fieldset">
+          <legend>Seller signals</legend>
+          <h4>Price cut from original list price</h4>
+          <div class="seg" data-seg="cutMin"></div>
+          <label class="check"><input type="checkbox" name="belowArea" /> <span>Priced below area <small class="muted">price per sq ft 10%+ under the median for its ZIP and home type</small></span></label>
+          <label class="check"><input type="checkbox" name="motivated" /> <span>Motivated seller wording <small class="muted">"motivated", "bring all offers", "priced to sell", "as is", "estate sale"…</small></span></label>
+          <label class="check"><input type="checkbox" name="hideOverpriced" /> <span>Hide likely overpriced <small class="muted">20%+ above the area, 60+ days on market, no price cut</small></span></label>
         </fieldset>
         <fieldset>
           <legend>Stories</legend>

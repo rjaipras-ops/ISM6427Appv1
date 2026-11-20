@@ -73,6 +73,16 @@ export function parseQuery(q) {
   return terms.slice(0, 8);
 }
 
+/** Returns the ListingKeys whose description contains at least one of the phrases (one pass). */
+export async function searchRemarksAny(phrases) {
+  const terms = [...new Set(phrases.map((p) => normalizeText(p).trim()).filter(Boolean))].slice(0, 40).map((t) => ` ${t}`);
+  if (!terms.length) return { keys: [], terms: [] };
+  const entries = await loadAll();
+  const keys = [];
+  for (const [k, t] of entries) if (terms.some((term) => t.includes(term))) keys.push(k);
+  return { keys, terms: terms.map((t) => t.trim()), searched: entries.length };
+}
+
 /** Returns the ListingKeys whose description contains every term. */
 export async function searchRemarks(q) {
   const terms = parseQuery(q);
