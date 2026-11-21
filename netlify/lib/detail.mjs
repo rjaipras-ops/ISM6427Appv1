@@ -12,6 +12,10 @@ import { INDEX_FIELDS } from "./index-format.mjs";
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
+// Structure details shown on the listing page (standard RESO fields; skipped if the feed lacks them).
+const DETAIL_EXTRA = ["Roof", "FoundationDetails", "WindowFeatures"];
+let extrasOffUntil = 0;
+
 async function fetchRecord(key) {
   const cfg = idxConfig();
   if (cfg.mock) {
@@ -21,7 +25,15 @@ async function fetchRecord(key) {
   }
   try {
     if (cfg.flavor === "reso") {
-      return await sparkGet(`${cfg.baseUrl}/Property('${encodeURIComponent(key)}')?${qs({ $select: RESO_SELECT.join(","), $expand: "Media" })}`);
+      const get = (fields) => sparkGet(`${cfg.baseUrl}/Property('${encodeURIComponent(key)}')?${qs({ $select: fields.join(","), $expand: "Media" })}`);
+      if (Date.now() > extrasOffUntil) {
+        try { return await get([...RESO_SELECT, ...DETAIL_EXTRA]); } catch (e) {
+          if (!/Spark API 400/.test(e.message)) throw e;
+          extrasOffUntil = Date.now() + 6 * 3600e3; // the feed doesn't know one of the extra fields
+          console.warn("[detail] extra structure fields not available:", e.message.slice(0, 160));
+        }
+      }
+      return await get(RESO_SELECT);
     }
     const json = await sparkGet(`${cfg.baseUrl}/listings/${encodeURIComponent(key)}?_expand=PrimaryPhoto,Photos`);
     const r = (json.D || json.d)?.Results?.[0];

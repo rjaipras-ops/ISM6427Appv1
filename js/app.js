@@ -178,7 +178,7 @@ function renderFooter() {
   $("#agentFoot").innerHTML = `<b>${esc(SITE.agentName)}</b>, ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""} · Lic. ${esc(SITE.licenseNo)}` +
     (mls ? `<span class="idx-disclaimer">${mlsMark()} ${esc(SITE.mlsDisclaimer())}</span>` : "");
   $("#globalFoot").innerHTML = `<p><b>${esc(SITE.agentName)}</b>, Florida real estate sales associate · License ${esc(SITE.licenseNo)} · ${esc(SITE.brokerage)}${SITE.phone ? ` · ${esc(SITE.phone)}` : ""}</p>
-    <p>${mls ? `${esc(SITE.mlsDisclaimer())} · ` : ""}<a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="#/contact">Contact</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
+    <p>${mls ? `${esc(SITE.mlsDisclaimer())} · ` : ""}<a href="/about">About</a> · <a href="/how-it-works">How it works</a> · <a href="/faq">FAQ</a> · <a href="/fl">Cities</a> · <a href="#" data-install>Get the app</a> · <a href="#/contact">Contact</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>`;
 }
 
 // Keep listings fresh while the page is open, without moving the map or closing anything.
@@ -764,6 +764,39 @@ function hot(id, scroll = false) {
 }
 
 /* ---------------- cards ---------------- */
+// Listing page: how the home is built, near the top (MLS fields, plus the county's year built).
+function constructionType(text) {
+  const t = String(text || "").toLowerCase();
+  const block = /\bcbs\b|block|concrete|masonry|\bicf\b|poured/.test(t), frame = /frame|wood/.test(t), steel = /steel/.test(t);
+  if (block && frame) return "Concrete block & frame";
+  if (block) return "Concrete block (CBS)";
+  if (frame) return "Wood frame";
+  if (steel) return "Steel";
+  return null;
+}
+function structureHTML(l) {
+  const d = l.demo, p = l.Parcel;
+  if (l.PropertyType === "Land") return "";
+  const type = constructionType(d.Construction);
+  const year = d.YearBuilt || p?.YearBuilt;
+  const age = year ? new Date().getFullYear() - year : null;
+  const county = p?.YearBuilt && (p.YearBuilt !== d.YearBuilt || (p.EffectiveYearBuilt && p.EffectiveYearBuilt !== p.YearBuilt))
+    ? `<small class="muted">County: built ${p.YearBuilt}${p.EffectiveYearBuilt && p.EffectiveYearBuilt !== p.YearBuilt ? `, effective ${p.EffectiveYearBuilt}` : ""}</small>` : "";
+  const loading = isMls(l) && !S.details.get(l.ListingId)?.fields;
+  const items = [
+    ["Construction", type ? `${esc(type)}${d.Construction && d.Construction.toLowerCase() !== type.toLowerCase() ? `<small class="muted">${esc(d.Construction)}</small>` : ""}` : (loading ? `<span class="muted">Loading…</span>` : `<span class="muted">Not listed</span>`)],
+    ["Year built", year ? `${year}${age >= 0 ? ` <span class="muted">· ${age} yr${age === 1 ? "" : "s"} old</span>` : ""}${county}` : `<span class="muted">Not listed</span>`],
+    d.Roof && ["Roof", esc(d.Roof)],
+    (d.StormProtection || d.ImpactWindows) && ["Storm protection", esc(d.StormProtection || "Impact windows")],
+    d.Windows && !d.StormProtection && ["Windows", esc(d.Windows)],
+    d.Foundation && ["Foundation", esc(d.Foundation)],
+    d.StoriesTotal && [l.PropertyType === "Condo" ? "Stories (building)" : "Stories", d.StoriesTotal],
+  ].filter(Boolean);
+  return `<section class="section structure" id="structure"><h2>Construction</h2>
+    <div class="structure-grid">${items.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
+    <p class="muted structure-src">From the listing${county ? " and county records" : ""}. Confirm with an inspection, and a wind-mitigation and four-point inspection for insurance.</p></section>`;
+}
+
 // Listing page: price cuts and price per sq ft vs. the area, in plain numbers.
 function sellerSignalsHTML(l) {
   const d = l.demo, items = [], cut = cutPct(l);
@@ -1055,6 +1088,7 @@ function renderDetail(l) {
         ${sellerSignalsHTML(l)}
         ${mls ? idxAttributionHTML(l) : ""}
         ${d.OpenHouse ? `<div class="cta-review" style="background:#fff;border:1.5px solid var(--line)"><p><b>Open house</b> · ${weekday(d.OpenHouse.date)}, ${fmtTime(d.OpenHouse.start)}–${fmtTime(addHours(d.OpenHouse.start, d.OpenHouse.durationHrs))} ${est}</p><span class="muted">Tour it, then come back to review it</span></div>` : ""}
+        ${structureHTML(l)}
         ${reviewsSection}
         <section class="section">
           <h2>About this home</h2>
@@ -1167,6 +1201,8 @@ async function loadMlsExtras(l) {
       if (!onThisListing()) return;
       const sec = $("#records");
       if (sec) sec.outerHTML = publicRecordsHTML(l);
+      const st = $("#structure");
+      if (st) st.outerHTML = structureHTML(l);
       loadHistoryFor(l);
       if (r.parcel?.Shape && galleryMaps[0]) {
         const poly = addParcelOutline(galleryMaps[0], r.parcel.Shape);
@@ -1390,19 +1426,23 @@ function publicRecordsHTML(l) {
   const p = l.Parcel;
   if (p) setTimeout(() => loadHistoryFor(l), 0);
   const label = mls ? `<p class="not-mls">County property records · not from BeachesMLS</p>` : "";
+  // Where there's no direct link (a county we don't link to yet, or a condo unit that couldn't be
+  // matched), search for this exact property on the county appraiser / tax collector sites instead.
+  const addr = String(l.UnparsedAddress || "").trim();
+  const web = (q) => `https://www.google.com/search?q=${encodeURIComponent(q)}`;
   const search = { Broward: "https://web.bcpa.net/BcpaClient/#/Record-Search", "Palm Beach": "https://pbcpao.gov/", "St. Lucie": "https://apps.paslc.gov/property-search/",
-    "Miami-Dade": "https://apps.miamidadepa.gov/PropertySearch/" }[l.County];
-  const taxSearch = taxBillLink(l.County, "");
+    "Miami-Dade": "https://apps.miamidadepa.gov/PropertySearch/" }[l.County] || web(`${l.County} County property appraiser ${addr}`);
+  const taxSearch = taxBillLink(l.County, "") || web(`${l.County} County tax collector property tax ${addr}`);
   if (mls && (st === undefined || st === "pending")) {
     return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
       <p class="muted">${st === "pending" ? "County records are taking longer than usual to load. Check back in a few minutes." : "Loading public records…"}</p></section>`;
   }
   if (!p) {
     return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
-      <p class="muted">We couldn't match this listing to its county parcel automatically. You can look it up by address:</p>
+      <p class="muted">We couldn't match this listing to its county parcel automatically${l.UnitNumber || /\d\s*$/.test(l.StreetAddress || "") ? " (condo units are sometimes recorded differently by the county)" : ""}. You can look it up by address:</p>
       <div class="records-links">
-        ${taxSearch ? `<a class="btn" href="${esc(taxSearch)}" target="_blank" rel="noopener noreferrer">Search ${esc(l.County)} tax bills ↗</a>` : ""}
-        ${search ? `<a class="btn btn-ghost" href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the property appraiser ↗</a>` : ""}
+        <a class="btn" href="${esc(taxSearch)}" target="_blank" rel="noopener noreferrer">Search ${esc(l.County)} tax bills ↗</a>
+        <a class="btn btn-ghost" href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the property appraiser ↗</a>
       </div></section>`;
   }
   const showOwner = p.Owner && (!mls || SITE.showOwnerOnMlsListings);
@@ -1438,8 +1478,14 @@ function publicRecordsHTML(l) {
       This estimate uses ${fmt$(t.newTaxable)} (the higher of the county's market value or 85% of the price) at ${t.millage.toFixed(2)} mills${t.exactMillage ? "" : " (approx.)"}${t.fixed ? ` plus ${fmt$(t.fixed)} in fixed county charges` : ""}.</p>
     ${saleHistoryHTML(h)}
     <div class="records-links">
-      ${taxBillLink(l.County, p.ParcelId, p.AltKey) ? `<a class="btn" href="${esc(taxBillLink(l.County, p.ParcelId, p.AltKey))}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>` : ""}
-      ${p.Links?.appraiser ? `<a class="btn btn-ghost" href="${esc(p.Links.appraiser)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>` : ""}
+      ${(() => {
+        const bill = taxBillLink(l.County, p.ParcelId, p.AltKey) || web(`${l.County} County tax collector ${p.ParcelId}`);
+        const pa = p.Links?.appraiser || web(`${l.County} County property appraiser ${p.ParcelId}`);
+        const searched = !taxBillLink(l.County, p.ParcelId, p.AltKey) || !p.Links?.appraiser;
+        return `<a class="btn" href="${esc(bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>
+          <a class="btn btn-ghost" href="${esc(pa)}" target="_blank" rel="noopener noreferrer">${showOwner ? `${esc(l.County)} property appraiser ↗` : "Owner &amp; full property record ↗"}</a>
+          ${searched ? `<p class="muted" style="font-size:12px;flex-basis:100%;margin:4px 0 0">We don't link straight to ${esc(l.County)} County's records yet, so these search for parcel ${esc(p.ParcelId)}.</p>` : ""}`;
+      })()}
     </div>
     ${SEARCH_ONLY_TAX_SITES.has(l.County) ? taxHint(l.County, p.ParcelId) : ""}
     <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
@@ -1803,25 +1849,62 @@ function renderMyReviews() {
 
 /* ---------------- installable app (PWA) ---------------- */
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
-(() => {
-  const bar = $("#installBar");
-  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-  let dismissed = false;
-  try { dismissed = localStorage.getItem("toured.install.dismissed") === "1"; } catch { /* private mode */ }
-  if (!bar || standalone || dismissed || !matchMedia("(max-width: 860px)").matches) return;
-  const hide = (remember) => { bar.hidden = true; document.body.classList.remove("has-install-bar"); if (remember) try { localStorage.setItem("toured.install.dismissed", "1"); } catch { /* ignore */ } };
-  const show = (text) => { $("#installText").textContent = text; bar.hidden = false; document.body.classList.add("has-install-bar"); };
-  $("#installX").onclick = () => hide(true);
-  // Android / Chrome: the browser offers a one-tap install.
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    show("Get the iToured app: faster, full screen, one tap from your home screen.");
-    const btn = $("#installBtn"); btn.hidden = false;
-    btn.onclick = async () => { hide(false); e.prompt(); const { outcome } = await e.userChoice; if (outcome !== "accepted") hide(true); };
-  });
-  window.addEventListener("appinstalled", () => hide(true));
-  // iPhone / iPad Safari has no install button: explain the two taps.
+// Install prompt on phones. Shown again 14 days after it's dismissed; never inside the installed app.
+const install = { event: null };
+function installInstructions() {
   const ua = navigator.userAgent;
   const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
-  if (ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) setTimeout(() => show("Add iToured to your Home Screen: tap the Share button, then “Add to Home Screen”."), 4000);
+  if (ios && /CriOS|EdgiOS|FxiOS/.test(ua)) return "Add iToured to your Home Screen: tap the Share button in the address bar, then “Add to Home Screen”.";
+  if (ios) return "Add iToured to your Home Screen: tap the Share button, then “Add to Home Screen”.";
+  if (/SamsungBrowser/.test(ua)) return "Add iToured to your home screen: tap the menu (☰), then “Add page to” → “Home screen”.";
+  return "Add iToured to your home screen: open the browser menu (⋮), then “Install app” or “Add to Home screen”.";
+}
+function showInstallBar(text, { button = false } = {}) {
+  $("#installText").textContent = text;
+  $("#installBtn").hidden = !button;
+  $("#installBar").hidden = false;
+  document.body.classList.add("has-install-bar");
+}
+function hideInstallBar(remember) {
+  $("#installBar").hidden = true;
+  document.body.classList.remove("has-install-bar");
+  if (remember) try { localStorage.setItem("toured.install.dismissedAt", String(Date.now())); } catch { /* private mode */ }
+}
+/** "Get the app" links: one-tap install where the browser supports it, otherwise the steps. */
+function offerInstall() {
+  if (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) { toast("You're already using the iToured app."); return; }
+  if (install.event) { promptInstall(); return; }
+  showInstallBar(installInstructions());
+}
+async function promptInstall() {
+  const e = install.event; if (!e) return;
+  hideInstallBar(false); install.event = null;
+  e.prompt();
+  const { outcome } = await e.userChoice;
+  if (outcome !== "accepted") hideInstallBar(true);
+}
+document.addEventListener("click", (e) => { if (e.target.closest("[data-install]")) { e.preventDefault(); offerInstall(); } });
+(() => {
+  if (!$("#installBar")) return;
+  $("#installX").onclick = () => hideInstallBar(true);
+  $("#installBtn").onclick = promptInstall;
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  let dismissedAt = 0;
+  try { dismissedAt = Number(localStorage.getItem("toured.install.dismissedAt")) || 0; localStorage.removeItem("toured.install.dismissed"); } catch { /* private mode */ }
+  const recentlyDismissed = Date.now() - dismissedAt < 14 * 864e5;
+  const phone = matchMedia("(max-width: 860px)").matches;
+  // Chrome/Edge on Android (and desktop): the browser offers a one-tap install when it's allowed.
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault(); install.event = e;
+    if (phone && !standalone && !recentlyDismissed) showInstallBar("Get the iToured app: faster, full screen, one tap from your home screen.", { button: true });
+  });
+  window.addEventListener("appinstalled", () => hideInstallBar(true));
+  if (standalone || recentlyDismissed || !phone) return;
+  // Other phone browsers (Safari, Chrome on iPhone, Samsung Internet, Firefox) have no install event:
+  // show the steps, unless the app is already installed (Chrome on Android can tell us).
+  setTimeout(async () => {
+    if (install.event || !$("#installBar").hidden) return;
+    try { if ((await navigator.getInstalledRelatedApps?.())?.length) return; } catch { /* not supported */ }
+    showInstallBar(installInstructions());
+  }, 5000);
 })();

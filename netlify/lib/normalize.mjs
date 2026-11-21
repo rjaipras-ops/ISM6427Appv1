@@ -169,6 +169,13 @@ export function normalizeListing(rec, { syncedAt } = {}) {
       GolfCommunity: /golf/i.test(`${list(rec.View)} ${list(rec.LotFeatures)}`),
       // Concrete block / CBS construction (Florida buyers and insurers look for it).
       CBS: /\bcbs\b|block|concrete/i.test(list(rec.ConstructionMaterials)),
+      // Structure (listing page)
+      Construction: list(rec.ConstructionMaterials) || null,
+      Roof: list(rec.Roof) || null,
+      Foundation: list(rec.FoundationDetails) || null,
+      Windows: list(rec.WindowFeatures) || null,
+      StormProtection: [list(rec.Storm_sp_Protection_co_Impact_sp_Glass) && `Impact glass: ${list(rec.Storm_sp_Protection_co_Impact_sp_Glass)}`,
+        list(rec.Storm_sp_Protection_sp_Details_co_Storm_sp_Protection_sp_Details)].filter(Boolean).join("; ") || null,
       // Short-term rentals allowed (and not separately prohibited).
       ShortTermRental: /short term rentals? allowed/i.test(leasing) && !/short term rentals? prohibited|leasing prohibited$/i.test(leaseLimits),
       FloodZone: null,

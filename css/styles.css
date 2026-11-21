@@ -1009,3 +1009,11 @@ body.on-search .globalfoot { display: none; }
 .badge-below { background: #e7f5ee; color: #17603f; }
 .seller-signals { font-size: 13px; color: var(--ink-2); margin: 6px 0 0; line-height: 1.5; }
 [data-dd="signals"] .dd-panel { left: auto; right: 0; }
+
+/* Listing page: construction box */
+.structure-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px 18px; }
+.structure-grid > div { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; }
+.structure-grid small { display: block; color: var(--ink-3); font-size: 12px; }
+.structure-grid div > div { font-weight: 600; font-size: 15px; }
+.structure-grid div > div small { font-weight: 400; display: block; margin-top: 2px; }
+.structure-src { font-size: 12px; margin-top: 8px; }
