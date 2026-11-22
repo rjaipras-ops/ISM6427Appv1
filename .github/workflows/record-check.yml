@@ -1,0 +1,45 @@
+# Daily public record check: compares active Miami-Dade, Broward and Palm Beach listings with the
+# Florida DOR tax roll and sends a PRIVATE report to the site's admin page (scripts/records/daily.mjs).
+#
+# This repository is public, so this job's logs are public: the script prints counts only.
+# Secrets (Settings > Secrets and variables > Actions):
+#   SPARK_API_BEARER_TOKEN   the MLS feed token (same value as in Netlify)
+#   RECORDS_UPLOAD_SECRET    a long random string; the same value must be set in Netlify
+name: Public record check
+
+on:
+  schedule:
+    - cron: "41 9 * * *" # 09:41 UTC daily (about 4:41 or 5:41 a.m. in Florida)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: record-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Current DOR tax roll version
+        id: dor
+        run: echo "key=$(node scripts/records/dor-version.mjs)" >> "$GITHUB_OUTPUT"
+      # DOR files (about 100 MB zipped) are downloaded again only when DOR posts new ones.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .records-cache/dor/*.zip
+            .records-cache/dor/*.meta.json
+          key: dor-${{ steps.dor.outputs.key }}
+      - name: Check listings against public records
+        run: node scripts/records/daily.mjs
+        env:
+          SPARK_API_BEARER_TOKEN: ${{ secrets.SPARK_API_BEARER_TOKEN }}
+          RECORDS_UPLOAD_SECRET: ${{ secrets.RECORDS_UPLOAD_SECRET }}

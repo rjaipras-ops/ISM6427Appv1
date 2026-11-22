@@ -52,18 +52,22 @@ export async function ensureCountyCsv(county, kind, year, cacheDir) {
     if (meta?.csv) return meta.csv;
     throw new Error(`No ${kind} file for ${county} ${year} on the DOR portal`);
   }
-  if (meta?.csv && meta.timeLastModified === remote.TimeLastModified && await stat(meta.csv).catch(() => null)) return meta.csv;
   const zip = join(cacheDir, `${kind}-${COUNTY_NO[county]}-${remote.roll}.zip`);
-  const res = await fetch(`https://floridarevenue.com${encodeURI(remote.ServerRelativeUrl)}`, { headers: { "User-Agent": UA["User-Agent"] } });
-  if (!res.ok) throw new Error(`DOR download ${remote.Name}: HTTP ${res.status}`);
-  await pipeline(Readable.fromWeb(res.body), createWriteStream(zip));
+  const current = meta?.timeLastModified === remote.TimeLastModified && meta.zip === zip;
+  if (current && meta.csv && await stat(meta.csv).catch(() => null)) return meta.csv;
+  // Download unless the same file is already cached (the daily job caches only the zips).
+  if (!(current && await stat(zip).catch(() => null))) {
+    const res = await fetch(`https://floridarevenue.com${encodeURI(remote.ServerRelativeUrl)}`, { headers: { "User-Agent": UA["User-Agent"] } });
+    if (!res.ok) throw new Error(`DOR download ${remote.Name}: HTTP ${res.status}`);
+    await pipeline(Readable.fromWeb(res.body), createWriteStream(zip));
+  }
   const outDir = join(cacheDir, `${kind}-${COUNTY_NO[county]}-${remote.roll}`);
   await mkdir(outDir, { recursive: true });
   await run("unzip", ["-o", "-q", zip, "-d", outDir]);
   const csvName = (await readdir(outDir)).find((n) => n.toLowerCase().endsWith(".csv"));
   if (!csvName) throw new Error(`No CSV inside ${remote.Name}`);
   const csv = join(outDir, csvName);
-  await writeFile(metaPath, JSON.stringify({ name: remote.Name, roll: remote.roll, timeLastModified: remote.TimeLastModified, csv }, null, 2));
+  await writeFile(metaPath, JSON.stringify({ name: remote.Name, roll: remote.roll, timeLastModified: remote.TimeLastModified, zip, csv }, null, 2));
   return csv;
 }
 
@@ -87,4 +91,15 @@ export async function readSdf(csvPath, parcelIds) {
     byParcel.get(r.PARCEL_ID).push(r);
   }, { pick: SDF_COLUMNS });
   return { byParcel, window: min && max ? `${min} to ${max}` : null };
+}
+
+/** Short version string for the counties' current DOR files (cache key for the daily job). */
+export async function dorVersion(counties, year) {
+  const parts = [];
+  for (const county of counties) for (const kind of ["NAL", "SDF"]) {
+    const f = await findCountyFile(county, kind, year);
+    parts.push(f ? `${f.Name}@${f.TimeLastModified}` : `${county}-${kind}-none`);
+  }
+  const { createHash } = await import("node:crypto");
+  return `${year}-${createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 16)}`;
 }

@@ -1699,6 +1699,7 @@ async function renderAdmin() {
     return;
   }
   if (admin.tab === "insights") return renderInsights();
+  if (admin.tab === "records") return renderRecords();
   el.innerHTML = `${adminTabs()}<h1>Review moderation</h1><p class="muted">Loading…</p>`;
   try {
     const [list, settings] = await Promise.all([store.adminListReviews(), store.adminGetSettings()]);
@@ -1706,7 +1707,7 @@ async function renderAdmin() {
   } catch (err) { el.innerHTML = `<h1>Review moderation</h1><p class="form-error">${esc(err.message)}</p>`; return; }
   drawAdmin();
 }
-const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["insights", "Search insights"]].map(([k, t]) =>
+const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["insights", "Search insights"], ["records", "Record checks"]].map(([k, t]) =>
   `<button type="button" data-admview="${k}" aria-pressed="${(admin.tab || "reviews") === k}">${t}</button>`).join("")}</div>`;
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-admview]");
@@ -1751,6 +1752,66 @@ async function renderInsights() {
       ${table("Bathrooms", d.baths, esc)}
     </div>`;
   el.onclick = (e) => { const b = e.target.closest("[data-insdays]"); if (b) { admin.insightDays = Number(b.dataset.insdays); renderInsights(); } };
+}
+
+/* Record checks: the private daily public-record report (netlify/lib/records.mjs). Site owner only. */
+const rec = { county: "", check: "", status: "open", q: "", page: 1, date: "" };
+async function renderRecords() {
+  const el = $("#view-admin");
+  if (!el.querySelector(".rec-wrap")) el.innerHTML = `${adminTabs()}<h1>Record checks</h1><p class="muted">Loading…</p>`;
+  let d;
+  try { d = await store.adminRecords(rec); } catch (err) { el.innerHTML = `${adminTabs()}<h1>Record checks</h1><p class="form-error">${esc(err.message)}</p>`; return; }
+  if (!d.date) {
+    el.innerHTML = `${adminTabs()}<h1>Record checks</h1><div class="empty"><h2>No report yet</h2><p>The daily check (GitHub Actions) hasn't sent a report. Run it from the repository's Actions tab, or wait for the next scheduled run.</p></div>`;
+    return;
+  }
+  const n = (x) => Number(x || 0).toLocaleString("en-US");
+  const counties = Object.entries(d.counties || {});
+  const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(label)}</option>`;
+  const statusOpts = (cur) => Object.entries(d.statuses).map(([k, t]) => opt(k, t, cur)).join("");
+  const money = (v) => (v == null ? "—" : fmt$(v));
+  const item = (it) => `<article class="rec-item rec-${esc(it.status)}" data-recid="${esc(it.id)}">
+    <div class="rec-top"><a href="#/home/${esc(it.id)}"><b>${esc(it.street)}</b>, ${esc(it.city || "")} ${esc(it.zip)}</a>
+      <span class="muted">${esc(it.type)} · ${money(it.listPrice)} · MLS ${esc(it.mls || "")} · listed ${esc(it.listDate || "?")} · ${esc(it.county)}</span></div>
+    <p class="rec-match muted">Matched by ${esc(it.match.method)} (confidence ${it.match.confidence}) to parcel ${esc(it.match.parcelId)}, roll address “${esc(it.match.situs)}”</p>
+    ${it.flags.length ? `<table class="rec-table"><thead><tr><th>Check</th><th>Listing</th><th>Public record</th></tr></thead><tbody>${it.flags.map((f) => `<tr><td>${esc(f.check)}</td><td>${esc(f.listing ?? "—")}</td><td>${esc(f.record ?? "—")}<div class="muted rec-note">${esc(f.note)}</div></td></tr>`).join("")}</tbody></table>` : ""}
+    ${it.context.length ? `<ul class="rec-context">${it.context.map((c) => `<li><b>${esc(c.check)}:</b> ${esc(c.record ?? "")} <span class="muted">${esc(c.note)}</span></li>`).join("")}</ul>` : ""}
+    ${it.tax ? `<p class="rec-tax">Taxes (ad valorem, ${d.taxYear} rates, ${esc(it.tax.district)}): seller now ${money(it.tax.seller)} · MLS ${money(it.tax.mlsAmount)} · buyer ${money(it.tax.buyerHomestead)} with homestead, ${money(it.tax.buyerNonHomestead)} without</p>` : ""}
+    ${it.private.signals.length ? `<div class="rec-private"><b>Private signals${it.private.closerLook ? " · closer look" : ""} (score ${it.private.score})</b><ul>${it.private.signals.map((s) => `<li>${esc(s.note)}</li>`).join("")}</ul></div>` : ""}
+    <div class="rec-status"><label>Status <select data-recstatus>${statusOpts(it.status)}</select></label>
+      <input data-recnote placeholder="Note (optional)" value="${esc(it.statusNote)}" maxlength="500">
+      ${it.flagsChanged ? `<span class="rec-changed">Flags changed since you marked this</span>` : ""}</div>
+  </article>`;
+  el.innerHTML = `${adminTabs()}<div class="rec-wrap"><h1>Record checks</h1>
+    <p class="muted">Private. Active listings compared with the Florida Department of Revenue tax roll. Only you can see this page; nothing here is shown on listings. Owner names are never stored.</p>
+    <p class="muted rec-src">Report of ${esc(d.date)} (run ${esc(new Date(d.runAt).toLocaleString())}). ${counties.map(([c, s]) => `${esc(c)}: ${esc(s.source?.label || "")}${s.source?.salesWindow ? `, sales ${esc(s.source.salesWindow)}` : ""}`).join(" · ")}</p>
+    <div class="ins-stats">${counties.map(([c, s]) => `<div><b>${n(s.withFlags)}</b><span>${esc(c)}: with differences</span><span>${n(s.closerLook)} closer look · ${n(s.checked)} of ${n(s.listings)} checked · ${n(s.unmatched + s.lowConfidence)} not matched</span></div>`).join("")}</div>
+    <form class="rec-filters" id="recFilters">
+      <select name="county">${opt("", "All counties", rec.county)}${counties.map(([c]) => opt(c, c, rec.county)).join("")}</select>
+      <select name="check">${opt("", "All checks", rec.check)}${opt("closer", "Closer look (private)", rec.check)}${d.checks.map((c) => opt(c, c, rec.check)).join("")}</select>
+      <select name="status">${opt("open", "Open (new or changed)", rec.status)}${Object.entries(d.statuses).filter(([k]) => k !== "new").map(([k, t]) => opt(k, t, rec.status)).join("")}${opt("all", "All statuses", rec.status)}</select>
+      <select name="date">${d.dates.map((x) => opt(x, x === d.dates[0] ? `${x} (latest)` : x, d.date)).join("")}</select>
+      <input name="q" placeholder="Address or MLS #" value="${esc(rec.q)}">
+      <button class="btn" type="submit">Filter</button>
+    </form>
+    <p class="muted">${n(d.total)} listing${d.total === 1 ? "" : "s"} · page ${d.page} of ${d.pages}</p>
+    <div class="rec-list">${d.items.length ? d.items.map(item).join("") : `<p class="muted" style="padding:16px 0">Nothing here.</p>`}</div>
+    <div class="rec-pager">${d.page > 1 ? `<button class="btn btn-ghost" type="button" data-recpage="${d.page - 1}">Previous</button>` : ""}${d.page < d.pages ? `<button class="btn btn-ghost" type="button" data-recpage="${d.page + 1}">Next</button>` : ""}</div>
+  </div>`;
+  $("#recFilters").onsubmit = (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    Object.assign(rec, { county: f.get("county"), check: f.get("check"), status: f.get("status"), q: f.get("q").trim(), date: f.get("date"), page: 1 });
+    renderRecords();
+  };
+  el.onclick = (e) => { const b = e.target.closest("[data-recpage]"); if (b) { rec.page = Number(b.dataset.recpage); renderRecords(); window.scrollTo(0, 0); } };
+  el.onchange = async (e) => {
+    const box = e.target.closest("[data-recid]");
+    if (!box || !e.target.matches("[data-recstatus], [data-recnote]")) return;
+    const status = box.querySelector("[data-recstatus]").value, note = box.querySelector("[data-recnote]").value;
+    try { await store.adminRecordStatus(box.dataset.recid, status, note); box.className = `rec-item rec-${status}`; box.querySelector(".rec-changed")?.remove(); toast("Saved"); }
+    catch (err) { toast(err.message || "Couldn't save"); }
+  };
 }
 
 const needsAttention = (r) => r.status === "pending" || (r.reports?.length && r.status !== "hidden") || (r.status === "hidden" && r.moderation?.action === "auto-hidden");

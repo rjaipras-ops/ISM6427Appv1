@@ -34,6 +34,8 @@ import sitemapPart from "../netlify/functions/sitemap-part.mjs";
 import reviewAction from "../netlify/functions/review-action.mjs";
 import adminReviews from "../netlify/functions/admin-reviews.mjs";
 import adminSettings from "../netlify/functions/admin-settings.mjs";
+import adminRecords from "../netlify/functions/admin-records.mjs";
+import recordsUpload from "../netlify/functions/records-upload.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
@@ -67,6 +69,8 @@ const routes = [
   [/^\/api\/reviews$/, reviews],
   [/^\/api\/admin\/reviews$/, adminReviews],
   [/^\/api\/admin\/settings$/, adminSettings],
+  [/^\/api\/admin\/records$/, adminRecords],
+  [/^\/api\/records\/upload$/, recordsUpload],
   [/^\/api\/reviews\/([\w-]+)\/(delete|helpful|report)$/, reviewAction, (m) => ({ id: m[1], action: m[2] })],
 ];
 

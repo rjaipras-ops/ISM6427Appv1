@@ -18,3 +18,6 @@ export function monthsBetween(sale, isoDate) {
   if (!m) return null;
   return (Number(m[1]) - sale.year) * 12 + (Number(m[2]) - (sale.month || 6));
 }
+
+/** Built on or after the roll's January 1 (give or take rules.useCode.newConstructionYears): the roll still shows the lot. */
+export const isNewConstruction = (l, r, rules) => !!(l.yearBuilt && r.rollYear && l.yearBuilt >= r.rollYear - (rules.useCode.newConstructionYears ?? 1));

@@ -32,6 +32,9 @@ test("year built: one-year tolerance", () => {
   assert.equal(yearBuilt(listing({ yearBuilt: 2023 }), house, rules).status, "ok");
   assert.equal(yearBuilt(listing({ yearBuilt: 2024 }), house, rules).status, "ok");
   assert.equal(yearBuilt(listing({ yearBuilt: 2019 }), house, rules).status, "flag");
+  const old = { ...house, yearBuilt: 1941, effectiveArea: 1825 };
+  assert.equal(yearBuilt(listing({ yearBuilt: 2026 }), old, rules).status, "info", "teardown and rebuild");
+  assert.equal(livingArea(listing({ yearBuilt: 2026, livingArea: 3917 }), old, rules).status, "info", "teardown and rebuild");
 });
 
 test("lot size: tolerance and condo skip", () => {
@@ -44,8 +47,12 @@ test("lot size: tolerance and condo skip", () => {
 test("use code: listing type vs DOR code", () => {
   assert.equal(useCode(listing({ type: "Single Family" }), house, rules).status, "ok");
   assert.equal(useCode(listing({ type: "Condo" }), condo, rules).status, "ok");
-  assert.equal(useCode(listing({ type: "Single Family" }), condo, rules).status, "flag");
-  assert.equal(useCode(listing({ type: "Land" }), house, rules).status, "flag");
+  assert.equal(useCode(listing({ type: "Single Family" }), condo, rules).status, "ok", "detached condo / villa");
+  assert.equal(useCode(listing({ type: "Single Family" }), { ...house, useCode: "008" }, rules).status, "flag", "listed as a house, roll says 2-9 units");
+  assert.equal(useCode(listing({ type: "Condo" }), { ...house, useCode: "010" }, rules).status, "flag");
+  assert.equal(useCode(listing({ type: "Land" }), house, rules).status, "info", "teardown");
+  assert.equal(useCode(listing({ type: "Townhouse", yearBuilt: 2026 }), { ...house, useCode: "000" }, rules).status, "info", "new construction");
+  assert.equal(useCode(listing({ type: "Townhouse", yearBuilt: 2001 }), { ...house, useCode: "000" }, rules).status, "flag");
 });
 
 test("last sale: resale within 12 months is flagged; sales outside the window are info", () => {
@@ -53,6 +60,8 @@ test("last sale: resale within 12 months is flagged; sales outside the window ar
   assert.equal(r.status, "flag");
   assert.match(r.record, /Mar 2026, \$480,000/);
   assert.match(r.note, /about 6 month/);
+  const qc = { ...resale, sales: [{ ...resale.sales[0], qualCode: "11" }, resale.sales[1]] };
+  assert.equal(lastSale(listing({ listDate: "2026-09-15" }), qc, rules).status, "info", "quitclaim is not a resale");
   const later = lastSale(listing({ listDate: "2027-06-01" }), resale, rules);
   assert.equal(later.status, "info", "15 months later");
   assert.equal(lastSale(listing(), house, rules).record, "none");
@@ -80,6 +89,11 @@ test("private signals: owner abroad, entity owner with owner-occupied remarks, c
   assert.ok(ids.includes("ownerChangedAfterListing"), "Mar 2026 sale after Jan 2026 listing");
   assert.ok(ids.includes("entityOwnerButOwnerOccupiedRemarks"));
   assert.ok(r.closerLook);
+  const flip = fraudSignals(listing({ listDate: "2026-04-15" }), resale, rules).signals.find((s) => s.id === "recentOwnerChange");
+  assert.equal(flip.points, 0, "arm's-length purchase a month before listing: a flip, not a fraud signal");
+  const qc = { ...resale, sales: [{ ...resale.sales[0], qualCode: "11" }, resale.sales[1]] };
+  assert.equal(fraudSignals(listing({ listDate: "2026-04-15" }), qc, rules).signals.find((s) => s.id === "recentOwnerChange").points, 2, "quitclaim");
+  assert.equal(fraudSignals(listing({ yearBuilt: 2026 }), { ...house, useCode: "000" }, rules).signals.some((s) => s.id === "vacantLandListedAsHome"), false, "new construction");
   const h = fraudSignals(listing({ listPrice: 2400000 }), house, rules);
   assert.equal(h.score, 0, "homesteaded owner living there: nothing to see");
 });

@@ -18,6 +18,11 @@ export function lastSale(l, r, rules, ctx = {}) {
   const multi = s.multiParcel ? ", multi-parcel sale" : "";
   const desc = `${fmtMonth(s)}, ${fmtMoney(s.price)} (${qualification(s.qualCode)}${change}${multi})`;
   const months = monthsBetween(s, l.listDate);
+  const armsLength = Number(s.qualCode) >= 1 && Number(s.qualCode) <= 6;
+  if (months != null && months >= 0 && months <= rules.lastSale.resaleWithinMonths && !armsLength) {
+    // Quitclaims, transfers between relatives, bank or government transfers: the price isn't a market price.
+    return result(name, "info", l.listDate, desc, `Transferred about ${months} month(s) before the listing date, but not in an arm's-length sale, so it isn't treated as a resale.`);
+  }
   if (months != null && months >= 0 && months <= rules.lastSale.resaleWithinMonths) {
     const gain = l.listPrice && s.price ? ` Listed at ${fmtMoney(l.listPrice)}, ${(((l.listPrice - s.price) / s.price) * 100).toFixed(0)}% above that sale.` : "";
     return result(name, "flag", l.listDate, desc, `Resale: listed about ${months} month(s) after this sale.${gain}`);

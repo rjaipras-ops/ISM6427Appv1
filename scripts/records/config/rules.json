@@ -1,6 +1,5 @@
 {
   "_about": "Every rule and tolerance the record checks use. Change behavior here, not in code.",
-
   "matching": {
     "_about": "Confidence given to each way a listing can be tied to a tax-roll parcel. Checks run only at or above minConfidence; anything lower is listed as unmatched.",
     "minConfidence": 0.7,
@@ -10,67 +9,202 @@
     "streetKeyword": 0.7,
     "ambiguous": 0.3
   },
-
   "livingArea": {
     "_about": "DOR TOT_LVG_AREA is the total *effective* area: the base area plus factored garages, porches and similar (2026 Users Guide, field 50). It is normally larger than MLS heated living area for houses, so for houses only a listing that claims MORE than the effective area by over tolerancePct is flagged. Condos and co-ops have no garages or porches on the unit, so both directions are checked there.",
     "tolerancePct": 10,
-    "twoWayUseCodes": ["004", "005"]
+    "twoWayUseCodes": [
+      "004",
+      "005"
+    ]
   },
-
-  "yearBuilt": { "toleranceYears": 1 },
-
+  "yearBuilt": {
+    "toleranceYears": 1
+  },
   "lotSize": {
     "_about": "MLS lot sizes are often converted from rounded acres, so small differences are expected. Skipped for condos and co-ops (DOR leaves LND_SQFOOT blank for them).",
     "tolerancePct": 15,
     "minDifferenceSqFt": 500
   },
-
   "useCode": {
-    "_about": "DOR use codes (2026 Users Guide, field 8) each listing type may have. Anything else is flagged.",
+    "_about": "DOR use codes (2026 Users Guide, field 8) each listing type may have. Anything else is flagged. Detached condos/villas (004), co-op homes (005), condo-hotel units (039) and homes on agricultural-classified land (050-069) are normal in South Florida.",
     "allowed": {
-      "Single Family": ["001", "000", "007", "009"],
-      "Condo": ["004", "005", "001"],
-      "Townhouse": ["001", "004", "005", "008", "009"],
-      "Multi-Family": ["008", "003", "001", "004"],
-      "Mobile/Manufactured": ["002", "004", "005", "000", "001"],
-      "Land": ["000", "010", "040", "050", "051", "052", "053", "054", "055", "056", "057", "058", "059", "060", "061", "062", "063", "064", "065", "066", "067", "068", "069", "070", "099"]
+      "Single Family": [
+        "001",
+        "004",
+        "005",
+        "007",
+        "009",
+        "050",
+        "051",
+        "052",
+        "053",
+        "054",
+        "055",
+        "056",
+        "057",
+        "058",
+        "059",
+        "060",
+        "061",
+        "062",
+        "063",
+        "064",
+        "065",
+        "066",
+        "067",
+        "068",
+        "069"
+      ],
+      "Condo": [
+        "004",
+        "005",
+        "001",
+        "039"
+      ],
+      "Townhouse": [
+        "001",
+        "004",
+        "005",
+        "008",
+        "009"
+      ],
+      "Multi-Family": [
+        "008",
+        "003",
+        "001",
+        "004"
+      ],
+      "Mobile/Manufactured": [
+        "002",
+        "004",
+        "005",
+        "000",
+        "001"
+      ],
+      "Land": [
+        "000",
+        "010",
+        "040",
+        "050",
+        "051",
+        "052",
+        "053",
+        "054",
+        "055",
+        "056",
+        "057",
+        "058",
+        "059",
+        "060",
+        "061",
+        "062",
+        "063",
+        "064",
+        "065",
+        "066",
+        "067",
+        "068",
+        "069",
+        "070",
+        "099"
+      ]
     },
-    "vacantCodes": ["000", "010", "040", "070", "099"]
+    "vacantCodes": [
+      "000",
+      "010",
+      "040",
+      "070",
+      "099"
+    ],
+    "newConstructionYears": 1,
+    "_newConstruction": "A vacant use code is expected when the listing's year built is within newConstructionYears of the roll year (built after the January 1 roll date). Reported as info, not a flag.",
+    "_land": "A Land listing on a parcel with a building is reported as info (usually a teardown or a lot sold for its land value), not a flag."
   },
-
   "lastSale": {
     "_about": "Sale dates come from the DOR Sales Data File (SDF) and the NAL SALE_* fields; both give year and month only.",
     "resaleWithinMonths": 12,
     "minPrice": 100
   },
-
-  "beds": { "enabled": false, "reason": "No allowed public source: the DOR files have no bedroom count, and county appraiser bulk files are not loaded." },
-  "baths": { "enabled": false, "reason": "No allowed public source: the DOR files have no bathroom count, and county appraiser bulk files are not loaded." },
-  "pool": { "enabled": false, "reason": "No allowed public source: the DOR files have no pool field, and county appraiser bulk files are not loaded." },
-
+  "beds": {
+    "enabled": false,
+    "reason": "No allowed public source: the DOR files have no bedroom count, and county appraiser bulk files are not loaded."
+  },
+  "baths": {
+    "enabled": false,
+    "reason": "No allowed public source: the DOR files have no bathroom count, and county appraiser bulk files are not loaded."
+  },
+  "pool": {
+    "enabled": false,
+    "reason": "No allowed public source: the DOR files have no pool field, and county appraiser bulk files are not loaded."
+  },
   "taxEstimate": {
     "_about": "Buyer's first full-year bill after the post-sale reset. Uses config/cost-of-sale, config/exemptions and config/millage for the listing's county and taxing district.",
     "basis": "listPrice"
   },
-
   "fraud": {
     "_about": "Private review signals only. Never shown publicly, never written with owner names. A listing is marked 'closer look' when its points reach closerLookScore.",
     "closerLookScore": 3,
     "signals": {
-      "vacantLandListedAsHome": { "enabled": true, "points": 2 },
-      "ownerAbroad": { "enabled": true, "points": 1 },
-      "ownerOutOfState": { "enabled": true, "points": 1 },
-      "absenteeOwner": { "enabled": true, "points": 1 },
-      "noHomestead": { "enabled": true, "points": 0 },
-      "recentOwnerChange": { "enabled": true, "points": 2, "withinMonthsBeforeListing": 3 },
-      "ownerChangedAfterListing": { "enabled": true, "points": 3 },
-      "governmentUtilityOrHoaOwner": { "enabled": true, "points": 2 },
-      "estateOwnerNotDisclosed": { "enabled": true, "points": 1 },
-      "entityOwnerButOwnerOccupiedRemarks": { "enabled": true, "points": 1 },
-      "listPriceFarBelowJustValue": { "enabled": true, "points": 1, "belowPct": 40 }
+      "vacantLandListedAsHome": {
+        "enabled": true,
+        "points": 2,
+        "_about": "Skipped for new construction (see useCode.newConstructionYears)."
+      },
+      "ownerAbroad": {
+        "enabled": true,
+        "points": 1
+      },
+      "ownerOutOfState": {
+        "enabled": true,
+        "points": 1
+      },
+      "absenteeOwner": {
+        "enabled": true,
+        "points": 1
+      },
+      "noHomestead": {
+        "enabled": true,
+        "points": 0
+      },
+      "recentOwnerChange": {
+        "enabled": true,
+        "withinMonthsBeforeListing": 3,
+        "points": 2,
+        "pointsIfArmsLength": 0,
+        "_about": "Arm's-length sales (DOR qualification codes 01-06) are ordinary purchases, e.g. flips, which the Last sale check already shows: pointsIfArmsLength. Other transfers just before listing use pointsByQualCode (11 quitclaim/corrective/minimum-stamp deed; 12 financial institution; 18 government; 19 fiduciary; 98/99 pending), else points.",
+        "pointsByQualCode": {
+          "11": 2,
+          "12": 1,
+          "18": 1,
+          "19": 1,
+          "98": 1,
+          "99": 1
+        }
+      },
+      "ownerChangedAfterListing": {
+        "enabled": true,
+        "points": 3
+      },
+      "governmentUtilityOrHoaOwner": {
+        "enabled": true,
+        "points": 2
+      },
+      "estateOwnerNotDisclosed": {
+        "enabled": true,
+        "points": 1
+      },
+      "entityOwnerButOwnerOccupiedRemarks": {
+        "enabled": true,
+        "points": 1
+      },
+      "listPriceFarBelowJustValue": {
+        "enabled": true,
+        "points": 1,
+        "belowPct": 40
+      }
     },
     "patterns": {
-      "government": "\\b(STATE OF FLORIDA|UNITED STATES|USA|COUNTY|CITY OF|TOWN OF|VILLAGE OF|SCHOOL (BOARD|DISTRICT)|BOARD OF|HOUSING AUTHORITY|TRUSTEES OF THE INTERNAL|DEPARTMENT OF|DISTRICT)\\b",
+      "government": "\\b(STATE OF FLORIDA|UNITED STATES OF AMERICA|UNITED STATES|(MIAMI-DADE|BROWARD|PALM BEACH) COUNTY|BOARD OF COUNTY|CITY OF|TOWN OF|VILLAGE OF|SCHOOL (BOARD|DISTRICT)|HOUSING AUTHORITY|TRUSTEES OF THE INTERNAL|DEPARTMENT OF|(WATER|DRAINAGE|IMPROVEMENT|SPECIAL|FIRE|COMMUNITY DEVELOPMENT) DISTRICT)\\b",
       "utility": "\\b(FLORIDA POWER|FPL|UTILIT(Y|IES)|WATER (CONTROL|MANAGEMENT|UTILITY)|DRAINAGE DISTRICT|SEWER)\\b",
       "hoa": "\\b(HOMEOWNERS?|PROPERTY OWNERS|COMMUNITY|MASTER|CONDOMINIUM|CONDO) (ASSOCIATION|ASSN|ASSOC)\\b|\\bPOA\\b|\\bHOA\\b",
       "estate": "\\b(ESTATE OF|EST OF|DECEASED|DEC'D|DECD|PERS(ONAL)? REP|PERSONAL REPRESENTATIVE)\\b",

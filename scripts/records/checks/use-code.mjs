@@ -1,4 +1,4 @@
-import { result } from "./util.mjs";
+import { result, isNewConstruction } from "./util.mjs";
 
 // DOR land use codes (2026 Users Guide, field 8), residential and the vacant/agricultural ones that
 // matter for home listings.
@@ -16,6 +16,9 @@ export function useCode(l, r, rules) {
   const allowed = rules.useCode.allowed[l.type];
   const rec = `${r.useCode} ${useName(r.useCode)}`;
   if (!allowed) return result(name, "not_checked", l.type, rec, "No rule for this listing type.");
-  if (!allowed.includes(r.useCode)) return result(name, "flag", l.type, rec, `A ${l.type} listing on a parcel coded "${useName(r.useCode)}".`);
-  return result(name, "ok", l.type, rec, "Consistent.");
+  if (allowed.includes(r.useCode)) return result(name, "ok", l.type, rec, "Consistent.");
+  const vacant = rules.useCode.vacantCodes.includes(r.useCode);
+  if (vacant && isNewConstruction(l, r, rules)) return result(name, "info", l.type, rec, `New construction (built ${l.yearBuilt}): the ${r.rollYear} roll still shows the lot.`);
+  if (l.type === "Land" && !vacant) return result(name, "info", l.type, rec, "Listed as land on a parcel with a building: usually a teardown or a lot sold for its land value.");
+  return result(name, "flag", l.type, rec, `A ${l.type} listing on a parcel coded "${useName(r.useCode)}".`);
 }
