@@ -1,0 +1,9 @@
+{
+  "_about": "The 'eighth criterion' adjustment each county property appraiser makes to a recorded sale price when arriving at just value (s. 193.011(8), F.S.), as filed with the Florida Department of Revenue on Form DR-493 for the 2026 roll. The buyer tax estimate uses: estimated just value = price x (1 - adjustment). Every use-code group on all three 2026 forms carries the same percentage, so one number per county is stored.",
+  "taxYear": 2026,
+  "counties": {
+    "Palm Beach": { "adjustmentPct": 15, "signed": "2026-06-24", "source": { "title": "2026 Palm Beach DR-493", "url": "https://floridarevenue.com/property/Documents/2026%20Palm%20Beach%20DR-493.pdf", "retrieved": "2026-11-22" } },
+    "Broward": { "adjustmentPct": 10, "signed": "2026-06-29", "source": { "title": "2026 Broward DR-493", "url": "https://floridarevenue.com/property/Documents/2026%20Broward%20DR-493.pdf", "retrieved": "2026-11-22" } },
+    "Miami-Dade": { "adjustmentPct": 15, "signed": "2026-07-01", "source": { "title": "2026 Miami-Dade DR-493", "url": "https://floridarevenue.com/property/Documents/2026%20Miami-Dade%20DR-493.pdf", "retrieved": "2026-11-22" } }
+  }
+}

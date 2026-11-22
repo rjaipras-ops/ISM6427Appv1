@@ -1,0 +1,49 @@
+{
+  "_about": "Homestead exemption amounts used in the buyer tax estimate, and the post-sale reset rules, with official sources. Update yearly from the sources below; do not edit numbers from memory.",
+  "taxYear": 2026,
+  "homestead": {
+    "first": {
+      "amount": 25000,
+      "appliesTo": "all levies (school and non-school)",
+      "statute": "s. 196.031(1)(a), F.S.",
+      "source": {
+        "title": "2026 NAL, SDF and NAP Users Guide, field 110 (EXMPT_01)",
+        "publisher": "Florida Department of Revenue",
+        "url": "https://floridarevenue.com/property/dataportal/Documents/PTO%20Data%20Portal/User%20Guides/2026%20Users%20guide%20and%20quick%20reference/2026_NAL_SDF_NAP_Users_Guide.pdf",
+        "retrieved": "2026-11-22"
+      }
+    },
+    "additional": {
+      "amount": 26411,
+      "appliesAboveAssessedValue": 50000,
+      "appliesTo": "non-school levies only",
+      "statute": "s. 196.031(1)(b), F.S.; indexed annually to CPI starting 2025",
+      "source": {
+        "title": "Additional Homestead Exemption Adjustment (2026: CPI change 2.7%, maximum $26,411)",
+        "publisher": "Florida Department of Revenue (revised January 2026)",
+        "url": "https://floridarevenue.com/property/Documents/cpi_homestead_exemption.pdf",
+        "retrieved": "2026-11-22"
+      },
+      "crossCheck": "2026 NAL, SDF and NAP Users Guide, field 111 (EXMPT_02): 'up to $26,411'"
+    }
+  },
+  "postSaleReset": {
+    "homestead": {
+      "rule": "Except as provided in this subsection or subsection (8), property assessed under this section shall be assessed at just value as of January 1 of the year following a change of ownership.",
+      "statute": "s. 193.155(3)(a), F.S. (2025 Florida Statutes, quoted)",
+      "url": "https://www.flsenate.gov/Laws/Statutes/2025/193.155",
+      "retrieved": "2026-11-22"
+    },
+    "nonHomesteadResidential": {
+      "rule": "Except as provided in this subsection, property assessed under this section shall be assessed at just value as of January 1 of the year following a change of ownership or control.",
+      "statute": "s. 193.1554(5), F.S. (2025 Florida Statutes, quoted)",
+      "url": "https://www.flsenate.gov/Laws/Statutes/2025/193.1554",
+      "retrieved": "2026-11-22"
+    }
+  },
+  "_notIncluded": [
+    "Portability (moving a Save Our Homes benefit from a previous Florida homestead): depends on the buyer, so it is not estimated.",
+    "Senior, veteran, disability, widow(er) and similar exemptions: personal to the owner.",
+    "Non-ad valorem assessments: not in the DOR tax roll files."
+  ]
+}

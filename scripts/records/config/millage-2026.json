@@ -1,0 +1,773 @@
+{
+ "_about": "Ad valorem millage (dollars per $1,000 of taxable value) by county and NAL taxing-authority code (TAX_AUTH_CD). School levies apply to school taxable value (TV_SD); all other levies to non-school taxable value (TV_NSD). Non-ad valorem assessments (solid waste, fire fees, CDD and similar) are not millage and are not included. Rebuild each year from the official sources below; do not edit numbers by hand.",
+ "taxYear": 2026,
+ "counties": {
+  "Palm Beach": {
+   "status": "final",
+   "sources": [
+    {
+     "title": "Taxing Authority Code Description - Palm Beach County 2026",
+     "publisher": "Palm Beach County Property Appraiser",
+     "url": "https://pbcpao.gov/pdf/taxroll/Palm%20Beach%20County%20Tax%20Auth%20Code.pdf",
+     "retrieved": "2026-11-22",
+     "use": "TOTAL millage per TAXAUTH code"
+    },
+    {
+     "title": "2026 Final vs Proposed Millage Rates",
+     "publisher": "Palm Beach County Property Appraiser",
+     "url": "https://pbcpao.gov/pdf/taxroll/2026%20Final%20vs%20Proposed%20Millage%20Rates.pdf",
+     "retrieved": "2026-11-22",
+     "use": "School Board State (3.0390) and Local (3.2480) final levies"
+    }
+   ],
+   "builtWith": "scripts/records/tools/millage-palm-beach.mjs",
+   "schoolLevies": {
+    "state": 3.039,
+    "local": 3.248,
+    "total": 6.287
+   },
+   "byTaxAuthCode": {
+    "10522": {
+     "name": "CLOUD LAKE",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "10523": {
+     "name": "CLOUD LAKE",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "12983": {
+     "name": "DELRAY BEACH",
+     "total": 18.591,
+     "school": 6.287,
+     "nonSchool": 12.304
+    },
+    "12984": {
+     "name": "DELRAY BEACH",
+     "total": 18.591,
+     "school": 6.287,
+     "nonSchool": 12.304
+    },
+    "12985": {
+     "name": "DELRAY BEACH",
+     "total": 18.591,
+     "school": 6.287,
+     "nonSchool": 12.304
+    },
+    "12987": {
+     "name": "DELRAY BEACH",
+     "total": 18.591,
+     "school": 6.287,
+     "nonSchool": 12.304
+    },
+    "14522": {
+     "name": "GLENRIDGE",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "14523": {
+     "name": "GLENRIDGE",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "18982": {
+     "name": "GREENACRES",
+     "total": 19.0611,
+     "school": 6.287,
+     "nonSchool": 12.7741
+    },
+    "18983": {
+     "name": "GREENACRES",
+     "total": 19.0611,
+     "school": 6.287,
+     "nonSchool": 12.7741
+    },
+    "18986": {
+     "name": "GREENACRES",
+     "total": 19.0611,
+     "school": 6.287,
+     "nonSchool": 12.7741
+    },
+    "20984": {
+     "name": "GULFSTREAM",
+     "total": 15.8844,
+     "school": 6.287,
+     "nonSchool": 9.5974
+    },
+    "22482": {
+     "name": "HAVERHILL",
+     "total": 20.1192,
+     "school": 6.287,
+     "nonSchool": 13.8322
+    },
+    "22487": {
+     "name": "HAVERHILL",
+     "total": 20.1192,
+     "school": 6.287,
+     "nonSchool": 13.8322
+    },
+    "24984": {
+     "name": "HIGHLAND BEACH",
+     "total": 15.7995,
+     "school": 6.287,
+     "nonSchool": 9.5125
+    },
+    "26984": {
+     "name": "HYPOLUXO",
+     "total": 15.9611,
+     "school": 6.287,
+     "nonSchool": 9.6741
+    },
+    "26987": {
+     "name": "HYPOLUXO",
+     "total": 15.9611,
+     "school": 6.287,
+     "nonSchool": 9.6741
+    },
+    "28471": {
+     "name": "JUNO BEACH",
+     "total": 18.1109,
+     "school": 6.287,
+     "nonSchool": 11.8239
+    },
+    "30571": {
+     "name": "JUPITER",
+     "total": 16.4219,
+     "school": 6.287,
+     "nonSchool": 10.1349
+    },
+    "30581": {
+     "name": "JUPITER",
+     "total": 16.4219,
+     "school": 6.287,
+     "nonSchool": 10.1349
+    },
+    "32461": {
+     "name": "JUPITER INLET BEACH",
+     "total": 18.3933,
+     "school": 6.287,
+     "nonSchool": 12.1063
+    },
+    "34523": {
+     "name": "LAKE CLARK SHORES",
+     "total": 22.0192,
+     "school": 6.287,
+     "nonSchool": 15.7322
+    },
+    "36501": {
+     "name": "LAKE PARK",
+     "total": 20.6701,
+     "school": 6.287,
+     "nonSchool": 14.3831
+    },
+    "36507": {
+     "name": "LAKE PARK",
+     "total": 20.6701,
+     "school": 6.287,
+     "nonSchool": 14.3831
+    },
+    "38452": {
+     "name": "LAKE WORTH BEACH",
+     "total": 21.5646,
+     "school": 6.287,
+     "nonSchool": 15.2776
+    },
+    "38453": {
+     "name": "LAKE WORTH BEACH",
+     "total": 21.5646,
+     "school": 6.287,
+     "nonSchool": 15.2776
+    },
+    "38457": {
+     "name": "LAKE WORTH BEACH",
+     "total": 21.5646,
+     "school": 6.287,
+     "nonSchool": 15.2776
+    },
+    "40532": {
+     "name": "LANTANA",
+     "total": 19.4201,
+     "school": 6.287,
+     "nonSchool": 13.1331
+    },
+    "40533": {
+     "name": "LANTANA",
+     "total": 19.4201,
+     "school": 6.287,
+     "nonSchool": 13.1331
+    },
+    "40534": {
+     "name": "LANTANA",
+     "total": 19.4201,
+     "school": 6.287,
+     "nonSchool": 13.1331
+    },
+    "40537": {
+     "name": "LANTANA",
+     "total": 19.4201,
+     "school": 6.287,
+     "nonSchool": 13.1331
+    },
+    "41486": {
+     "name": "LOXAHATCHEE GROVES",
+     "total": 19.4756,
+     "school": 6.287,
+     "nonSchool": 13.1886
+    },
+    "42984": {
+     "name": "MANALAPAN",
+     "total": 15.212,
+     "school": 6.287,
+     "nonSchool": 8.925
+    },
+    "44407": {
+     "name": "MANGONIA PARK",
+     "total": 22.6611,
+     "school": 6.287,
+     "nonSchool": 16.3741
+    },
+    "46981": {
+     "name": "OCEAN RIDGE",
+     "total": 18.1611,
+     "school": 6.287,
+     "nonSchool": 11.8741
+    },
+    "46984": {
+     "name": "OCEAN RIDGE",
+     "total": 18.1611,
+     "school": 6.287,
+     "nonSchool": 11.8741
+    },
+    "48486": {
+     "name": "PAHOKEE",
+     "total": 22.7611,
+     "school": 6.287,
+     "nonSchool": 16.4741
+    },
+    "50411": {
+     "name": "PALM BEACH",
+     "total": 14.823,
+     "school": 6.287,
+     "nonSchool": 8.536
+    },
+    "50417": {
+     "name": "PALM BEACH",
+     "total": 14.823,
+     "school": 6.287,
+     "nonSchool": 8.536
+    },
+    "50444": {
+     "name": "PALM BEACH",
+     "total": 14.823,
+     "school": 6.287,
+     "nonSchool": 8.536
+    },
+    "50447": {
+     "name": "PALM BEACH",
+     "total": 14.823,
+     "school": 6.287,
+     "nonSchool": 8.536
+    },
+    "52401": {
+     "name": "PALM BEACH GARDENS",
+     "total": 17.8148,
+     "school": 6.287,
+     "nonSchool": 11.5278
+    },
+    "52406": {
+     "name": "PALM BEACH GARDENS",
+     "total": 17.8148,
+     "school": 6.287,
+     "nonSchool": 11.5278
+    },
+    "52407": {
+     "name": "PALM BEACH GARDENS",
+     "total": 17.8148,
+     "school": 6.287,
+     "nonSchool": 11.5278
+    },
+    "52461": {
+     "name": "PALM BEACH GARDENS",
+     "total": 17.887,
+     "school": 6.287,
+     "nonSchool": 11.6
+    },
+    "52981": {
+     "name": "PALM BEACH GARDENS",
+     "total": 17.8148,
+     "school": 6.287,
+     "nonSchool": 11.5278
+    },
+    "54401": {
+     "name": "PALM BEACH SHORES",
+     "total": 19.8901,
+     "school": 6.287,
+     "nonSchool": 13.6031
+    },
+    "56421": {
+     "name": "RIVIERA BEACH",
+     "total": 21.362,
+     "school": 6.287,
+     "nonSchool": 15.075
+    },
+    "56427": {
+     "name": "RIVIERA BEACH",
+     "total": 21.362,
+     "school": 6.287,
+     "nonSchool": 15.075
+    },
+    "58486": {
+     "name": "SOUTH BAY",
+     "total": 22.5281,
+     "school": 6.287,
+     "nonSchool": 16.2411
+    },
+    "60461": {
+     "name": "TEQUESTA",
+     "total": 19.2928,
+     "school": 6.287,
+     "nonSchool": 13.0058
+    },
+    "62524": {
+     "name": "SOUTH PALM BEACH",
+     "total": 19.5192,
+     "school": 6.287,
+     "nonSchool": 13.2322
+    },
+    "66983": {
+     "name": "GOLF",
+     "total": 18.7572,
+     "school": 6.287,
+     "nonSchool": 12.4702
+    },
+    "66984": {
+     "name": "GOLF",
+     "total": 18.7572,
+     "school": 6.287,
+     "nonSchool": 12.4702
+    },
+    "68401": {
+     "name": "NORTH PALM BEACH",
+     "total": 19.612,
+     "school": 6.287,
+     "nonSchool": 13.325
+    },
+    "70452": {
+     "name": "PALM SPRINGS",
+     "total": 19.3447,
+     "school": 6.287,
+     "nonSchool": 13.0577
+    },
+    "70453": {
+     "name": "PALM SPRINGS",
+     "total": 19.3447,
+     "school": 6.287,
+     "nonSchool": 13.0577
+    },
+    "72486": {
+     "name": "ROYAL PALM BEACH",
+     "total": 18.1392,
+     "school": 6.287,
+     "nonSchool": 11.8522
+    },
+    "73482": {
+     "name": "WELLINGTON",
+     "total": 18.6892,
+     "school": 6.287,
+     "nonSchool": 12.4022
+    },
+    "73486": {
+     "name": "WELLINGTON",
+     "total": 18.6892,
+     "school": 6.287,
+     "nonSchool": 12.4022
+    },
+    "74401": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "74402": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "74406": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "74407": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "74982": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "74983": {
+     "name": "WEST PALM BEACH",
+     "total": 20.3456,
+     "school": 6.287,
+     "nonSchool": 14.0586
+    },
+    "77486": {
+     "name": "WESTLAKE",
+     "total": 20.8092,
+     "school": 6.287,
+     "nonSchool": 14.5222
+    },
+    "84402": {
+     "name": "WEST PALM BEACH DDA",
+     "total": 21.3156,
+     "school": 6.287,
+     "nonSchool": 15.0286
+    },
+    "84407": {
+     "name": "WEST PALM BEACH DDA",
+     "total": 21.3156,
+     "school": 6.287,
+     "nonSchool": 15.0286
+    },
+    "88984": {
+     "name": "DELRAY BEACH DDA",
+     "total": 19.591,
+     "school": 6.287,
+     "nonSchool": 13.304
+    },
+    "88987": {
+     "name": "DELRAY BEACH DDA",
+     "total": 19.591,
+     "school": 6.287,
+     "nonSchool": 13.304
+    },
+    "00071": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00076": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00111": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00115": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00116": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00141": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2914,
+     "school": 6.287,
+     "nonSchool": 10.0044
+    },
+    "00164": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 17.2523,
+     "school": 6.287,
+     "nonSchool": 10.9653
+    },
+    "00165": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 17.2523,
+     "school": 6.287,
+     "nonSchool": 10.9653
+    },
+    "00173": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00175": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00176": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00191": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00192": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00193": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00196": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00197": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00202": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00203": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00204": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00205": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00206": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00207": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00221": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00222": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00226": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00227": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00282": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00283": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00353": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00354": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00355": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00356": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00357": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00362": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00363": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00365": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00366": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00591": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00596": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "00601": {
+     "name": "UNINCORPORATED COUNTY",
+     "total": 16.2192,
+     "school": 6.287,
+     "nonSchool": 9.9322
+    },
+    "02432": {
+     "name": "ATLANTIS",
+     "total": 19.9111,
+     "school": 6.287,
+     "nonSchool": 13.6241
+    },
+    "02433": {
+     "name": "ATLANTIS",
+     "total": 19.9111,
+     "school": 6.287,
+     "nonSchool": 13.6241
+    },
+    "04486": {
+     "name": "BELLE GLADE",
+     "total": 22.7611,
+     "school": 6.287,
+     "nonSchool": 16.4741
+    },
+    "06154": {
+     "name": "BOCA RATON",
+     "total": 16.909,
+     "school": 6.287,
+     "nonSchool": 10.622
+    },
+    "06155": {
+     "name": "BOCA RATON",
+     "total": 16.909,
+     "school": 6.287,
+     "nonSchool": 10.622
+    },
+    "06625": {
+     "name": "BOCA RATON",
+     "total": 15.8759,
+     "school": 6.287,
+     "nonSchool": 9.5889
+    },
+    "08982": {
+     "name": "BOYNTON BEACH",
+     "total": 19.4172,
+     "school": 6.287,
+     "nonSchool": 13.1302
+    },
+    "08983": {
+     "name": "BOYNTON BEACH",
+     "total": 19.4172,
+     "school": 6.287,
+     "nonSchool": 13.1302
+    },
+    "08984": {
+     "name": "BOYNTON BEACH",
+     "total": 19.4172,
+     "school": 6.287,
+     "nonSchool": 13.1302
+    },
+    "08987": {
+     "name": "BOYNTON BEACH",
+     "total": 19.4172,
+     "school": 6.287,
+     "nonSchool": 13.1302
+    },
+    "09984": {
+     "name": "BRINY BREEZES",
+     "total": 19.5111,
+     "school": 6.287,
+     "nonSchool": 13.2241
+    }
+   }
+  },
+  "Broward": {
+   "status": "not_loaded",
+   "note": "Add from the Broward County Property Appraiser's official 2026 millage table before checking Broward listings."
+  },
+  "Miami-Dade": {
+   "status": "not_loaded",
+   "note": "Add from the Miami-Dade Property Appraiser's official 2026 millage table before checking Miami-Dade listings."
+  }
+ }
+}
