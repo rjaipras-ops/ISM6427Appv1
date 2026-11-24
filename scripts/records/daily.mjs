@@ -45,6 +45,9 @@ async function main() {
     report.counties[county] = { ...s, source: res.source };
     for (const r of res.results) { const it = toItem(r); if (it) report.items.push(it); }
     console.log(`${county}: ${s.listings} listings, ${s.checked} checked, ${s.unmatched + s.lowConfidence} not matched, ${s.withFlags} with differences, ${s.closerLook} for a closer look`);
+    const list = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ");
+    console.log(`  matched by: ${list(s.byMethod)}`);
+    console.log(`  flags by check: ${list(s.flagsByCheck) || "none"}`);
   }
 
   const body = gzipSync(JSON.stringify(report));

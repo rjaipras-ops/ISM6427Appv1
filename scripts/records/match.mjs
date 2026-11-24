@@ -11,7 +11,9 @@
 import { addressKey, coreWords, numZip, listingStreet, situsStreet } from "./lib/address.mjs";
 
 const UNIT_USE_CODES = new Set(["004", "005"]);
-const digits = (s) => String(s || "").replace(/\D/g, "");
+// Parcel IDs compared without punctuation, letters kept: Broward folios contain letters
+// ("474131AA0010" and "474131AB0010" are different parcels).
+export const parcelKey = (s) => String(s || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 
 /** Key used to keep only plausible NAL rows while streaming a county file. */
 export const listingNumZip = (l) => numZip(listingStreet(l), l.zip);
@@ -21,7 +23,7 @@ export const rowNumZip = (row) => numZip(situsStreet(row), row.PHY_ZIPCD);
 export function indexRows(rows) {
   const byParcel = new Map(), byNumZip = new Map();
   for (const r of rows) {
-    byParcel.set(digits(r.PARCEL_ID), r);
+    byParcel.set(parcelKey(r.PARCEL_ID), r);
     const k = rowNumZip(r);
     if (!k) continue;
     if (!byNumZip.has(k)) byNumZip.set(k, []);
@@ -30,7 +32,7 @@ export function indexRows(rows) {
   return { byParcel, byNumZip };
 }
 
-const uniqueParcels = (rows) => [...new Map(rows.map((r) => [digits(r.PARCEL_ID), r])).values()];
+const uniqueParcels = (rows) => [...new Map(rows.map((r) => [parcelKey(r.PARCEL_ID), r])).values()];
 
 /**
  * Returns { method, confidence, row, candidates, reason }. `row` is the raw NAL row (or null).
@@ -39,8 +41,11 @@ const uniqueParcels = (rows) => [...new Map(rows.map((r) => [digits(r.PARCEL_ID)
 export function matchListing(l, index, rules) {
   const c = rules.matching;
   if (l.parcelId) {
-    const r = index.byParcel.get(digits(l.parcelId));
-    if (r) return { method: "parcelId", confidence: c.parcelId, row: r, candidates: 1 };
+    const r = index.byParcel.get(parcelKey(l.parcelId));
+    // Trust the MLS parcel number only if the roll's house number agrees (catches typos in the MLS field).
+    const num = (k) => (k || "").split("|")[0];
+    const lk = listingNumZip(l), rk = r && rowNumZip(r);
+    if (r && (l.addressHidden || !lk || !rk || num(lk) === num(rk))) return { method: "parcelId", confidence: c.parcelId, row: r, candidates: 1 };
   }
   if (l.addressHidden) return { method: "none", confidence: 0, row: null, candidates: 0, reason: "address withheld by the listing" };
   const street = listingStreet(l);

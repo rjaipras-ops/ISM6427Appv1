@@ -2,17 +2,16 @@
 // match, match each listing, then run the checks, the private signals and the tax estimate.
 
 import { readNal, readSdf } from "./sources/dor.mjs";
-import { indexRows, matchListing, listingNumZip, rowNumZip } from "./match.mjs";
+import { indexRows, matchListing, listingNumZip, rowNumZip, parcelKey } from "./match.mjs";
 import { toRecord } from "./lib/record.mjs";
 import { runChecks } from "./checks/index.mjs";
 import { situsStreet } from "./lib/address.mjs";
 
-const digits = (s) => String(s || "").replace(/\D/g, "");
 
 export async function checkCounty(listings, { nalCsv, sdfCsv, config, source }) {
   const wantKeys = new Set(listings.map(listingNumZip).filter(Boolean));
-  const wantIds = new Set(listings.map((l) => digits(l.parcelId)).filter(Boolean));
-  const rows = await readNal(nalCsv, (get) => wantIds.has(digits(get("PARCEL_ID")))
+  const wantIds = new Set(listings.map((l) => parcelKey(l.parcelId)).filter(Boolean));
+  const rows = await readNal(nalCsv, (get) => wantIds.has(parcelKey(get("PARCEL_ID")))
     || wantKeys.has(rowNumZip({ PHY_ADDR1: get("PHY_ADDR1"), PHY_ADDR2: get("PHY_ADDR2"), PHY_ZIPCD: get("PHY_ZIPCD") })));
   const index = indexRows(rows);
   const matches = listings.map((l) => ({ listing: l, match: matchListing(l, index, config.rules) }));
