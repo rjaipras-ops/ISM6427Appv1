@@ -82,7 +82,7 @@ const avgRating = (rows) => rows.reduce((a, r) => a + (r.ratings?.overall || 0),
 const TOUR_TYPE = { open_house: "open house", private_showing: "private showing", builder_tour: "builder tour" };
 
 // Homes "for sale" under $10,000 are almost always rentals entered as sales (the app hides them too).
-const mispriced = (l) => l.ListPrice < 10000 && l.PropertyType !== "Land";
+const mispriced = (l) => !(l.ListPrice > 0) || (l.ListPrice < 10000 && l.PropertyType !== "Land");
 
 export const listingPath = (l) => `/homes/${l.ListingKey}-${slugify(l.AddressHidden ? `${l.City} fl ${l.PostalCode}` : `${l.StreetAddress} ${l.City} fl ${l.PostalCode}`)}`;
 
@@ -287,7 +287,7 @@ function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = fa
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#ffffff">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fraunces:opsz,wght@9..144,700&family=Source+Serif+4:opsz,wght@8..60,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/legal.css">
   <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [ORG_LD, ...ld] }).replace(/</g, "\\u003c")}</script>
 </head>

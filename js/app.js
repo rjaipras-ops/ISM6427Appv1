@@ -106,7 +106,7 @@ async function submitContact(e) {
     if (f.has_agent.value === "Yes") { $("#agentNote").hidden = false; btn.disabled = false; $("#contactStatus").textContent = ""; return; }
     f.page.value = location.href;
     f.consent_text.value = `${$("#consentText").textContent.trim()} ${$("#feeText").textContent.trim()}`;
-    f.consent_version.value = "2026-11-13";
+    f.consent_version.value = "2026-11-24";
     f.consent_at.value = new Date().toISOString();
     const data = new URLSearchParams(new FormData(f));
     const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: data.toString(), signal: AbortSignal.timeout(15000) });
@@ -1119,14 +1119,18 @@ function renderDetail(l) {
         </div>
         <div class="side-card calc" id="calc"></div>
       </aside>
-    </div>`;
+    </div>
+    <div class="tour-bar" id="tourBar"><div class="tour-bar-text"><b>${fmt$(l.ListPrice)}</b><span>${esc(l.StreetAddress)}</span></div>
+      <button class="btn" type="button" id="reqTourBar">Request a tour</button></div>`;
 
   $("#writeReview")?.addEventListener("click", () => requireAuth(() => openReviewForm(l)));
   $("#sideReview")?.addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
-  $("#reqTour").addEventListener("click", () => {
+  const requestTour = () => {
     const home = `${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`;
     contactAgent(`Tour request: ${home}`, `I'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).`, home);
-  });
+  };
+  $("#reqTour").addEventListener("click", requestTour);
+  $("#reqTourBar").addEventListener("click", requestTour); // phones: pinned above the tab bar
   $("#reviewList")?.addEventListener("click", async (e) => {
     const h = e.target.closest("[data-helpful]");
     if (h && store.isRemote() && !S.user) { requireAuth(() => renderDetail(l)); return; }

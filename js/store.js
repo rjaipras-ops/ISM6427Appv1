@@ -462,8 +462,9 @@ function decodeIndex(data) {
     const c = fixCoords(Number(l.Latitude), Number(l.Longitude));
     if (!c) return null;
     [l.Latitude, l.Longitude] = c;
-    // A "home for sale" under $10,000 is almost always a rental entered as a sale. Land can be that cheap.
-    if (l.ListPrice < MIN_HOME_PRICE && l.PropertyType !== "Land") return null;
+    // A "home for sale" under $10,000 is almost always a rental entered as a sale. Land can be that cheap,
+    // but never free: a $0 price is missing data.
+    if (!(l.ListPrice > 0) || (l.ListPrice < MIN_HOME_PRICE && l.PropertyType !== "Land")) return null;
     return l;
   }).filter(Boolean);
 }

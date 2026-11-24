@@ -18,7 +18,8 @@
   --shadow: 0 1px 2px rgba(16, 24, 32, .06), 0 4px 14px rgba(16, 24, 32, .06);
   --shadow-lg: 0 10px 40px rgba(16, 24, 32, .18);
   --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --display: "Fraunces", Georgia, serif;
+  --display: "Source Serif 4", Georgia, serif; /* headings: a plain "f" (Fraunces' display "f" crowded the letter before it) */
+  --brand-font: "Fraunces", Georgia, serif;     /* the iToured wordmark only */
   --topbar-h: 60px;
 }
 
@@ -47,7 +48,7 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
   background: #fff; border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); }
-.brand span { font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
+.brand span { font-family: var(--brand-font); font-size: 24px; font-weight: 700; letter-spacing: -.01em; }
 .mainnav { display: flex; gap: 4px; }
 .mainnav a {
   text-decoration: none; color: var(--ink-2); font-weight: 500;
@@ -924,6 +925,20 @@ body.on-search .globalfoot { display: none; }
 .acct-menu { display: flex; align-items: center; gap: 4px; }
 .idx-source > span { min-width: 0; }
 .install-bar { display: none; }
+/* Listing page on phones: "Request a tour" stays on screen while you scroll */
+.tour-bar { display: none; }
+@media (max-width: 860px) {
+  .tour-bar { display: flex; align-items: center; gap: 12px; position: fixed; left: 0; right: 0; z-index: 900;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--line);
+    box-shadow: 0 -4px 16px rgba(0,0,0,.08); padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
+  .tour-bar-text { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.2; }
+  .tour-bar-text b { font-size: 18px; }
+  .tour-bar-text span { font-size: 13px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tour-bar .btn { white-space: nowrap; padding: 11px 18px; }
+  .detail { padding-bottom: 96px; }
+  /* The install prompt floats just above the tour bar on listing pages */
+  body:has(#view-detail:not([hidden])) .install-bar:not([hidden]) { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 76px); }
+}
 @media (max-width: 860px) {
   /* Listing page: never wider than the screen */
   .detail-grid { grid-template-columns: minmax(0, 1fr); }
