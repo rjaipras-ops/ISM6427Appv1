@@ -22,4 +22,5 @@ batch contains.
 
 ## Pending for the next deploy
 
-- Tour bar on phone listing pages shows "street, city" (was street only).
+1. Tour bar on phone listing pages shows "street, city" (was street only).
+2. /CLAUDE.md returns 404 on the site (netlify.toml).
