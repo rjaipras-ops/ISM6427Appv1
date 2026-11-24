@@ -1120,7 +1120,7 @@ function renderDetail(l) {
         <div class="side-card calc" id="calc"></div>
       </aside>
     </div>
-    <div class="tour-bar" id="tourBar"><div class="tour-bar-text"><b>${fmt$(l.ListPrice)}</b><span>${esc(l.StreetAddress)}</span></div>
+    <div class="tour-bar" id="tourBar"><div class="tour-bar-text"><b>${fmt$(l.ListPrice)}</b><span>${esc(l.AddressHidden ? l.City : `${l.StreetAddress}, ${l.City}`)}</span></div>
       <button class="btn" type="button" id="reqTourBar">Request a tour</button></div>`;
 
   $("#writeReview")?.addEventListener("click", () => requireAuth(() => openReviewForm(l)));
