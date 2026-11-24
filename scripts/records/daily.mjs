@@ -60,8 +60,9 @@ async function main() {
     const secret = (process.env.RECORDS_UPLOAD_SECRET || "").trim();
     if (!secret) throw new Error("RECORDS_UPLOAD_SECRET is not set");
     const res = await fetch(UPLOAD_URL, {
-      method: "POST", body,
-      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json", "Content-Encoding": "gzip", "User-Agent": "iToured record check" },
+      // Base64 text, not raw gzip: Netlify hands text bodies to functions as strings.
+      method: "POST", body: body.toString("base64"),
+      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "text/plain", "X-Body-Encoding": "gzip-base64", "User-Agent": "iToured record check" },
     });
     const text = await res.text().catch(() => "");
     if (!res.ok) throw new Error(`Upload failed: HTTP ${res.status} ${text.slice(0, 120)}`);
