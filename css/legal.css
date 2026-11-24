@@ -11,6 +11,7 @@ footer { border-top: 1px solid #e6eaed; margin-top: 40px; padding-top: 16px; fon
 
 /* Content pages (about, how it works, FAQ, city pages) */
 .legal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.legal-firm { font: 700 14px Inter, system-ui, sans-serif; color: #0e6b5c; margin-right: auto; } /* BeachesMLS 20.2.5: brokerage visible on arrival */
 .legal-nav { display: flex; gap: 4px 18px; flex-wrap: wrap; font-size: 15px; }
 .legal-nav a { font: 600 15px Inter, system-ui, sans-serif; color: #1d2a33; }
 .legal-nav a:hover { color: #0e6b5c; }

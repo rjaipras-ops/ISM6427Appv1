@@ -122,7 +122,8 @@ async function submitContact(e) {
 function renderBrokerage() {
   const el = $("#brokerage");
   if (!el) return;
-  el.innerHTML = `<span class="broker-agent">${esc(SITE.agentName)}<span class="broker-lic"> · Lic. ${esc(SITE.licenseNo)}</span></span><span class="broker-firm">${esc(SITE.brokerage)}</span>`;
+  // Only the brokerage at the top; the agent's name and license are in the footer on every page.
+  el.innerHTML = `<span class="broker-firm">${esc(SITE.brokerage)}</span>`;
   el.title = [`${SITE.agentName}, ${SITE.brokerage}`, SITE.phone].filter(Boolean).join(" · ");
   el.onclick = () => {
     $("#aboutTitle").textContent = SITE.agentName;

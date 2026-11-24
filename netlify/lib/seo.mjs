@@ -292,7 +292,7 @@ function contentPage({ path, title, desc, h1, body, ld, mls = true, noindex = fa
   <script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": [ORG_LD, ...ld] }).replace(/</g, "\\u003c")}</script>
 </head>
 <body>
-  <header class="legal-head"><a href="/"><img src="/assets/brand/toured-icon.svg" width="28" height="28" alt="">iToured</a>
+  <header class="legal-head"><a href="/"><img src="/assets/brand/toured-icon.svg" width="28" height="28" alt="">iToured</a><span class="legal-firm">LoKation Real Estate</span>
     <nav class="legal-nav" aria-label="Site"><a href="/">Search homes</a><a href="/about">About</a><a href="/how-it-works">How it works</a><a href="/faq">FAQ</a><a href="/fl">Cities</a></nav></header>
   <main class="wide">
     <h1>${esc(h1)}</h1>

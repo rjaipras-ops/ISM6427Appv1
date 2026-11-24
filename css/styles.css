@@ -831,7 +831,7 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
   .broker-agent { display: block; font-size: 11px; white-space: normal; line-height: 1.15; }
   .brokerage { align-items: flex-start; text-align: left; overflow: visible; flex: 1 1 auto; margin-left: 2px; }
   button.brokerage { text-align: left; }
-  .broker-firm { font-size: 12px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
+  .broker-firm { font-size: 13px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
 }
 @media (max-width: 380px) {
   .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
