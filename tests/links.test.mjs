@@ -34,3 +34,10 @@ test("county links", () => {
   assert.equal(taxBillLink("Indian River", "31382400001177000004.0"), "https://indianriver.county-taxes.com/public/real_estate/parcels/31382400001177000004.0/bills");
   assert.equal(taxBillLink("Miami-Dade", "01-4138-153-2000"), "https://miamidade.county-taxes.com/public/real_estate/parcels/0141381532000/bills");
 });
+
+test("unit check helper reads units from county situs formats", async () => {
+  const { addressKey: ak } = await import("../netlify/lib/parcels.mjs");
+  assert.equal(ak({ StreetAddress: "603 S STATE ROAD 7 #1E" }).unit, "1E");
+  assert.equal(ak({ StreetAddress: "10771 PALM LAKE AVE 102" }).unit, "102");
+  assert.equal(ak({ StreetAddress: "4105 RESIDENCE DR" }).unit, "", "no unit on the record: can't check");
+});

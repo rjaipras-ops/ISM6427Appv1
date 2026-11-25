@@ -276,9 +276,21 @@ function sameHouse(listing, row) {
   return listing.AddressHidden || !a || !b || a === b;
 }
 
+/** Where the record shows a unit, it agrees with the listing's (an MLS number can belong to another unit). */
+function sameUnit(listing, row) {
+  const strip = (u) => String(u || "").replace(/^0+/, "");
+  const a = strip(addressKey(listing).unit);
+  const b = strip(addressKey({ StreetAddress: fullSitus(row) }).unit);
+  // Counties sometimes prefix the unit with letters: the listing's "1" is Key West's "R1".
+  const prefixed = (x, y) => x.length > y.length && x.endsWith(y) && /^[A-Z]+$/.test(x.slice(0, -y.length));
+  return !a || !b || a === b || prefixed(a, b) || prefixed(b, a);
+}
+
 /** A parcel known only by its number (the state layer lacks it, e.g. Miami-Dade condo units): links only. */
 function idOnlyParcel(listing, id) {
-  const pid = cleanParcelId(id);
+  let pid = cleanParcelId(id);
+  // Indian River parcel IDs are 20 digits + ".0"; the MLS sometimes drops the dot.
+  if (listing.County === "Indian River" && /^\d{21}$/.test(pid)) pid = `${pid.slice(0, 20)}.${pid.slice(20)}`;
   return { ParcelId: pid, IdOnly: true, Source: "mls", AltKey: null, Links: countyLinks(listing.County, { PARCEL_ID: pid, ALT_KEY: "" }), Shape: null };
 }
 
@@ -300,7 +312,8 @@ export async function lookupParcel(listing, { includeOwner = true } = {}) {
     return { status: "matched", parcel: { ...toParcel(listing, row, { shape, includeOwner }), MatchedBy: matchedBy } };
   };
   if (mlsId) {
-    const isIt = (r) => parcelKey(r.PARCEL_ID) === mlsId;
+    // Monroe's MLS numbers are the 14-digit RE number; the state layer prefixes it ("1166 32 00341450000000").
+    const isIt = (r) => { const k = parcelKey(r.PARCEL_ID); return k === mlsId || (mlsId.length >= 12 && k.length > mlsId.length && k.endsWith(mlsId)); };
     // By number first: a fraction of a second, where a location search can take 20+ seconds
     // in a large community (one Palm Beach condo point returned 350 parcels).
     let hit = (await parcelsById(listing.ParcelNumber, listing.County).catch(() => [])).find(isIt);
@@ -310,7 +323,7 @@ export async function lookupParcel(listing, { includeOwner = true } = {}) {
       rows = await parcelsAt(listing.Longitude, listing.Latitude);
       hit = rows.find(isIt);
     }
-    if (hit && sameHouse(listing, hit)) return finish(hit, "mls_parcel");
+    if (hit && sameHouse(listing, hit) && sameUnit(listing, hit)) return finish(hit, "mls_parcel");
     if (!hit) {
       // Not in the state layer. A house matched by address is more trustworthy than a number
       // nobody can confirm (it may be mistyped). For a condo unit, the layer often has only the
@@ -319,7 +332,7 @@ export async function lookupParcel(listing, { includeOwner = true } = {}) {
       if (r.parcel && !addressKey(listing).unit) return finish(r.parcel, "address");
       return { status: "matched", parcel: idOnlyParcel(listing, listing.ParcelNumber) };
     }
-    // The MLS number points at a different house: don't trust it, match by address instead.
+    // The MLS number points at a different house or unit: don't trust it, match by address instead.
     const r = await addressMatch(listing, rows || await parcelsAt(listing.Longitude, listing.Latitude));
     if (!r.parcel) return { status: r.status, parcel: null };
     return finish(r.parcel, "address");

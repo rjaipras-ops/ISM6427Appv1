@@ -63,7 +63,8 @@ const QUEUE = "parcel-queue";
 
 // Bump when the parcel matcher improves, so earlier results (matches included) are redone once.
 // 3: uses the MLS parcel number (exact condo unit), so earlier wrong-unit matches are corrected.
-const MATCH_VERSION = 3;
+// 4: Monroe short parcel numbers, unit check, Indian River ".0" (redoes the Nov 25 results).
+const MATCH_VERSION = 4;
 
 async function listingFromIndex(key, { fetchDetail = true } = {}) {
   const row = (await readIndex())[key];

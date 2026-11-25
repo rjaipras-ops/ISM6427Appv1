@@ -22,5 +22,10 @@ batch contains.
 
 ## Pending for the next deploy
 
-Nothing yet. (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
+1. Records links follow-up: Monroe's short MLS parcel numbers matched to the state's longer IDs
+   (restores record values and tax-bill links lost in the Nov 25 deploy); unit check where the
+   county record shows a unit (letter prefixes like Key West's "R1" allowed); Indian River ".0"
+   restored when the MLS drops it; MATCH_VERSION 4.
+
+(Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)
