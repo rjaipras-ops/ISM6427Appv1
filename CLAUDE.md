@@ -22,10 +22,5 @@ batch contains.
 
 ## Pending for the next deploy
 
-1. Tour bar on phone listing pages shows "street, city" (was street only).
-2. /CLAUDE.md returns 404 on the site (netlify.toml).
-3. Records links on listing pages: parcel found by the MLS parcel number (exact condo unit, with a
-   house-number check), number-only display with direct links where the state map lacks the unit
-   (Miami-Dade condos), unit parsing after numbered roads (A1A, State Road 7), Lee and Collier
-   tax-bill links, MATCH_VERSION 3 (cached matches redone once).
-4. /tests/* returns 404 on the site (netlify.toml).
+Nothing yet. (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
+/CLAUDE.md and /tests/* blocked on the site.)
