@@ -1450,6 +1450,21 @@ function publicRecordsHTML(l) {
         <a class="btn btn-ghost" href="${esc(search)}" target="_blank" rel="noopener noreferrer">Search the property appraiser ↗</a>
       </div></section>`;
   }
+  if (p.IdOnly) {
+    // Known only by the parcel number on the MLS listing: the state's statewide parcel data has just
+    // the building, not this unit (true of every Miami-Dade condo). The county links are exact.
+    const bill = p.Links?.bill || taxBillLink(l.County, p.ParcelId, p.AltKey) || web(`${l.County} County tax collector ${p.ParcelId}`);
+    const pa = p.Links?.appraiser || web(`${l.County} County property appraiser ${p.ParcelId}`);
+    return `<section class="section" id="records"><h2>Public records &amp; taxes</h2>${label}
+      <div class="records-grid"><div><small>Parcel ID</small><div><span style="font-variant-numeric:tabular-nums">${esc(p.ParcelId)}</span></div></div></div>
+      <p class="muted">The state's statewide parcel data doesn't list this unit separately, so its values and tax estimate aren't shown here. The county's own records for this unit:</p>
+      <div class="records-links">
+        <a class="btn" href="${esc(bill)}" target="_blank" rel="noopener noreferrer">Tax bills &amp; payment status ↗</a>
+        <a class="btn btn-ghost" href="${esc(pa)}" target="_blank" rel="noopener noreferrer">Owner &amp; full property record ↗</a>
+      </div>
+      ${SEARCH_ONLY_TAX_SITES.has(l.County) ? taxHint(l.County, p.ParcelId) : ""}
+      <p class="muted" style="font-size:12px;margin-top:10px">Parcel number from the MLS listing.</p></section>`;
+  }
   const showOwner = p.Owner && (!mls || SITE.showOwnerOnMlsListings);
   const listVsJust = p.JustValue ? Math.round(((l.ListPrice - p.JustValue) / p.JustValue) * 100) : null;
   const rows = [
@@ -1493,7 +1508,7 @@ function publicRecordsHTML(l) {
       })()}
     </div>
     ${SEARCH_ONLY_TAX_SITES.has(l.County) ? taxHint(l.County, p.ParcelId) : ""}
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing by location and address. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
+    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing ${p.MatchedBy === "mls_parcel" ? "by the parcel number on the MLS listing" : "by location and address"}. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
 const fmtMonthYear = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");

@@ -3,7 +3,7 @@
 //  - Palm Beach's tax site (Aumentum) can't be opened to one parcel by URL, so we link to its
 //    property-tax search and the page offers the parcel number to paste.
 export function taxBillLink(county, parcelId, altKey) {
-  const id = String(parcelId || "").trim();
+  const id = String(parcelId || "").trim(); // keep as given: Indian River IDs really end in ".0"
   const alt = String(altKey || "").trim();
   if (county === "Broward") {
     const c = id.replace(/[^0-9A-Za-z]/g, "");
@@ -25,6 +25,11 @@ export function taxBillLink(county, parcelId, altKey) {
   if (county === "Indian River") return id ? `https://indianriver.county-taxes.com/public/real_estate/parcels/${encodeURIComponent(id)}/bills` : "https://county-taxes.net/indianriver/property-tax";
   if (county === "Monroe") return /^\d+$/.test(alt) ? `https://monroe.county-taxes.com/public/real_estate/parcels/${alt}/bills` : "https://county-taxes.net/fl-monroe/property-tax";
   if (county === "Martin") return "https://county-taxes.net/fl-martin";
+  // Lee and Collier also use TaxSys (checked Nov 2026 with real parcels: each opened the right account).
+  if (county === "Lee" || county === "Collier") {
+    const c = id.replace(/[^0-9A-Za-z]/g, "");
+    return c ? `https://${county.toLowerCase()}.county-taxes.com/public/real_estate/parcels/${c}/bills` : `https://county-taxes.net/fl-${county.toLowerCase()}/property-tax`;
+  }
   return null;
 }
 

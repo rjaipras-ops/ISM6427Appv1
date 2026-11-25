@@ -7,7 +7,7 @@
     "dev": "node scripts/dev-server.mjs",
     "idx:sync": "node scripts/idx-sync.mjs",
     "build:demo": "node scripts/build-listings.mjs",
-    "test": "node --test \"scripts/records/test/*.test.mjs\"",
+    "test": "node --test \"scripts/records/test/*.test.mjs\" \"tests/*.test.mjs\"",
     "records:dry-run": "node scripts/records/dry-run.mjs"
   },
   "dependencies": {

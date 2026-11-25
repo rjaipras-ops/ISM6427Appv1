@@ -113,6 +113,7 @@ export function normalizeListing(rec, { syncedAt } = {}) {
     StreetAddress: showAddress ? titleCase(street) : "Address withheld",
     AddressHidden: !showAddress,
     UnitNumber: rec.UnitNumber || null,
+    ParcelNumber: rec.ParcelNumber ? String(rec.ParcelNumber).trim() : null,
     City: city,
     StateOrProvince: rec.StateOrProvince || "FL",
     PostalCode: rec.PostalCode ? String(rec.PostalCode).slice(0, 5) : "",

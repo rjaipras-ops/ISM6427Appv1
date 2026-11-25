@@ -17,6 +17,11 @@ export const PARCEL_FIELDS = [
   "OWN_NAME", "PHY_ADDR1", "PHY_ADDR2", "PHY_CITY", "PHY_ZIPCD",
 ];
 
+/** Parcel ID as the county writes it (kept as is: Indian River IDs really end in ".0"). */
+export const cleanParcelId = (id) => String(id ?? "").trim();
+/** Comparison key: letters and digits only (Broward folios contain letters: 474131AA0010). */
+export const parcelKey = (id) => cleanParcelId(id).toUpperCase().replace(/[^0-9A-Z]/g, "");
+
 /** Situs address incl. unit. Broward keeps condo unit numbers in PHY_ADDR2 ("#702"). */
 export const fullSitus = (p) => `${String(p.PHY_ADDR1 || "").trim()} ${String(p.PHY_ADDR2 || "").trim()}`.trim();
 
@@ -41,7 +46,7 @@ const saleOf = (price, yr, mo, q) => (price > 100 && yr > 0
 
 /** County tax-collector and property-appraiser links (deep links verified Nov 2026). */
 export function countyLinks(county, p) {
-  const id = String(p.PARCEL_ID || "").trim();
+  const id = cleanParcelId(p.PARCEL_ID);
   const alt = String(p.ALT_KEY || "").trim();
   switch (county) {
     case "Broward":
@@ -58,8 +63,8 @@ export function countyLinks(county, p) {
       };
     case "St. Lucie":
       return {
-        bill: /^\d{4}-\d{3}-\d{4}-\d{3}-\d$/.test(id)
-          ? `https://stlucie.county-taxes.com/public/real_estate/parcels/${id}/bills`
+        bill: id.replace(/\D/g, "").length === 15
+          ? `https://stlucie.county-taxes.com/public/real_estate/parcels/${id.replace(/\D/g, "").replace(/^(\d{4})(\d{3})(\d{4})(\d{3})(\d)$/, "$1-$2-$3-$4-$5")}/bills`
           : "https://county-taxes.net/stlucie/property-tax",
         // St. Lucie record cards are keyed by the county account number (DOR ALT_KEY).
         appraiser: alt && /^\d+$/.test(alt) ? `https://apps.paslc.gov/rerecordcard/${alt}` : "https://apps.paslc.gov/property-search/",
@@ -83,6 +88,13 @@ export function countyLinks(county, p) {
         bill: alt && /^\d+$/.test(alt) ? `https://monroe.county-taxes.com/public/real_estate/parcels/${alt}/bills` : "https://county-taxes.net/fl-monroe/property-tax",
         appraiser: re.length === 14 ? `https://qpublic.schneidercorp.com/Application.aspx?AppID=605&LayerID=9946&PageTypeID=4&KeyValue=${re.slice(0, 8)}-${re.slice(8)}` : null,
       };
+    }
+    // Lee and Collier: tax bills open by parcel number (TaxSys). Their appraiser sites can't be opened
+    // to one parcel by its number (checked Nov 2026), so the page searches for it instead.
+    case "Lee":
+    case "Collier": {
+      const c = id.replace(/[^0-9A-Za-z]/g, "");
+      return { bill: c ? `https://${county.toLowerCase()}.county-taxes.com/public/real_estate/parcels/${c}/bills` : null, appraiser: null };
     }
     case "Martin":
       return { bill: "https://county-taxes.net/fl-martin", appraiser: null }; // no per-parcel tax links on Martin's site
@@ -111,7 +123,7 @@ export function shapeFits(rings, lng, lat) {
 export function toParcel(listing, p, { shape = null, includeOwner = true } = {}) {
   const rate = MILLAGE[listing.County] || MILLAGE.Broward;
   return {
-    ParcelId: String(p.PARCEL_ID).trim(),
+    ParcelId: cleanParcelId(p.PARCEL_ID),
     AltKey: String(p.ALT_KEY || "").trim() || null,
     AssessmentYear: p.ASMNT_YR,
     LandUse: DOR_USE[p.DOR_UC] || `DOR code ${p.DOR_UC}`,
@@ -155,7 +167,11 @@ export function addressKey(l) {
   {
     const w = street.split(" ");
     const last = w[w.length - 1], prev = w[w.length - 2];
-    if (w.length >= 3 && /\d/.test(last) && last.length <= 6 && (SUFFIX.has(prev) || DIRS.has(prev))) {
+    // Roads whose names contain numbers: "N HIGHWAY A1A 3A", "S STATE ROAD 7 1E", "US HIGHWAY 1 204".
+    const route = prev === "A1A" || (/^\d+$/.test(prev) && ["HWY", "HIGHWAY", "US", "SR", "ROAD", "RD", "ROUTE"].includes(w[w.length - 3]));
+    // ...but in "100 STATE ROAD 7" or "500 US HIGHWAY 1" the last number is the road, not a unit.
+    const lastIsRoad = ["HWY", "HIGHWAY", "US", "SR", "ROUTE"].includes(prev) || (["ROAD", "RD"].includes(prev) && ["STATE", "COUNTY"].includes(w[w.length - 3]));
+    if (w.length >= 3 && /\d/.test(last) && last.length <= 6 && !lastIsRoad && (SUFFIX.has(prev) || DIRS.has(prev) || route)) {
       trailingUnit = last;
       street = w.slice(0, -1).join(" ");
     }
@@ -240,11 +256,76 @@ export async function parcelShape(coNo, parcelId) {
   return g?.rings?.length ? g.rings.map((ring) => ring.map(([x, y]) => [Math.round(x * 1e6) / 1e6, Math.round(y * 1e6) / 1e6])) : null;
 }
 
-/** Full lookup for one listing: match its parcel, fetch the outline, build the Parcel object. */
+// Florida DOR county numbers (2026 NAL/SDF Users Guide, "County Numbers"), by the MLS county name.
+export const COUNTY_NO = { Alachua: 11, Baker: 12, Bay: 13, Bradford: 14, Brevard: 15, Broward: 16, Calhoun: 17, Charlotte: 18, Citrus: 19, Clay: 20, Collier: 21, Columbia: 22, "Miami-Dade": 23, DeSoto: 24, Dixie: 25, Duval: 26, Escambia: 27, Flagler: 28, Franklin: 29, Gadsden: 30, Gilchrist: 31, Glades: 32, Gulf: 33, Hamilton: 34, Hardee: 35, Hendry: 36, Hernando: 37, Highlands: 38, Hillsborough: 39, Holmes: 40, "Indian River": 41, Jackson: 42, Jefferson: 43, Lafayette: 44, Lake: 45, Lee: 46, Leon: 47, Levy: 48, Liberty: 49, Madison: 50, Manatee: 51, Marion: 52, Martin: 53, Monroe: 54, Nassau: 55, Okaloosa: 56, Okeechobee: 57, Orange: 58, Osceola: 59, "Palm Beach": 60, Pasco: 61, Pinellas: 62, Polk: 63, Putnam: 64, "St. Johns": 65, "St. Lucie": 66, "Santa Rosa": 67, Sarasota: 68, Seminole: 69, Sumter: 70, Suwannee: 71, Taylor: 72, Union: 73, Volusia: 74, Wakulla: 75, Walton: 76, Washington: 77 };
+const countyNo = (name) => COUNTY_NO[String(name || "").replace(/^Saint /, "St. ").replace(/^Desoto$/i, "DeSoto")] || null;
+
+/** Parcels with this ID (in the listing's county when known; IDs are stored in more than one format). */
+async function parcelsById(id, county) {
+  const vals = [...new Set([cleanParcelId(id), parcelKey(id)])].filter(Boolean).map((v) => `'${v.replace(/'/g, "''")}'`);
+  const co = countyNo(county);
+  if (!vals.length) return [];
+  const j = await layerQuery({ where: `${co ? `CO_NO=${co} AND ` : ""}PARCEL_ID IN (${vals.join(",")})`, outFields: PARCEL_FIELDS.join(","), returnGeometry: "false" });
+  return j.features.map((f) => f.attributes);
+}
+
+/** The listing's house number agrees with the parcel's situs (guards against a mistyped MLS parcel number). */
+function sameHouse(listing, row) {
+  const a = addressKey(listing).num;
+  const b = (norm(row.PHY_ADDR1).match(/^(\d+)/) || [])[1];
+  return listing.AddressHidden || !a || !b || a === b;
+}
+
+/** A parcel known only by its number (the state layer lacks it, e.g. Miami-Dade condo units): links only. */
+function idOnlyParcel(listing, id) {
+  const pid = cleanParcelId(id);
+  return { ParcelId: pid, IdOnly: true, Source: "mls", AltKey: null, Links: countyLinks(listing.County, { PARCEL_ID: pid, ALT_KEY: "" }), Shape: null };
+}
+
+async function addressMatch(listing, rows) {
+  const r = pickParcel(listing, rows);
+  return r.status === "no_match" ? pickParcel(listing, await parcelsAt(listing.Longitude, listing.Latitude, { box: true })) : r;
+}
+
+/**
+ * Full lookup for one listing: match its parcel, fetch the outline, build the Parcel object.
+ * With the MLS parcel number (listing.ParcelNumber) the exact parcel, condo unit included, is used;
+ * otherwise the parcel is picked by location and address (pickParcel).
+ */
 export async function lookupParcel(listing, { includeOwner = true } = {}) {
-  let r = pickParcel(listing, await parcelsAt(listing.Longitude, listing.Latitude));
-  if (r.status === "no_match") r = pickParcel(listing, await parcelsAt(listing.Longitude, listing.Latitude, { box: true }));
+  const want = parcelKey(listing.ParcelNumber);
+  const mlsId = want.length >= 8 ? want : "";
+  const finish = async (row, matchedBy) => {
+    const shape = await parcelShape(row.CO_NO, row.PARCEL_ID).catch(() => null);
+    return { status: "matched", parcel: { ...toParcel(listing, row, { shape, includeOwner }), MatchedBy: matchedBy } };
+  };
+  if (mlsId) {
+    const isIt = (r) => parcelKey(r.PARCEL_ID) === mlsId;
+    // By number first: a fraction of a second, where a location search can take 20+ seconds
+    // in a large community (one Palm Beach condo point returned 350 parcels).
+    let hit = (await parcelsById(listing.ParcelNumber, listing.County).catch(() => [])).find(isIt);
+    let rows = null;
+    if (!hit) {
+      // Some counties store IDs in another format: look at the parcels at the listing's location.
+      rows = await parcelsAt(listing.Longitude, listing.Latitude);
+      hit = rows.find(isIt);
+    }
+    if (hit && sameHouse(listing, hit)) return finish(hit, "mls_parcel");
+    if (!hit) {
+      // Not in the state layer. A house matched by address is more trustworthy than a number
+      // nobody can confirm (it may be mistyped). For a condo unit, the layer often has only the
+      // building (all Miami-Dade units), so the MLS number alone gives exact county links.
+      const r = await addressMatch(listing, rows);
+      if (r.parcel && !addressKey(listing).unit) return finish(r.parcel, "address");
+      return { status: "matched", parcel: idOnlyParcel(listing, listing.ParcelNumber) };
+    }
+    // The MLS number points at a different house: don't trust it, match by address instead.
+    const r = await addressMatch(listing, rows || await parcelsAt(listing.Longitude, listing.Latitude));
+    if (!r.parcel) return { status: r.status, parcel: null };
+    return finish(r.parcel, "address");
+  }
+  const rows = await parcelsAt(listing.Longitude, listing.Latitude);
+  const r = await addressMatch(listing, rows);
   if (!r.parcel) return { status: r.status, parcel: null };
-  const shape = await parcelShape(r.parcel.CO_NO, r.parcel.PARCEL_ID).catch(() => null);
-  return { status: "matched", parcel: toParcel(listing, r.parcel, { shape, includeOwner }) };
+  return finish(r.parcel, "address");
 }

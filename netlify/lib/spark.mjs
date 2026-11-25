@@ -28,6 +28,9 @@ export const RESO_SELECT = [
   "Boat_sp_and_sp_Dock_sp_Information_co_Dock",
   "Boat_sp_and_sp_Dock_sp_Features_co_Boat_sp_and_sp_Dock_sp_Features",
   "ParkingFeatures", "Electric", "GreenEnergyEfficient", "Power_sp_Production_co_Annual_sp_Status",
+  // County parcel / folio number: listing pages link to the county records with it.
+  // (Confirmed in the BeachesMLS feed by the daily record check, Nov 2026.)
+  "ParcelNumber",
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

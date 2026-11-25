@@ -8,7 +8,7 @@ import { sparkGet, RESO_SELECT, qs } from "./spark.mjs";
 import { normalizeListing } from "./normalize.mjs";
 import { getJSON, setJSON, del, getIndex, setIndex, getState, setState, readIndex } from "./store.mjs";
 import { lookupParcel } from "./parcels.mjs";
-import { INDEX_FIELDS } from "./index-format.mjs";
+import { INDEX_FIELDS, INDEX_FLAGS } from "./index-format.mjs";
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
@@ -61,15 +61,24 @@ async function purge(key) {
 
 const QUEUE = "parcel-queue";
 
-// Bump when the parcel matcher improves, so earlier "couldn't match" results are retried.
-const MATCH_VERSION = 2;
+// Bump when the parcel matcher improves, so earlier results (matches included) are redone once.
+// 3: uses the MLS parcel number (exact condo unit), so earlier wrong-unit matches are corrected.
+const MATCH_VERSION = 3;
 
-async function listingFromIndex(key) {
+async function listingFromIndex(key, { fetchDetail = true } = {}) {
   const row = (await readIndex())[key];
   if (!row) return null;
   const o = Object.fromEntries(INDEX_FIELDS.map((f, i) => [f, row[i]]));
-  return { ListingKey: key, StreetAddress: o.StreetAddress, UnitNumber: null, PostalCode: o.PostalCode,
-    Longitude: o.Longitude, Latitude: o.Latitude, County: o.County, ListPrice: o.ListPrice };
+  const flags = Number(row[INDEX_FIELDS.length]) || 0;
+  const base = { ListingKey: key, StreetAddress: o.StreetAddress, UnitNumber: null, ParcelNumber: null, PostalCode: o.PostalCode,
+    Longitude: o.Longitude, Latitude: o.Latitude, County: o.County, ListPrice: o.ListPrice, AddressHidden: !!(flags & (1 << INDEX_FLAGS.indexOf("AddressHidden"))) };
+  // The unit and the MLS parcel number come from the full listing (cached when its page opens).
+  // (The scheduled sync uses only what's cached, so it never waits on the MLS.)
+  try {
+    const d = fetchDetail ? await withTimeout(getListingDetail(key), 4000) : { listing: (await getJSON(`listing/${key}`))?.listing };
+    if (d.listing) Object.assign(base, { UnitNumber: d.listing.UnitNumber || null, ParcelNumber: d.listing.ParcelNumber || null });
+  } catch { /* slow or unavailable: match by location and address */ }
+  return base;
 }
 
 async function lookupAndCache(listing, ms) {
@@ -85,10 +94,12 @@ async function lookupAndCache(listing, ms) {
 export async function getParcel(key) {
   const cached = await getJSON(`parcel/${key}`);
   // Keep matches; retry failures made by an older matcher or more than a week ago.
-  const fresh = cached && (cached.status === "matched" || (cached.v === MATCH_VERSION && Date.now() - Date.parse(cached.at) < 7 * 864e5));
+  const fresh = cached && cached.v === MATCH_VERSION && (cached.status === "matched" || Date.now() - Date.parse(cached.at) < 7 * 864e5);
   if (fresh) return { status: cached.status, parcel: cached.parcel };
   const listing = await listingFromIndex(key);
   if (!listing) return { status: "gone", parcel: null };
+  // The seller chose not to show the address: county record links would reveal it.
+  if (listing.AddressHidden) return { status: "no_match", parcel: null };
   try {
     return await lookupAndCache(listing, 8000);
   } catch {
@@ -106,9 +117,9 @@ export async function warmParcels(deadline) {
   let done = 0;
   while (q.length && Date.now() < deadline - 2000) {
     const key = q[0];
-    const listing = await listingFromIndex(key);
+    const listing = await listingFromIndex(key, { fetchDetail: false });
     try {
-      if (listing && !(await getJSON(`parcel/${key}`))) await lookupAndCache(listing, Math.max(1000, deadline - Date.now() - 1000));
+      if (listing && !listing.AddressHidden && !(await getJSON(`parcel/${key}`))) await lookupAndCache(listing, Math.max(1000, deadline - Date.now() - 1000));
       q.shift();
       done++;
     } catch {
