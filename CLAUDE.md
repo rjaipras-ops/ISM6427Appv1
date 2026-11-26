@@ -22,9 +22,10 @@ batch contains.
 
 ## Pending for the next deploy
 
-1. Language switch is now a two-sided EN | ES toggle (current language highlighted) instead of a
-   button naming the other language; compact on phones so "LoKation Real Estate" stays readable
-   (two lines at 390px, one line at 360-375px). Service worker cache v6.
+1. Language switch is now a two-sided "English | Español" toggle (current language highlighted)
+   instead of a button naming the other language. On phones the logo shows the icon only (no
+   "iToured" word) so "LoKation Real Estate" stays readable; 320px phones show EN | ES.
+   Service worker cache v6.
 
 (Last deploy, Nov 26 2026: records links follow-up (Monroe, unit check, Indian River);
 FRED mortgage rate; flood & elevation; Spanish version; /.claude, /knowledge, /docs blocked;

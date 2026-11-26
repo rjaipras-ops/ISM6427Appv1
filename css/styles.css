@@ -838,8 +838,7 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
 }
 
 @media (max-width: 380px) {
-  .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
-  .broker-agent, .broker-firm { white-space: nowrap; }
+  .brand span { display: none; } /* icon only, so the brokerage stays readable */
 }
 
 /* License next to the name (desktop) and a footer on every page */
@@ -1138,4 +1137,9 @@ body.on-search .globalfoot { display: none; }
   .lang-toggle + .account { margin-left: 6px; }
   .account .btn { padding: 7px 12px; }
   .topbar { gap: 8px; }
+  /* The full "English | Español" switch needs the room: icon-only logo on phones. */
+  .brand span { display: none; }
 }
+.lang-toggle .lang-short { display: none; }
+/* Smallest phones (320px): short labels so the brokerage name isn't cut off. */
+@media (max-width: 340px) { .lang-toggle .lang-long { display: none; } .lang-toggle .lang-short { display: inline; } }
