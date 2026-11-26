@@ -491,6 +491,14 @@ export async function loadElevation(lat, lng) {
   } catch { return null; }
 }
 
+/** Rooftop solar potential for a listing ({ available, solar }), or null. */
+export async function loadSolar(listingId) {
+  try {
+    const r = await fetch(`/api/solar/${encodeURIComponent(listingId)}`, { signal: AbortSignal.timeout(15000) });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
+
 export async function loadFeed() {
   try {
     // "no-cache" revalidates with the server's ETag, so unchanged data isn't re-downloaded.

@@ -30,6 +30,8 @@ batch contains.
    with the rate and week shown under the listing calculator (was a fixed 6.4%).
 3. "Flood & elevation" section on listing pages: ground elevation (USGS 3DEP via /api/elevation,
    Open Topo Data fallback), the listing's flood zone, and a FEMA flood map link for the address.
+4. "Solar potential" section on house listings (Google Solar API via /api/solar/:key). Off until
+   GOOGLE_SOLAR_API_KEY is set in Netlify; 30-day cache; SOLAR_MONTHLY_CAP (default 2,000 calls).
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

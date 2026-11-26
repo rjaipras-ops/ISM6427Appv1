@@ -1101,6 +1101,7 @@ function renderDetail(l) {
         </section>
         ${publicRecordsHTML(l)}
         ${floodHTML(l)}
+        <div id="solarSlot"></div>
         <section class="section">
           <h2>Key facts</h2>
           <div class="keyfacts">${keyFacts.map(([k, v]) => `<div class="kf"><div><small>${k}</small><strong>${v}</strong></div></div>`).join("")}</div>
@@ -1166,6 +1167,7 @@ function renderDetail(l) {
 
   if (mls) loadMlsExtras(l);
   loadElevationFor(l);
+  loadSolarFor(l);
 }
 
 // Listing firm, MLS #, last-updated and the BeachesMLS mark (IDX rules: firm name plus an email or
@@ -1536,6 +1538,28 @@ function floodHTML(l) {
     <div class="records-links"><a class="btn btn-ghost" href="${esc(fema)}" target="_blank" rel="noopener noreferrer">FEMA flood map for this address ↗</a></div>
   </section>`;
 }
+/* ---------------- rooftop solar (Google Solar API; shown only when the site has a key) ---------------- */
+function solarHTML(s) {
+  const n = (x) => Number(x).toLocaleString("en-US");
+  const rows = [
+    s.sunHoursPerYear && ["Sunshine on the roof", `${n(s.sunHoursPerYear)} hours a year`],
+    s.maxPanels && ["Room for", `up to ${n(s.maxPanels)} panels${s.roofAreaSqFt ? ` · about ${n(s.roofAreaSqFt)} sq ft of usable roof` : ""}`],
+    s.typical && ["A typical system here", `${s.typical.kw} kW (${s.typical.panels} panels) · about ${n(s.typical.kwhPerYear)} kWh a year`],
+  ].filter(Boolean);
+  return `<section class="section" id="solar"><h2>Solar potential</h2>
+    <div class="records-grid">${rows.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
+    <p class="muted" style="font-size:12px">Estimated by Google's Solar API from aerial imagery${s.imageryDate ? ` (${esc(s.imageryDate)})` : ""}. Energy figures are before inverter losses; get a quote from a licensed installer.</p>
+  </section>`;
+}
+function loadSolarFor(l) {
+  if (!["Single Family", "Townhouse", "Multi-Family"].includes(l.PropertyType) || l.AddressHidden) return;
+  store.loadSolar(l.ListingId).then((r) => {
+    if (!r?.available || location.hash !== `#/home/${l.ListingId}`) return;
+    const slot = $("#solarSlot");
+    if (slot) slot.outerHTML = solarHTML(r.solar);
+  });
+}
+
 function loadElevationFor(l) {
   S.elevation ||= new Map();
   if (S.elevation.has(l.ListingId)) return;
