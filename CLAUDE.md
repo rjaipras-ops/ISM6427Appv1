@@ -54,6 +54,12 @@ batch contains.
    office email from the listing; never sale history, values, owner details or private signals.
    Opening it in email marks "Contacted listing agent"; after 14 days, if the listing still differs,
    it shows under "Follow-up due" with a follow-up draft. Count of emailed listings now fixed/gone.
+10. Market report agent: admin "Market report" tab with a weekly draft in English and Spanish
+   (templates, no AI) to edit, approve and copy. Publishable part: closed sales from the DOR sales
+   files (qualified sales, true 3-month medians, change vs a year earlier), computed by the daily
+   record check (scripts/records/market.mjs) and stored as market/sales on upload. Private part:
+   active-listing stats from the MLS index, marked "do not publish" until BeachesMLS answers.
+   MARKET_COUNTIES (optional) sets the counties.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

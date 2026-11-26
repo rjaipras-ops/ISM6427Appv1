@@ -406,6 +406,8 @@ export const adminAct = (id, action) => api("/api/admin/reviews", { method: "POS
 export const adminGetSettings = () => api("/api/admin/settings");
 export const adminInsights = (days) => api(`/api/admin/insights?days=${encodeURIComponent(days)}`);
 export const adminRecords = (params) => api(`/api/admin/records?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ""))}`);
+export const adminMarket = () => api("/api/admin/market");
+export const adminMarketSave = (body) => api("/api/admin/market", { method: "POST", body: JSON.stringify(body) });
 export const adminLeads = () => api("/api/admin/leads");
 export const adminLead = (id) => api(`/api/admin/leads?id=${encodeURIComponent(id)}`);
 export const adminLeadPost = (body) => api("/api/admin/leads", { method: "POST", body: JSON.stringify(body) });

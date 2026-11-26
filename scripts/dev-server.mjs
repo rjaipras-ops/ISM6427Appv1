@@ -42,6 +42,7 @@ import solarFn from "../netlify/functions/solar.mjs";
 import commuteFn from "../netlify/functions/commute.mjs";
 import featuresFn from "../netlify/functions/features.mjs";
 import adminLeads from "../netlify/functions/admin-leads.mjs";
+import adminMarket from "../netlify/functions/admin-market.mjs";
 import submissionCreated from "../netlify/functions/submission-created.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -78,6 +79,7 @@ const routes = [
   [/^\/api\/admin\/settings$/, adminSettings],
   [/^\/api\/admin\/records$/, adminRecords],
   [/^\/api\/admin\/leads$/, adminLeads],
+  [/^\/api\/admin\/market$/, adminMarket],
   [/^\/api\/records\/upload$/, recordsUpload],
   [/^\/api\/rates$/, ratesFn],
   [/^\/api\/elevation$/, elevationFn],

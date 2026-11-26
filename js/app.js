@@ -1862,6 +1862,7 @@ async function renderAdmin() {
   if (admin.tab === "insights") return renderInsights();
   if (admin.tab === "records") return renderRecords();
   if (admin.tab === "leads") return renderLeads();
+  if (admin.tab === "market") return renderMarket();
   el.innerHTML = `${adminTabs()}<h1>Review moderation</h1><p class="muted">Loading…</p>`;
   try {
     const [list, settings] = await Promise.all([store.adminListReviews(), store.adminGetSettings()]);
@@ -1869,7 +1870,7 @@ async function renderAdmin() {
   } catch (err) { el.innerHTML = `<h1>Review moderation</h1><p class="form-error">${esc(err.message)}</p>`; return; }
   drawAdmin();
 }
-const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["leads", "Leads"], ["insights", "Search insights"], ["records", "Record checks"]].map(([k, t]) =>
+const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["leads", "Leads"], ["market", "Market report"], ["insights", "Search insights"], ["records", "Record checks"]].map(([k, t]) =>
   `<button type="button" data-admview="${k}" aria-pressed="${(admin.tab || "reviews") === k}">${t}</button>`).join("")}</div>`;
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-admview]");
@@ -2013,6 +2014,55 @@ async function openOutreach(card, it, d) {
   mail?.addEventListener("click", mark);
   box.querySelector("[data-ocopy]").onclick = async () => {
     try { await navigator.clipboard.writeText(`${subj.value}\n\n${body.value}`); toast("Copied. Mark the status when you send it."); } catch { toast("Couldn't copy; select the text instead."); }
+  };
+}
+
+/* Market report: weekly drafts in English and Spanish (netlify/lib/market.mjs). Site owner only.
+   The editable box is the publishable part (public-record sales); the BeachesMLS part stays private. */
+const mkt = { lang: "en" };
+async function renderMarket() {
+  const el = $("#view-admin");
+  el.innerHTML = `${adminTabs()}<h1>Market report</h1><p class="muted">Loading…</p>`;
+  let d;
+  try { d = await store.adminMarket(); } catch (err) { el.innerHTML = `${adminTabs()}<h1>Market report</h1><p class="form-error">${esc(err.message)}</p>`; return; }
+  const text = { en: d.saved?.en || d.draft.en.public, es: d.saved?.es || d.draft.es.public };
+  const n = (x) => (x == null ? "—" : Number(x).toLocaleString("en-US"));
+  const salesRows = Object.entries(d.sales?.counties || {}).flatMap(([c, v]) => (v.months || []).slice(-6).map((m) => `<tr><td>${esc(c)}</td><td>${esc(m.ym)}</td><td>${esc(m.group)}</td><td>${n(m.count)}</td><td>${fmt$(m.median)}</td></tr>`)).join("");
+  const draw = () => {
+    const st = d.saved?.status;
+    el.innerHTML = `${adminTabs()}<div class="mkt-wrap"><h1>Market report</h1>
+      <p class="muted">A weekly summary for your newsletter, social posts or blog. Drafts are written from the numbers (no AI). You edit, approve and copy; nothing is published from here. Numbers describe homes and prices only, never who lives in an area.</p>
+      <p class="mkt-status">Week of <b>${esc(d.week)}</b> · ${st === "approved" ? `<span class="lead-sug lead-sug-handle">Approved ${esc(new Date(d.saved.at).toLocaleDateString())}</span>` : st === "draft" ? `<span class="lead-pri">Draft saved</span>` : `<span class="lead-pri">New draft</span>`}</p>
+      <div class="seg mkt-lang">${[["en", "English"], ["es", "Español"]].map(([k, t]) => `<button type="button" data-mktlang="${k}" aria-pressed="${mkt.lang === k}">${t}</button>`).join("")}</div>
+      <label class="field">Publishable (public-record sales)<textarea id="mktText" rows="14">${esc(text[mkt.lang])}</textarea></label>
+      <div class="lead-actions">
+        <button class="btn" type="button" data-mktsave="approved">Approve both languages</button>
+        <button class="btn btn-ghost" type="button" data-mktsave="draft">Save draft</button>
+        <button class="btn btn-ghost" type="button" id="mktCopy">Copy</button>
+        <button class="linkbtn" type="button" id="mktReset">Start over from this week's numbers</button>
+      </div>
+      <section class="mkt-private"><h2>Private: active listings (BeachesMLS)</h2>
+        <p class="muted">Not for publishing until BeachesMLS confirms that statistics from the IDX feed may be published (it's on your list of questions for them). Use it for your own conversations with clients. Counted ${esc(new Date(d.mlsAt).toLocaleString())}${d.prevWeek ? `; compared with the week of ${esc(d.prevWeek)}` : "; week-over-week changes start next week"}.</p>
+        <pre class="mkt-pre">${esc(d.draft[mkt.lang].private)}</pre></section>
+      <details class="mkt-data"><summary>Sales numbers behind the draft</summary>
+        ${salesRows ? `<table class="rec-table"><thead><tr><th>County</th><th>Month</th><th>Type</th><th>Qualified sales</th><th>Median price</th></tr></thead><tbody>${salesRows}</tbody></table>`
+          : `<p class="muted">No sales numbers yet. They arrive with the next daily record check.</p>`}
+      </details></div>`;
+    const ta = $("#mktText");
+    ta.oninput = () => { text[mkt.lang] = ta.value; };
+  };
+  draw();
+  el.onclick = async (e) => {
+    const l = e.target.closest("[data-mktlang]");
+    if (l) { mkt.lang = l.dataset.mktlang; return draw(); }
+    const sv = e.target.closest("[data-mktsave]");
+    if (sv) {
+      try { d.saved = await store.adminMarketSave({ week: d.week, en: text.en, es: text.es, status: sv.dataset.mktsave }); toast(sv.dataset.mktsave === "approved" ? "Approved" : "Draft saved"); draw(); }
+      catch (err) { toast(err.message); }
+      return;
+    }
+    if (e.target.id === "mktCopy") { try { await navigator.clipboard.writeText(text[mkt.lang]); toast("Copied"); } catch { toast("Couldn't copy; select the text instead."); } }
+    if (e.target.id === "mktReset") { text.en = d.draft.en.public; text.es = d.draft.es.public; draw(); }
   };
 }
 

@@ -1121,3 +1121,11 @@ body.on-search .globalfoot { display: none; }
 .rec-follow { margin: 8px 0 0; font-size: 13px; color: #44525c; }
 .rec-follow.due { color: #8a5a00; font-weight: 600; }
 .rec-outsum { margin: 4px 0 8px; font-size: 14px; }
+.mkt-lang { max-width: 260px; margin: 8px 0 12px; }
+.mkt-status { margin: 8px 0; }
+.mkt-wrap textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; }
+.mkt-private { margin-top: 20px; padding: 12px 14px; border: 1px dashed #c9a227; border-radius: var(--radius-sm); background: #fffaf0; }
+.mkt-private h2 { font-size: 16px; margin: 0 0 6px; }
+.mkt-pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 8px 0 0; }
+.mkt-data { margin-top: 16px; }
+.mkt-data table { margin-top: 8px; }

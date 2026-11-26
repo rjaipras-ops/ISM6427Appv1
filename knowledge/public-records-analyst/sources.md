@@ -27,3 +27,8 @@ parcel number. Automated visits to county sites only where their terms allow.
 ## Record check tuning
 New construction, teardowns, detached condos, co-op homes, condo-hotel units and farm-classified
 homes are not flagged. Non-market transfers are not resales. Tune from the owner's false alarms.
+
+## Market statistics (Nov 2026)
+`scripts/records/market.mjs`: qualified sales (QUAL_CD 01-02), improved (VI_CD "I"), single-parcel
+(MULTI_PAR_SAL empty; "D" marks multi-parcel), DOR_UC 001 single family and 004 condo, by situs
+city. The newest month in the SDF is dropped as incomplete. Counts and medians only.

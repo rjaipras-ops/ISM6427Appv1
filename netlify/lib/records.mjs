@@ -30,6 +30,10 @@ export async function saveReport(report) {
     throw new Error("Not a record check report");
   }
   if (report.items.length > 60000) throw new Error("Too many items");
+  // Closed-sale statistics travel with the report but are kept apart for the Market report tab.
+  const market = report.market && typeof report.market === "object" ? report.market : null;
+  delete report.market;
+  if (market) await setJSON("market/sales", { date: report.date, counties: market });
   await setJSON(`records/report/${report.date}`, report);
   const dates = [report.date, ...((await getJSON("records/dates")) || []).filter((d) => d !== report.date)].sort().reverse();
   for (const d of dates.slice(KEEP)) await del(`records/report/${d}`).catch(() => {});

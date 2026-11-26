@@ -12,6 +12,7 @@
 // Environment: SPARK_API_BEARER_TOKEN, RECORDS_UPLOAD_SECRET (both GitHub Actions secrets),
 // optional RECORDS_UPLOAD_URL. With --no-upload the report is written to .records-cache/ instead.
 
+import { salesStats } from "./market.mjs";
 import { gzipSync } from "node:zlib";
 import { mkdir, writeFile } from "node:fs/promises";
 import { loadConfig } from "./config/index.mjs";
@@ -44,6 +45,9 @@ async function main() {
     const s = countySummary(res.results);
     report.counties[county] = { ...s, source: res.source };
     for (const r of res.results) { const it = toItem(r); if (it) report.items.push(it); }
+    // Closed-sale statistics (public records, counts and medians only) for the weekly market report.
+    try { (report.market ||= {})[county] = { source: label, ...(await salesStats(nalCsv, sdfCsv)) }; }
+    catch (e) { console.log(`${county}: market statistics skipped (${e.message})`); }
     console.log(`${county}: ${s.listings} listings, ${s.checked} checked, ${s.unmatched + s.lowConfidence} not matched, ${s.withFlags} with differences, ${s.closerLook} for a closer look`);
     const list = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(", ");
     console.log(`  matched by: ${list(s.byMethod)}`);
