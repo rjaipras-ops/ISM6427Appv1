@@ -482,6 +482,15 @@ export async function loadRates() {
   } catch { return null; }
 }
 
+/** Ground elevation at a listing's location ({ feet, source, datum }), or null. */
+export async function loadElevation(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  try {
+    const r = await fetch(`/api/elevation?lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`, { signal: AbortSignal.timeout(12000) });
+    return r.ok ? (await r.json()).elevation : null;
+  } catch { return null; }
+}
+
 export async function loadFeed() {
   try {
     // "no-cache" revalidates with the server's ETag, so unchanged data isn't re-downloaded.

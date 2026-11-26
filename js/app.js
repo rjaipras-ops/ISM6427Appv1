@@ -1100,6 +1100,7 @@ function renderDetail(l) {
           <p id="remarks">${esc(remarks)}</p>
         </section>
         ${publicRecordsHTML(l)}
+        ${floodHTML(l)}
         <section class="section">
           <h2>Key facts</h2>
           <div class="keyfacts">${keyFacts.map(([k, v]) => `<div class="kf"><div><small>${k}</small><strong>${v}</strong></div></div>`).join("")}</div>
@@ -1164,6 +1165,7 @@ function renderDetail(l) {
   }
 
   if (mls) loadMlsExtras(l);
+  loadElevationFor(l);
 }
 
 // Listing firm, MLS #, last-updated and the BeachesMLS mark (IDX rules: firm name plus an email or
@@ -1515,6 +1517,35 @@ function publicRecordsHTML(l) {
     <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing ${p.MatchedBy === "mls_parcel" ? "by the parcel number on the MLS listing" : "by location and address"}. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
   </section>`;
 }
+/* ---------------- flood & elevation ---------------- */
+// Ground elevation (USGS) next to the listing's flood zone, with FEMA's official map for the address.
+function floodHTML(l) {
+  const d = l.demo || {};
+  const zone = isMls(l) ? d.FloodZone : null;
+  const fema = `https://msc.fema.gov/portal/search?AddressQuery=${encodeURIComponent(l.AddressHidden ? `${l.City}, FL` : l.UnparsedAddress || "")}`;
+  const e = S.elevation?.get(l.ListingId);
+  const elev = e === undefined ? `<span class="muted">Loading…</span>`
+    : e === null ? `<span class="muted">Not available</span>`
+    : `About ${e.feet < 1 ? "1" : Math.round(e.feet)} ft above sea level <span class="muted" style="font-size:12px">· ${esc(e.source)}</span>`;
+  return `<section class="section" id="flood"><h2>Flood &amp; elevation</h2>
+    <div class="records-grid">
+      <div><small>Ground elevation</small><div>${elev}</div></div>
+      <div><small>Flood zone (from the listing)</small><div>${zone ? `${esc(zone)}${zone === "X" ? " · lower risk" : " · flood insurance is usually required with a mortgage"}` : `<span class="muted">Not stated in the listing</span>`}</div></div>
+    </div>
+    <p class="muted" style="font-size:13px">Elevation is the ground at the home's map location (NAVD88), not the floor height. Flood insurance depends on the FEMA flood zone and the home's elevation certificate, so ask the seller for the certificate.</p>
+    <div class="records-links"><a class="btn btn-ghost" href="${esc(fema)}" target="_blank" rel="noopener noreferrer">FEMA flood map for this address ↗</a></div>
+  </section>`;
+}
+function loadElevationFor(l) {
+  S.elevation ||= new Map();
+  if (S.elevation.has(l.ListingId)) return;
+  S.elevation.set(l.ListingId, undefined);
+  store.loadElevation(Number(l.Latitude), Number(l.Longitude)).then((e) => {
+    S.elevation.set(l.ListingId, e || null);
+    if (location.hash === `#/home/${l.ListingId}`) { const sec = $("#flood"); if (sec) sec.outerHTML = floodHTML(l); }
+  });
+}
+
 const fmtMonthYear = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
 function saleHistoryHTML(h) {
   if (!h?.sales?.length) return "";

@@ -28,6 +28,8 @@ batch contains.
    restored when the MLS drops it; MATCH_VERSION 4.
 2. Payment estimates use this week's 30-year mortgage rate (Freddie Mac via FRED, /api/rates),
    with the rate and week shown under the listing calculator (was a fixed 6.4%).
+3. "Flood & elevation" section on listing pages: ground elevation (USGS 3DEP via /api/elevation,
+   Open Topo Data fallback), the listing's flood zone, and a FEMA flood map link for the address.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)
