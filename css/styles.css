@@ -676,11 +676,6 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .broker-firm { font-size: 15px; font-weight: 700; color: var(--brand-ink); white-space: nowrap; }
 .brokerage + .account { margin-left: 8px; }
 /* Language switch (English / Español) */
-.lang-btn { appearance: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px; font: 600 13px Inter, system-ui, sans-serif; color: var(--brand-ink); cursor: pointer; white-space: nowrap; margin-left: 8px; }
-.lang-btn:hover { border-color: var(--brand); }
-.lang-btn { flex: none; }
-.lang-btn .lang-short { display: none; }
-.lang-btn + .account { margin-left: 8px; }
 @media (max-width: 860px) {
   .broker-agent { display: none; }
   .broker-firm { font-size: 13px; }
@@ -841,7 +836,7 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
   button.brokerage { text-align: left; }
   .broker-firm { font-size: 13px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
 }
-@media (max-width: 560px) { .lang-btn { padding: 5px 8px; font-size: 12px; margin-left: 4px; } .lang-btn .lang-long { display: none; } .lang-btn .lang-short { display: inline; } }
+
 @media (max-width: 380px) {
   .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
   .broker-agent, .broker-firm { white-space: nowrap; }
@@ -1129,3 +1124,18 @@ body.on-search .globalfoot { display: none; }
 .mkt-pre { white-space: pre-wrap; font: inherit; font-size: 14px; margin: 8px 0 0; }
 .mkt-data { margin-top: 16px; }
 .mkt-data table { margin-top: 8px; }
+
+/* Language switch (header) */
+.lang-toggle { display: inline-flex; flex: none; margin-left: 8px; padding: 2px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+.lang-toggle button { appearance: none; border: 0; background: none; border-radius: 999px; padding: 5px 10px; font: 600 13px Inter, system-ui, sans-serif; color: var(--muted, #5b6770); cursor: pointer; line-height: 1.2; }
+.lang-toggle button[aria-pressed="true"] { background: var(--brand); color: #fff; cursor: default; }
+.lang-toggle button[aria-pressed="false"]:hover { color: var(--brand-ink); }
+.lang-toggle + .account { margin-left: 8px; }
+/* Phones: keep the switch small so "LoKation Real Estate" stays readable (two lines at most). */
+@media (max-width: 560px) {
+  .lang-toggle { margin-left: 2px; padding: 1px; }
+  .lang-toggle button { padding: 4px 6px; font-size: 11.5px; }
+  .lang-toggle + .account { margin-left: 6px; }
+  .account .btn { padding: 7px 12px; }
+  .topbar { gap: 8px; }
+}

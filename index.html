@@ -48,7 +48,9 @@
       <a href="/about">About</a>
     </nav>
     <button class="brokerage" id="brokerage" type="button" aria-haspopup="dialog" aria-label="About the agent and brokerage"></button>
-    <button class="lang-btn" type="button" data-lang-toggle lang="es" aria-label="Español"><span class="lang-long">Español</span><span class="lang-short">ES</span></button>
+    <div class="lang-toggle" role="group" aria-label="Language / Idioma" translate="no">
+      <button type="button" data-lang-set="en" lang="en" aria-label="English" aria-pressed="true">EN</button><button type="button" data-lang-set="es" lang="es" aria-label="Español" aria-pressed="false">ES</button>
+    </div>
     <div class="account" id="account"></div>
   </header>
 

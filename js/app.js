@@ -62,12 +62,11 @@ init().catch((e) => {
 
 async function init() {
   startTranslating(); // Spanish version: no-op in English
-  for (const b of document.querySelectorAll("[data-lang-toggle]")) {
-    const [long, short] = isEs ? ["English", "EN"] : ["Español", "ES"];
-    if (b.querySelector(".lang-long")) { b.querySelector(".lang-long").textContent = long; b.querySelector(".lang-short").textContent = short; } else b.textContent = long;
-    b.setAttribute("aria-label", long);
-    b.setAttribute("lang", isEs ? "en" : "es");
-    b.addEventListener("click", () => setLang(isEs ? "en" : "es"));
+  // EN | ES switch: the current language is highlighted; tapping the other one switches.
+  for (const b of document.querySelectorAll("[data-lang-set]")) {
+    const on = (b.dataset.langSet === "es") === isEs;
+    b.setAttribute("aria-pressed", String(on));
+    b.addEventListener("click", () => { if (!on) setLang(b.dataset.langSet); });
   }
   const [feed, , rate] = await Promise.all([store.loadFeed(), store.initBackend(), store.loadRates()]);
   // Payment estimates use this week's average 30-year rate (Freddie Mac, via FRED) when available.
