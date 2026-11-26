@@ -22,47 +22,12 @@ batch contains.
 
 ## Pending for the next deploy
 
-1. Records links follow-up: Monroe's short MLS parcel numbers matched to the state's longer IDs
-   (restores record values and tax-bill links lost in the Nov 25 deploy); unit check where the
-   county record shows a unit (letter prefixes like Key West's "R1" allowed); Indian River ".0"
-   restored when the MLS drops it; MATCH_VERSION 4.
-2. Payment estimates use this week's 30-year mortgage rate (Freddie Mac via FRED, /api/rates),
-   with the rate and week shown under the listing calculator (was a fixed 6.4%).
-3. "Flood & elevation" section on listing pages: ground elevation (USGS 3DEP via /api/elevation,
-   Open Topo Data fallback), the listing's flood zone, and a FEMA flood map link for the address.
-4. "Solar potential" section on house listings (Google Solar API via /api/solar/:key). Off until
-   GOOGLE_SOLAR_API_KEY is set in Netlify; 30-day cache; SOLAR_MONTHLY_CAP (default 2,000 calls).
-5. "Commute" search menu: homes within 10-60 min by car/bike/walking of a typed place
-   (OpenRouteService via /api/commute, area drawn on the map, kept in the URL). Hidden until
-   ORS_API_KEY is set; 30-day cache; COMMUTE_DAILY_CAP (default 400 calls). /api/features tells
-   the page which optional features are on.
-6. Spanish version: "Español / English" switch in the header (ES/EN on phones), remembered per
-   device and settable by link (?lang=es). js/i18n.js translates the site's own text as it appears
-   (phrase dictionary + patterns); MLS listing text, office names and user reviews are not
-   translated (translate="no"). Tour requests record the visitor's language. Admin and the
-   About/FAQ/privacy/terms pages are still English only.
-7. Site blocks /.claude/*, /knowledge/* and /docs/* (agent team files, agent notes, referral setup
-   notes) so they aren't served publicly.
-8. Lead triage agent: admin "Leads" tab. Netlify's submission-created event stores a private copy
-   of each tour request (lib/leads.mjs): priority (hot/warm/nurture), handle-or-refer by "counties
-   you handle", a standard reply in the visitor's language, optional "Draft with AI" (name, email,
-   phone removed first), referral text to copy, status and notes. Replies open the owner's own
-   email/text app (nothing is sent by the site). Tour form options now submit English values from
-   the Spanish site too. Privacy policy updated (Nov 26). Admin tabs wrap on phones.
-9. Listing outreach agent (Record checks tab): "Email the listing office" on listings whose size,
-   lot, year built or property type differ from the tax roll. Neutral note (js/outreach.js) to the
-   office email from the listing; never sale history, values, owner details or private signals.
-   Opening it in email marks "Contacted listing agent"; after 14 days, if the listing still differs,
-   it shows under "Follow-up due" with a follow-up draft. Count of emailed listings now fixed/gone.
-10. Market report agent: admin "Market report" tab with a weekly draft in English and Spanish
-   (templates, no AI) to edit, approve and copy. Publishable part: closed sales from the DOR sales
-   files (qualified sales, true 3-month medians, change vs a year earlier), computed by the daily
-   record check (scripts/records/market.mjs) and stored as market/sales on upload. Private part:
-   active-listing stats from the MLS index, marked "do not publish" until BeachesMLS answers.
-   MARKET_COUNTIES (optional) sets the counties.
+(Nothing yet.)
 
-(Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
-/CLAUDE.md and /tests/* blocked on the site.)
+(Last deploy, Nov 26 2026: records links follow-up (Monroe, unit check, Indian River);
+FRED mortgage rate; flood & elevation; Spanish version; /.claude, /knowledge, /docs blocked;
+admin Leads, listing outreach and Market report tabs; privacy policy update. Solar and commute
+code shipped but stay hidden: the owner chose not to add GOOGLE_SOLAR_API_KEY or ORS_API_KEY.)
 
 ## Agent team
 
