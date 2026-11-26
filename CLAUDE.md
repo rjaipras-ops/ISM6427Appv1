@@ -41,6 +41,14 @@ batch contains.
    (phrase dictionary + patterns); MLS listing text, office names and user reviews are not
    translated (translate="no"). Tour requests record the visitor's language. Admin and the
    About/FAQ/privacy/terms pages are still English only.
+7. Site blocks /.claude/*, /knowledge/* and /docs/* (agent team files, agent notes, referral setup
+   notes) so they aren't served publicly.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)
+
+## Agent team
+
+Agent definitions are in `.claude/agents/` (orchestrator first for multi-part work; the two
+compliance reviewers and security-expert review, they don't edit). Each agent's notes are in
+`knowledge/<agent>/`: public-safe summaries only.
