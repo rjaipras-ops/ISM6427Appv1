@@ -49,6 +49,11 @@ batch contains.
    phone removed first), referral text to copy, status and notes. Replies open the owner's own
    email/text app (nothing is sent by the site). Tour form options now submit English values from
    the Spanish site too. Privacy policy updated (Nov 26). Admin tabs wrap on phones.
+9. Listing outreach agent (Record checks tab): "Email the listing office" on listings whose size,
+   lot, year built or property type differ from the tax roll. Neutral note (js/outreach.js) to the
+   office email from the listing; never sale history, values, owner details or private signals.
+   Opening it in email marks "Contacted listing agent"; after 14 days, if the listing still differs,
+   it shows under "Follow-up due" with a follow-up draft. Count of emailed listings now fixed/gone.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

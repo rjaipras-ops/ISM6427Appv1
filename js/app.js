@@ -10,6 +10,7 @@ import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
+import { outreachEmail, FOLLOW_UP_DAYS } from "./outreach.js";
 import { startTranslating, setLang, isEs, LOCALE } from "./i18n.js";
 import { parseSearch } from "./nlsearch.js";
 import { homeKey, homeSlug, reviewHomeKey } from "./homekey.js";
@@ -1942,6 +1943,8 @@ async function renderRecords() {
     <div class="rec-status"><label>Status <select data-recstatus>${statusOpts(it.status)}</select></label>
       <input data-recnote placeholder="Note (optional)" value="${esc(it.statusNote)}" maxlength="500">
       ${it.flagsChanged ? `<span class="rec-changed">Flags changed since you marked this</span>` : ""}</div>
+    ${it.followUp ? `<p class="rec-follow${it.followUp.due ? " due" : ""}">Emailed the listing office ${it.followUp.days === 0 ? "today" : `${it.followUp.days} day${it.followUp.days === 1 ? "" : "s"} ago`}${it.followUp.due ? `: the listing still differs. A follow-up is due.` : `. Follow-up after ${FOLLOW_UP_DAYS} days if it still differs.`}</p>` : ""}
+    ${it.outreach ? `<div class="rec-out"><button class="btn btn-ghost" type="button" data-recout>${it.followUp?.due ? "Write a follow-up" : it.followUp ? "Email the office again" : "Email the listing office"}</button><div class="rec-out-box" hidden></div></div>` : ""}
   </article>`;
   el.innerHTML = `${adminTabs()}<div class="rec-wrap"><h1>Record checks</h1>
     <p class="muted">Private. Active listings compared with the Florida Department of Revenue tax roll. Only you can see this page; nothing here is shown on listings. Owner names are never stored.</p>
@@ -1950,11 +1953,12 @@ async function renderRecords() {
     <form class="rec-filters" id="recFilters">
       <select name="county">${opt("", "All counties", rec.county)}${counties.map(([c]) => opt(c, c, rec.county)).join("")}</select>
       <select name="check">${opt("", "All checks", rec.check)}${opt("closer", "Closer look (private)", rec.check)}${d.checks.map((c) => opt(c, c, rec.check)).join("")}</select>
-      <select name="status">${opt("open", "Open (new or changed)", rec.status)}${Object.entries(d.statuses).filter(([k]) => k !== "new").map(([k, t]) => opt(k, t, rec.status)).join("")}${opt("all", "All statuses", rec.status)}</select>
+      <select name="status">${opt("open", "Open (new or changed)", rec.status)}${opt("followup", `Follow-up due (${n(d.followUpsDue)})`, rec.status)}${Object.entries(d.statuses).filter(([k]) => k !== "new").map(([k, t]) => opt(k, t, rec.status)).join("")}${opt("all", "All statuses", rec.status)}</select>
       <select name="date">${d.dates.map((x) => opt(x, x === d.dates[0] ? `${x} (latest)` : x, d.date)).join("")}</select>
       <input name="q" placeholder="Address or MLS #" value="${esc(rec.q)}">
       <button class="btn" type="submit">Filter</button>
     </form>
+    ${d.followUpsDue || d.resolved ? `<p class="rec-outsum">${d.followUpsDue ? `<b>${n(d.followUpsDue)}</b> follow-up${d.followUpsDue === 1 ? "" : "s"} due. ` : ""}${d.resolved ? `${n(d.resolved)} listing${d.resolved === 1 ? "" : "s"} you emailed no longer differ${d.resolved === 1 ? "s" : ""} from the record (fixed, sold or withdrawn).` : ""}</p>` : ""}
     <p class="muted">${n(d.total)} listing${d.total === 1 ? "" : "s"} · page ${d.page} of ${d.pages}</p>
     <div class="rec-list">${d.items.length ? d.items.map(item).join("") : `<p class="muted" style="padding:16px 0">Nothing here.</p>`}</div>
     <div class="rec-pager">${d.page > 1 ? `<button class="btn btn-ghost" type="button" data-recpage="${d.page - 1}">Previous</button>` : ""}${d.page < d.pages ? `<button class="btn btn-ghost" type="button" data-recpage="${d.page + 1}">Next</button>` : ""}</div>
@@ -1965,13 +1969,50 @@ async function renderRecords() {
     Object.assign(rec, { county: f.get("county"), check: f.get("check"), status: f.get("status"), q: f.get("q").trim(), date: f.get("date"), page: 1 });
     renderRecords();
   };
-  el.onclick = (e) => { const b = e.target.closest("[data-recpage]"); if (b) { rec.page = Number(b.dataset.recpage); renderRecords(); window.scrollTo(0, 0); } };
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-recpage]");
+    if (b) { rec.page = Number(b.dataset.recpage); renderRecords(); window.scrollTo(0, 0); return; }
+    const o = e.target.closest("[data-recout]");
+    if (o) openOutreach(o.closest("[data-recid]"), d.items.find((x) => x.id === o.closest("[data-recid]").dataset.recid), d);
+  };
   el.onchange = async (e) => {
     const box = e.target.closest("[data-recid]");
     if (!box || !e.target.matches("[data-recstatus], [data-recnote]")) return;
     const status = box.querySelector("[data-recstatus]").value, note = box.querySelector("[data-recnote]").value;
     try { await store.adminRecordStatus(box.dataset.recid, status, note); box.className = `rec-item rec-${status}`; box.querySelector(".rec-changed")?.remove(); toast("Saved"); }
     catch (err) { toast(err.message || "Couldn't save"); }
+  };
+}
+
+/* Listing outreach: a neutral note to the listing office about listing-vs-record differences (js/outreach.js).
+   The office's email comes from the listing record; the owner sends it from their own email app. */
+async function openOutreach(card, it, d) {
+  const box = card.querySelector(".rec-out-box");
+  if (!box.hidden) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = `<p class="muted">Loading the listing office…</p>`;
+  let l = null;
+  try { const r = await store.loadListingDetail(it.id); l = r?.gone ? null : r; } catch {}
+  const src = Object.values(d.counties || {}).map((c) => c.source?.label).find(Boolean) || "";
+  const draft = outreachEmail(it, { agent: { name: SITE.agentName, brokerage: SITE.brokerage, phone: SITE.phone }, source: src, followUpOf: it.followUp ? it.statusAt : null });
+  const to = l?.ListOfficeEmail || "";
+  box.innerHTML = `
+    <p class="rec-out-to">${l ? `To: <b>${esc(l.ListOfficeName || "Listing office")}</b> ${to ? `&lt;${esc(to)}&gt;` : `<span class="muted">(no office email in the listing: add the address in your email app${l.ListOfficePhone ? `, or call ${esc(l.ListOfficePhone)}` : ""})</span>`}` : `<span class="form-error">This listing is no longer active or couldn't be loaded.</span>`}</p>
+    <label class="field">Subject<input data-osubj value="${esc(draft.subject)}" maxlength="200"></label>
+    <label class="field">Message<textarea data-obody rows="11">${esc(draft.body)}</textarea></label>
+    <div class="lead-actions"><a class="btn" data-omail href="#">Open in email</a><button class="btn btn-ghost" type="button" data-ocopy>Copy</button></div>
+    <p class="muted lead-small">Only listing details vs. the county record are included: never sale history, values, owner details or private signals. Opening it in email marks the listing “Contacted listing agent” and starts the ${FOLLOW_UP_DAYS}-day follow-up clock.</p>`;
+  const subj = box.querySelector("[data-osubj]"), body = box.querySelector("[data-obody]"), mail = box.querySelector("[data-omail]");
+  const sync = () => { if (mail) mail.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj.value)}&body=${encodeURIComponent(body.value)}`; };
+  sync(); subj.oninput = body.oninput = sync;
+  const mark = async () => {
+    const note = card.querySelector("[data-recnote]").value || `Emailed listing office ${new Date().toLocaleDateString("en-US")}`;
+    try { await store.adminRecordStatus(it.id, "contacted_agent", note, true); card.querySelector("[data-recstatus]").value = "contacted_agent"; card.querySelector("[data-recnote]").value = note; card.className = "rec-item rec-contacted_agent"; toast("Marked: contacted listing agent"); }
+    catch (err) { toast(err.message || "Couldn't save"); }
+  };
+  mail?.addEventListener("click", mark);
+  box.querySelector("[data-ocopy]").onclick = async () => {
+    try { await navigator.clipboard.writeText(`${subj.value}\n\n${body.value}`); toast("Copied. Mark the status when you send it."); } catch { toast("Couldn't copy; select the text instead."); }
   };
 }
 
