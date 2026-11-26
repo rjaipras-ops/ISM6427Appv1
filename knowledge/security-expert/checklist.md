@@ -12,3 +12,8 @@
   would spend money (solar is by listing key only).
 - Never log a URL that contains a key.
 - Owner names and lead contact details are never sent to AI services; strip them first.
+- Leads: `submission-created` is a Netlify event function; Netlify signs the event and checks it
+  before running, so outside requests can't add leads. Leads are read only through
+  `/api/admin/leads` (isAdmin). Logs say "stored a request", never who.
+- Lead AI drafts: only on the owner's click; `aiPrompt()` strips name, email, phone and links
+  (tests/leads.test.mjs checks this). Daily cap LEAD_AI_DAILY_CAP (default 50).

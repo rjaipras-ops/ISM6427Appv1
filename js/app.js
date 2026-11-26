@@ -1860,6 +1860,7 @@ async function renderAdmin() {
   }
   if (admin.tab === "insights") return renderInsights();
   if (admin.tab === "records") return renderRecords();
+  if (admin.tab === "leads") return renderLeads();
   el.innerHTML = `${adminTabs()}<h1>Review moderation</h1><p class="muted">Loading…</p>`;
   try {
     const [list, settings] = await Promise.all([store.adminListReviews(), store.adminGetSettings()]);
@@ -1867,7 +1868,7 @@ async function renderAdmin() {
   } catch (err) { el.innerHTML = `<h1>Review moderation</h1><p class="form-error">${esc(err.message)}</p>`; return; }
   drawAdmin();
 }
-const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["insights", "Search insights"], ["records", "Record checks"]].map(([k, t]) =>
+const adminTabs = () => `<div class="seg admin-switch">${[["reviews", "Reviews"], ["leads", "Leads"], ["insights", "Search insights"], ["records", "Record checks"]].map(([k, t]) =>
   `<button type="button" data-admview="${k}" aria-pressed="${(admin.tab || "reviews") === k}">${t}</button>`).join("")}</div>`;
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-admview]");
@@ -1971,6 +1972,132 @@ async function renderRecords() {
     const status = box.querySelector("[data-recstatus]").value, note = box.querySelector("[data-recnote]").value;
     try { await store.adminRecordStatus(box.dataset.recid, status, note); box.className = `rec-item rec-${status}`; box.querySelector(".rec-changed")?.remove(); toast("Saved"); }
     catch (err) { toast(err.message || "Couldn't save"); }
+  };
+}
+
+/* Leads: private copies of tour requests with triage and a reply to send (netlify/lib/leads.mjs). Site owner only.
+   Nothing is sent from the site: "Open in email" and "Text" open the owner's own apps with the reply filled in. */
+const leadsUi = { filter: "open", open: null };
+const PRIORITY = { hot: "Hot", warm: "Warm", nurture: "Nurture" };
+async function renderLeads() {
+  const el = $("#view-admin");
+  if (!el.querySelector(".leads-wrap")) el.innerHTML = `${adminTabs()}<h1>Leads</h1><p class="muted">Loading…</p>`;
+  let d;
+  try { d = await store.adminLeads(); } catch (err) { el.innerHTML = `${adminTabs()}<h1>Leads</h1><p class="form-error">${esc(err.message)}</p>`; return; }
+  const openSt = new Set(["new", "contacted", "touring"]);
+  const rows = d.leads.filter((r) => leadsUi.filter === "all" ? true : leadsUi.filter === "open" ? openSt.has(r.status) : r.status === leadsUi.filter);
+  const count = (f) => d.leads.filter((r) => f === "all" || (f === "open" ? openSt.has(r.status) : r.status === f)).length;
+  const when = (iso) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  el.innerHTML = `${adminTabs()}<div class="leads-wrap"><h1>Leads</h1>
+    <p class="muted">Private. A copy of each tour request from the site's form (Netlify still emails you each one). Only you can see this page. Replies are never sent from here: “Open in email” and “Text” open your own apps with the reply filled in.</p>
+    <form class="leads-settings" id="leadSettings"><label class="field-inline">Counties you handle yourself
+      <input name="counties" value="${esc((d.settings.myCounties || []).join(", "))}" placeholder="e.g. Palm Beach, Broward" maxlength="300"></label>
+      <button class="btn btn-ghost" type="submit">Save</button>
+      <small class="muted">Requests for homes in other counties are marked “Refer”.</small></form>
+    <div class="seg leads-filter">${[["open", "Open"], ...Object.entries(d.statuses).filter(([k]) => !openSt.has(k)), ["all", "All"]].map(([k, t]) =>
+      `<button type="button" data-leadfilter="${k}" aria-pressed="${leadsUi.filter === k}">${esc(t)} (${count(k)})</button>`).join("")}</div>
+    <div class="lead-list">${rows.length ? rows.map((r) => `<article class="lead-row" data-leadid="${esc(r.id)}">
+      <button type="button" class="lead-sum" data-leadopen="${esc(r.id)}" aria-expanded="${leadsUi.open === r.id}">
+        <span class="lead-pri lead-${esc(r.priority)}">${PRIORITY[r.priority] || ""}</span>
+        <span class="lead-main"><b>${esc(r.name)}</b><span class="muted">${esc(r.home || "General message")}${r.county ? ` · ${esc(r.county)}` : ""}</span></span>
+        <span class="lead-meta"><span class="lead-sug lead-sug-${esc(r.suggestion)}">${r.suggestion === "refer" ? "Refer" : "Handle"}</span>${r.language === "Spanish" ? `<span class="lead-lang">ES</span>` : ""}
+          <span class="muted">${esc(d.statuses[r.status] || r.status)} · ${when(r.at)}</span></span>
+      </button><div class="lead-detail" ${leadsUi.open === r.id ? "" : "hidden"}></div></article>`).join("")
+      : `<div class="empty"><h2>No requests here</h2><p>New tour requests appear here a few seconds after they're sent.</p></div>`}</div></div>`;
+  $("#leadSettings").onsubmit = async (e) => {
+    e.preventDefault();
+    try { await store.adminLeadPost({ action: "settings", myCounties: e.target.counties.value.split(",").map((x) => x.trim()).filter(Boolean) }); toast("Saved. New requests use these counties."); }
+    catch (err) { toast(err.message); }
+  };
+  el.onclick = async (e) => {
+    const f = e.target.closest("[data-leadfilter]");
+    if (f) { leadsUi.filter = f.dataset.leadfilter; leadsUi.open = null; return renderLeads(); }
+    const o = e.target.closest("[data-leadopen]");
+    if (o) {
+      const box = o.nextElementSibling, id = o.dataset.leadopen;
+      const show = box.hidden;
+      el.querySelectorAll(".lead-detail").forEach((x) => { x.hidden = true; x.previousElementSibling.setAttribute("aria-expanded", "false"); });
+      leadsUi.open = show ? id : null;
+      if (show) { box.hidden = false; o.setAttribute("aria-expanded", "true"); box.innerHTML = `<p class="muted">Loading…</p>`; drawLead(box, id, d.statuses); }
+    }
+  };
+  if (leadsUi.open) { const b = el.querySelector(`[data-leadid="${CSS.escape(leadsUi.open)}"] .lead-detail`); if (b) drawLead(b, leadsUi.open, d.statuses); }
+}
+async function drawLead(box, id, statuses) {
+  let d;
+  try { d = await store.adminLead(id); } catch (err) { box.innerHTML = `<p class="form-error">${esc(err.message)}</p>`; return; }
+  const l = d.lead, li = l.listing;
+  const tel = l.phone.replace(/[^\d+]/g, "");
+  box.innerHTML = `
+    <div class="lead-cols">
+      <section><h3>Request</h3>
+        <dl class="lead-dl">
+          <dt>Email</dt><dd><a href="mailto:${esc(l.email)}">${esc(l.email)}</a></dd>
+          <dt>Phone</dt><dd><a href="tel:${esc(tel)}">${esc(l.phone)}</a></dd>
+          <dt>Home</dt><dd>${li ? `<a href="#/home/${esc(li.key)}">${esc(li.address)}</a><br><span class="muted">${esc(li.type || "")} · ${fmt$(li.price)}${li.mls ? ` · MLS ${esc(li.mls)}` : ""}${li.office ? ` · ${esc(li.office)}` : ""}</span>` : esc(l.home || l.subject || "General message")}</dd>
+          <dt>Timeline</dt><dd>${esc(l.timeline || "—")}</dd>
+          <dt>Financing</dt><dd>${esc(l.financing || "—")}</dd>
+          <dt>Has an agent</dt><dd>${esc(l.hasAgent || "—")}</dd>
+          <dt>Language</dt><dd>${esc(l.language)}</dd>
+          ${l.message ? `<dt>Message</dt><dd class="lead-msg">${esc(l.message)}</dd>` : ""}
+          <dt>Consent</dt><dd>${l.consent.given ? `Given ${esc(new Date(l.consent.at || l.at).toLocaleString())} (version ${esc(l.consent.version || "?")})` : "Not recorded"}
+            ${l.consent.text ? `<details><summary>Wording they agreed to</summary><p class="muted">${esc(l.consent.text)}</p></details>` : ""}</dd>
+        </dl>
+        <h3>Triage</h3>
+        <p><span class="lead-pri lead-${esc(l.triage.priority)}">${PRIORITY[l.triage.priority]}</span> <span class="lead-sug lead-sug-${esc(l.triage.suggestion)}">${l.triage.suggestion === "refer" ? "Suggest: refer" : "Suggest: handle it yourself"}</span></p>
+        <ul class="lead-reasons">${l.triage.reasons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      </section>
+      <section><h3>Reply</h3>
+        <label class="field">Subject<input data-lsubj value="${esc(d.reply.subject)}" maxlength="200"></label>
+        <label class="field">Message<textarea data-lbody rows="9">${esc(d.reply.body)}</textarea></label>
+        <div class="lead-actions">
+          ${d.aiDrafts ? `<button class="btn btn-ghost" type="button" data-lai>Draft with AI</button>` : ""}
+          <a class="btn" data-lmail href="#">Open in email</a>
+          ${tel ? `<a class="btn btn-ghost" data-lsms href="#">Text</a>` : ""}
+          <button class="btn btn-ghost" type="button" data-lcopy="reply">Copy</button>
+        </div>
+        ${d.aiDrafts ? `<p class="muted lead-small">AI drafts don't see the person's name, email or phone number (they're removed first). Read the draft before sending.</p>` : ""}
+        <h3>Referral</h3>
+        <textarea class="lead-ref" data-lref rows="7" readonly>${esc(d.referral)}</textarea>
+        <div class="lead-actions"><button class="btn btn-ghost" type="button" data-lcopy="ref">Copy referral details</button></div>
+        <p class="muted lead-small">For a referral agreement with another agent or a referral network. Before using a network that contacts the buyer itself, see the open consent question in the compliance notes.</p>
+        <h3>Status</h3>
+        <div class="lead-status"><select data-lstatus>${Object.entries(statuses).map(([k, t]) => `<option value="${k}"${k === l.status ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>
+          <input data-lnotes placeholder="Notes (only you see these)" value="${esc(l.notes || "")}" maxlength="2000">
+          <button class="linkbtn lead-del" type="button" data-ldel>Delete request</button></div>
+      </section>
+    </div>`;
+  const subj = box.querySelector("[data-lsubj]"), body = box.querySelector("[data-lbody]");
+  const sync = () => {
+    box.querySelector("[data-lmail]").href = `mailto:${encodeURIComponent(l.email)}?subject=${encodeURIComponent(subj.value)}&body=${encodeURIComponent(body.value)}`;
+    const sms = box.querySelector("[data-lsms]");
+    if (sms) sms.href = `sms:${tel}?&body=${encodeURIComponent(body.value)}`;
+  };
+  sync();
+  subj.oninput = body.oninput = sync;
+  const save = async (patch, msg = "Saved") => {
+    try { await store.adminLeadPost({ id, ...patch }); toast(msg); } catch (err) { toast(err.message || "Couldn't save"); }
+  };
+  // Opening the reply in email or text marks the request contacted (the owner can change it back).
+  box.querySelectorAll("[data-lmail], [data-lsms]").forEach((a) => a.addEventListener("click", () => {
+    const st = box.querySelector("[data-lstatus]");
+    if (st.value === "new") { st.value = "contacted"; save({ status: "contacted" }, "Marked contacted"); }
+  }));
+  box.querySelector("[data-lai]")?.addEventListener("click", async (e) => {
+    const b = e.currentTarget; b.disabled = true; b.textContent = "Drafting…";
+    try { const r = await store.adminLeadPost({ id, action: "ai-draft" }); body.value = r.body; sync(); toast("Draft ready. Read it before sending."); }
+    catch (err) { toast(err.message); }
+    finally { b.disabled = false; b.textContent = "Draft with AI"; }
+  });
+  box.querySelectorAll("[data-lcopy]").forEach((b) => b.addEventListener("click", async () => {
+    const text = b.dataset.lcopy === "ref" ? box.querySelector("[data-lref]").value : `${subj.value}\n\n${body.value}`;
+    try { await navigator.clipboard.writeText(text); toast("Copied"); } catch { toast("Couldn't copy; select the text instead."); }
+  }));
+  box.querySelector("[data-lstatus]").onchange = (e) => save({ status: e.target.value });
+  box.querySelector("[data-lnotes]").onchange = (e) => save({ notes: e.target.value });
+  box.querySelector("[data-ldel]").onclick = async () => {
+    if (!confirm("Delete this request from the Leads tab? (Netlify keeps its own copy under Forms.)")) return;
+    try { await store.adminLeadPost({ id, action: "delete" }); leadsUi.open = null; renderLeads(); } catch (err) { toast(err.message); }
   };
 }
 

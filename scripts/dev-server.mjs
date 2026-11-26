@@ -41,6 +41,8 @@ import elevationFn from "../netlify/functions/elevation.mjs";
 import solarFn from "../netlify/functions/solar.mjs";
 import commuteFn from "../netlify/functions/commute.mjs";
 import featuresFn from "../netlify/functions/features.mjs";
+import adminLeads from "../netlify/functions/admin-leads.mjs";
+import submissionCreated from "../netlify/functions/submission-created.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
@@ -75,6 +77,7 @@ const routes = [
   [/^\/api\/admin\/reviews$/, adminReviews],
   [/^\/api\/admin\/settings$/, adminSettings],
   [/^\/api\/admin\/records$/, adminRecords],
+  [/^\/api\/admin\/leads$/, adminLeads],
   [/^\/api\/records\/upload$/, recordsUpload],
   [/^\/api\/rates$/, ratesFn],
   [/^\/api\/elevation$/, elevationFn],
@@ -87,6 +90,15 @@ const routes = [
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+    // Netlify Forms stand-in: a form POST to "/" is handed to the submission-created event function.
+    if (req.method === "POST" && url.pathname === "/") {
+      const raw = await new Promise((r) => { const c = []; req.on("data", (d) => c.push(d)); req.on("end", () => r(Buffer.concat(c).toString())); });
+      const data = Object.fromEntries(new URLSearchParams(raw));
+      const payload = { form_name: data["form-name"], data, created_at: new Date().toISOString(), id: `dev${Date.now()}` };
+      await submissionCreated(new Request(url, { method: "POST", body: JSON.stringify({ payload }) }));
+      res.writeHead(200, { "Content-Type": "text/plain" }).end("ok");
+      return;
+    }
     for (const [re, fn, params] of routes) {
       const m = url.pathname.match(re);
       if (!m) continue;

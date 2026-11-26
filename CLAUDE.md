@@ -43,6 +43,12 @@ batch contains.
    About/FAQ/privacy/terms pages are still English only.
 7. Site blocks /.claude/*, /knowledge/* and /docs/* (agent team files, agent notes, referral setup
    notes) so they aren't served publicly.
+8. Lead triage agent: admin "Leads" tab. Netlify's submission-created event stores a private copy
+   of each tour request (lib/leads.mjs): priority (hot/warm/nurture), handle-or-refer by "counties
+   you handle", a standard reply in the visitor's language, optional "Draft with AI" (name, email,
+   phone removed first), referral text to copy, status and notes. Replies open the owner's own
+   email/text app (nothing is sent by the site). Tour form options now submit English values from
+   the Spanish site too. Privacy policy updated (Nov 26). Admin tabs wrap on phones.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

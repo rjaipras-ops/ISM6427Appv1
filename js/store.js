@@ -406,6 +406,9 @@ export const adminAct = (id, action) => api("/api/admin/reviews", { method: "POS
 export const adminGetSettings = () => api("/api/admin/settings");
 export const adminInsights = (days) => api(`/api/admin/insights?days=${encodeURIComponent(days)}`);
 export const adminRecords = (params) => api(`/api/admin/records?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ""))}`);
+export const adminLeads = () => api("/api/admin/leads");
+export const adminLead = (id) => api(`/api/admin/leads?id=${encodeURIComponent(id)}`);
+export const adminLeadPost = (body) => api("/api/admin/leads", { method: "POST", body: JSON.stringify(body) });
 export const adminRecordStatus = (id, status, note) => api("/api/admin/records", { method: "POST", body: JSON.stringify({ id, status, note }) });
 export async function adminSaveSettings(patch) {
   const s = await api("/api/admin/settings", { method: "POST", body: JSON.stringify(patch) });
