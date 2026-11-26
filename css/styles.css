@@ -675,6 +675,12 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .broker-agent { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
 .broker-firm { font-size: 15px; font-weight: 700; color: var(--brand-ink); white-space: nowrap; }
 .brokerage + .account { margin-left: 8px; }
+/* Language switch (English / Español) */
+.lang-btn { appearance: none; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px; font: 600 13px Inter, system-ui, sans-serif; color: var(--brand-ink); cursor: pointer; white-space: nowrap; margin-left: 8px; }
+.lang-btn:hover { border-color: var(--brand); }
+.lang-btn { flex: none; }
+.lang-btn .lang-short { display: none; }
+.lang-btn + .account { margin-left: 8px; }
 @media (max-width: 860px) {
   .broker-agent { display: none; }
   .broker-firm { font-size: 13px; }
@@ -835,6 +841,7 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
   button.brokerage { text-align: left; }
   .broker-firm { font-size: 13px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
 }
+@media (max-width: 560px) { .lang-btn { padding: 5px 8px; font-size: 12px; margin-left: 4px; } .lang-btn .lang-long { display: none; } .lang-btn .lang-short { display: inline; } }
 @media (max-width: 380px) {
   .brand span { display: none; } /* icon only, so the agent + brokerage stay on one line each */
   .broker-agent, .broker-firm { white-space: nowrap; }

@@ -10,6 +10,7 @@ import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { taxEstimates } from "./taxes.js";
 import { houseSVG, typeIcon } from "./art.js";
 import { SITE } from "./config.js";
+import { startTranslating, setLang, isEs, LOCALE } from "./i18n.js";
 import { parseSearch } from "./nlsearch.js";
 import { homeKey, homeSlug, reviewHomeKey } from "./homekey.js";
 import { satelliteThumb, satelliteMap, addParcelOutline } from "./imagery.js";
@@ -21,8 +22,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt$ = (n) => "$" + Math.round(n).toLocaleString("en-US");
 const fmtN = (n) => Math.round(n).toLocaleString("en-US");
-const fmtDate = (iso) => new Date(iso + (iso.length === 10 ? "T12:00:00" : "")).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-const weekday = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+const fmtDate = (iso) => new Date(iso + (iso.length === 10 ? "T12:00:00" : "")).toLocaleDateString(LOCALE, { month: "short", day: "numeric", year: "numeric" });
+const weekday = (iso) => new Date(iso + "T12:00:00").toLocaleDateString(LOCALE, { weekday: "short", month: "short", day: "numeric" });
 const stars = (v, size = "") => {
   const full = Math.round(v * 2) / 2;
   let s = "";
@@ -59,6 +60,14 @@ init().catch((e) => {
 });
 
 async function init() {
+  startTranslating(); // Spanish version: no-op in English
+  for (const b of document.querySelectorAll("[data-lang-toggle]")) {
+    const [long, short] = isEs ? ["English", "EN"] : ["Español", "ES"];
+    if (b.querySelector(".lang-long")) { b.querySelector(".lang-long").textContent = long; b.querySelector(".lang-short").textContent = short; } else b.textContent = long;
+    b.setAttribute("aria-label", long);
+    b.setAttribute("lang", isEs ? "en" : "es");
+    b.addEventListener("click", () => setLang(isEs ? "en" : "es"));
+  }
   const [feed, , rate] = await Promise.all([store.loadFeed(), store.initBackend(), store.loadRates()]);
   // Payment estimates use this week's average 30-year rate (Freddie Mac, via FRED) when available.
   if (rate) { PAY_DEFAULTS.rate = rate.rate30; S.rate = rate; }
@@ -113,6 +122,7 @@ async function submitContact(e) {
     f.page.value = location.href;
     f.consent_text.value = `${$("#consentText").textContent.trim()} ${$("#feeText").textContent.trim()}`;
     f.consent_version.value = "2026-11-24";
+    f.language.value = isEs ? "Spanish" : "English"; // so the agent can answer in the visitor's language
     f.consent_at.value = new Date().toISOString();
     const data = new URLSearchParams(new FormData(f));
     const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: data.toString(), signal: AbortSignal.timeout(15000) });
@@ -149,7 +159,7 @@ function applyFeed(feed) {
   renderFooter();
 }
 const isMls = (l) => l?.Source === "mls";
-const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—");
+const fmtDateTime = (iso) => (iso ? new Date(iso).toLocaleString(LOCALE, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—");
 function ago(iso) {
   if (!iso) return "—";
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -855,15 +865,24 @@ function structureHTML(l) {
   ].filter(Boolean);
   return `<section class="section structure" id="structure"><h2>Construction</h2>
     <div class="structure-grid">${items.map(([k, v]) => `<div><small>${k}</small><div>${v}</div></div>`).join("")}</div>
-    <p class="muted structure-src">From the listing${county ? " and county records" : ""}. Confirm with an inspection, and a wind-mitigation and four-point inspection for insurance.</p></section>`;
+    <p class="muted structure-src">${isEs
+      ? `Según el anuncio${county ? " y los registros del condado" : ""}. Confírmelo con una inspección, y con inspecciones de mitigación de viento y de cuatro puntos para el seguro.`
+      : `From the listing${county ? " and county records" : ""}. Confirm with an inspection, and a wind-mitigation and four-point inspection for insurance.`}</p></section>`;
 }
 
 // Listing page: price cuts and price per sq ft vs. the area, in plain numbers.
 function sellerSignalsHTML(l) {
   const d = l.demo, items = [], cut = cutPct(l);
+  const diff = l.areaDiff != null ? `<b>${l.areaDiff > 0 ? "+" : ""}${l.areaDiff}%</b>` : "";
+  if (isEs) {
+    if (cut >= 1) items.push(`Rebaja de <b>${cut.toFixed(1)}%</b> desde el precio original de ${fmt$(d.OriginalListPrice)}`);
+    if (d.DaysOnMarket != null) items.push(`<b>${d.DaysOnMarket}</b> día${d.DaysOnMarket === 1 ? "" : "s"} en el mercado`);
+    if (l.areaDiff != null) items.push(`${fmt$(l.ListPrice / l.LivingArea)}/pie² frente a la mediana de ${fmt$(l.areaMedian.ppsf)} en ${esc(l.areaMedian.by)} (${diff})`);
+  } else {
   if (cut >= 1) items.push(`Price cut <b>${cut.toFixed(1)}%</b> from the original ${fmt$(d.OriginalListPrice)}`);
   if (d.DaysOnMarket != null) items.push(`<b>${d.DaysOnMarket}</b> day${d.DaysOnMarket === 1 ? "" : "s"} on market`);
-  if (l.areaDiff != null) items.push(`${fmt$(l.ListPrice / l.LivingArea)}/sqft vs. ${fmt$(l.areaMedian.ppsf)} median for ${esc(l.PropertyType.toLowerCase())} homes in ${esc(l.areaMedian.by)} (<b>${l.areaDiff > 0 ? "+" : ""}${l.areaDiff}%</b>)`);
+  if (l.areaDiff != null) items.push(`${fmt$(l.ListPrice / l.LivingArea)}/sqft vs. ${fmt$(l.areaMedian.ppsf)} median for ${esc(l.PropertyType.toLowerCase())} homes in ${esc(l.areaMedian.by)} (${diff})`);
+  }
   if (!items.length) return "";
   return `<p class="seller-signals" title="Calculated by iToured from the listing's prices and other active listings nearby">${items.join(" · ")}</p>`;
 }
@@ -1153,7 +1172,7 @@ function renderDetail(l) {
         ${reviewsSection}
         <section class="section">
           <h2>About this home</h2>
-          <p id="remarks">${esc(remarks)}</p>
+          <p id="remarks" translate="no">${esc(remarks)}</p>
         </section>
         ${publicRecordsHTML(l)}
         ${floodHTML(l)}
@@ -1189,7 +1208,7 @@ function renderDetail(l) {
   $("#sideReview")?.addEventListener("click", () => mine ? $("#reviewList").scrollIntoView({ behavior: "smooth" }) : requireAuth(() => openReviewForm(l)));
   const requestTour = () => {
     const home = `${l.UnparsedAddress}${l.MlsNumber ? ` (MLS #${l.MlsNumber})` : ""}`;
-    contactAgent(`Tour request: ${home}`, `I'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).`, home);
+    contactAgent(`Tour request: ${home}`, isEs ? `Me gustaría visitar ${l.UnparsedAddress} (precio ${fmt$(l.ListPrice)}).` : `I'd like to tour ${l.UnparsedAddress} (listed at ${fmt$(l.ListPrice)}).`, home);
   };
   $("#reqTour").addEventListener("click", requestTour);
   $("#reqTourBar").addEventListener("click", requestTour); // phones: pinned above the tab bar
@@ -1471,7 +1490,7 @@ function panelClick(e) {
   if (act === "clear") { $("#tpAddr").value = ""; renderPanelHome(); $("#tpAddr").focus(); }
   if (act === "review" && p) requireAuth(() => openReviewForm(panelListing(p)));
   if (act === "tour" && p) {
-    contactAgent(`Tour request: ${p.address}`, `I'd like to tour ${p.address}.`, p.address);
+    contactAgent(`Tour request: ${p.address}`, isEs ? `Me gustaría visitar ${p.address}.` : `I'd like to tour ${p.address}.`, p.address);
   }
   const h = e.target.closest("[data-helpful]");
   if (h && p && store.isRemote() && !S.user) { requireAuth(() => renderPanelProperty(p)); return; }
@@ -1558,8 +1577,11 @@ function publicRecordsHTML(l) {
       <div><small>Est. taxes after you buy</small><b>${fmt$(t.afterBuy)}/yr</b>
         <span class="muted">About ${fmt$(t.afterBuyHomestead)}/yr if it's your primary home (homestead)</span></div>
     </div>
-    <p class="muted tax-why">After a sale the county resets the taxable value, so the seller's capped value and exemptions don't carry over.
-      This estimate uses ${fmt$(t.newTaxable)} (the higher of the county's market value or 85% of the price) at ${t.millage.toFixed(2)} mills${t.exactMillage ? "" : " (approx.)"}${t.fixed ? ` plus ${fmt$(t.fixed)} in fixed county charges` : ""}.</p>
+    <p class="muted tax-why">${isEs
+      ? `Después de una venta, el condado reajusta el valor imponible, así que el valor limitado y las exenciones del vendedor no pasan al comprador.
+      Este estimado usa ${fmt$(t.newTaxable)} (el mayor entre el valor de mercado del condado y el 85 % del precio) a ${t.millage.toFixed(2)} milésimas${t.exactMillage ? "" : " (aprox.)"}${t.fixed ? ` más ${fmt$(t.fixed)} en cargos fijos del condado` : ""}.`
+      : `After a sale the county resets the taxable value, so the seller's capped value and exemptions don't carry over.
+      This estimate uses ${fmt$(t.newTaxable)} (the higher of the county's market value or 85% of the price) at ${t.millage.toFixed(2)} mills${t.exactMillage ? "" : " (approx.)"}${t.fixed ? ` plus ${fmt$(t.fixed)} in fixed county charges` : ""}.`}</p>
     ${saleHistoryHTML(h)}
     <div class="records-links">
       ${(() => {
@@ -1572,7 +1594,9 @@ function publicRecordsHTML(l) {
       })()}
     </div>
     ${SEARCH_ONLY_TAX_SITES.has(l.County) ? taxHint(l.County, p.ParcelId) : ""}
-    <p class="muted" style="font-size:12px;margin-top:10px">Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing ${p.MatchedBy === "mls_parcel" ? "by the parcel number on the MLS listing" : "by location and address"}. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}</p>
+    <p class="muted" style="font-size:12px;margin-top:10px">${isEs
+      ? `Fuente: registro de impuestos a la propiedad del condado de ${esc(String(p.AssessmentYear))} (publicado a nivel estatal por el Departamento de Ingresos de la Florida), vinculado a este anuncio ${p.MatchedBy === "mls_parcel" ? "por el número de parcela del anuncio del MLS" : "por ubicación y dirección"}. Los estimados de impuestos usan la tasa real del condado cuando está disponible (si no, una tasa aproximada) y no incluyen las exenciones propias del comprador aparte de homestead; el enlace del recaudador de impuestos muestra las facturas reales y si están pagadas. Verifique si hay impuestos impagos o certificados de impuestos antes del cierre.${showOwner ? "" : " El propietario registrado aparece en el sitio del tasador de propiedades del condado."}`
+      : `Source: ${esc(String(p.AssessmentYear))} county property tax roll (published statewide by the Florida Department of Revenue), matched to this listing ${p.MatchedBy === "mls_parcel" ? "by the parcel number on the MLS listing" : "by location and address"}. Tax estimates use the county's actual tax rate when available (otherwise an approximate rate) and don't include the buyer's own exemptions beyond homestead; the tax collector link shows the actual bills and whether they've been paid. Check for unpaid taxes or tax certificates before closing.${showOwner ? "" : " The owner of record is shown on the county property appraiser's site."}`}</p>
   </section>`;
 }
 /* ---------------- flood & elevation ---------------- */
@@ -1626,7 +1650,7 @@ function loadElevationFor(l) {
   });
 }
 
-const fmtMonthYear = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "");
+const fmtMonthYear = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString(LOCALE, { month: "short", year: "numeric" }) : "");
 function saleHistoryHTML(h) {
   if (!h?.sales?.length) return "";
   return `<div class="sale-history"><h3>Sale history</h3>
@@ -1695,9 +1719,9 @@ function reviewHTML(r) {
       <span class="verified-pill" title="The reviewer certified they toured this home in person">${CHECK} Certified tour</span>
     </div>
     <div style="margin-top:8px">${stars(r.ratings.overall)}</div>
-    <h4>${esc(r.title)}</h4>
-    <p>${esc(r.body)}</p>
-    ${r.pros || r.cons ? `<div class="pros-cons">${r.pros ? `<div class="pro"><b>Liked</b>${esc(r.pros)}</div>` : ""}${r.cons ? `<div class="con"><b>Watch out for</b>${esc(r.cons)}</div>` : ""}</div>` : ""}
+    <h4 translate="no">${esc(r.title)}</h4>
+    <p translate="no">${esc(r.body)}</p>
+    ${r.pros || r.cons ? `<div class="pros-cons">${r.pros ? `<div class="pro"><b>Liked</b><span translate="no">${esc(r.pros)}</span></div>` : ""}${r.cons ? `<div class="con"><b>Watch out for</b><span translate="no">${esc(r.cons)}</span></div>` : ""}</div>` : ""}
     ${r.tags?.length ? `<div class="review-tags">${r.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
     <div class="helpful">
       ${r.status && r.status !== "published" ? "" : `<button type="button" data-helpful="${r.id}">👍 Helpful${r.helpful ? ` (${r.helpful})` : ""}</button>`}

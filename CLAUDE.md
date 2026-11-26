@@ -36,6 +36,11 @@ batch contains.
    (OpenRouteService via /api/commute, area drawn on the map, kept in the URL). Hidden until
    ORS_API_KEY is set; 30-day cache; COMMUTE_DAILY_CAP (default 400 calls). /api/features tells
    the page which optional features are on.
+6. Spanish version: "Español / English" switch in the header (ES/EN on phones), remembered per
+   device and settable by link (?lang=es). js/i18n.js translates the site's own text as it appears
+   (phrase dictionary + patterns); MLS listing text, office names and user reviews are not
+   translated (translate="no"). Tour requests record the visitor's language. Admin and the
+   About/FAQ/privacy/terms pages are still English only.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)
