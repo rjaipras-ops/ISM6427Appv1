@@ -2,6 +2,7 @@ import * as store from "./store.js";
 import {
   PRICE_STEPS, SQFT_STEPS, LOT_STEPS, LOT_LABELS, HOME_TYPES, SEGMENTS, DRAWER_KEYS,
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney, cutPct, annotateArea, MOTIVATED_PHRASES,
+  setCommuteArea, commuteArea, COMMUTE_MODES,
 } from "./filters.js";
 import { monthlyCost, parseMoney, PAY_DEFAULTS } from "./payment.js";
 import { taxBillLink, formatPcn, SEARCH_ONLY_TAX_SITES } from "./taxlinks.js";
@@ -77,6 +78,7 @@ async function init() {
   window.addEventListener("hashchange", route);
   window.addEventListener("hashchange", () => $("#account")?.classList.remove("open"));
   route();
+  initOptionalFeatures();
   startBackgroundRefresh();
 }
 
@@ -303,6 +305,8 @@ function syncControls() {
   setPill("type", f.types.length ? (f.types.length === 1 ? f.types[0] : `Home type (${f.types.length})`) : "Home type", f.types.length > 0);
   const sigN = [f.cutMin != null, f.belowArea, f.motivated, f.hideOverpriced].filter(Boolean).length;
   setPill("signals", sigN ? `Seller signals (${sigN})` : "Seller signals", sigN > 0);
+  setPill("commute", f.commuteQ && f.commuteMin ? `≤ ${f.commuteMin} min ${COMMUTE_MODES[f.commuteMode] || "drive"}` : "Commute", !!f.commuteQ);
+  if (!f.commuteQ && commuteArea()) { setCommuteArea(null); drawCommute(null); }
   const st = !(f.statusActive && f.statusContingent && !f.statusPending);
   setPill("status", st ? (f.statusPending ? "Incl. pending" : "Status (custom)") : "For sale", st);
   const d = defaults();
@@ -429,6 +433,58 @@ function showSearchNote(r) {
       ? "AI read your request and turned it into filters. It can misread things, so check the filters and adjust if needed."
       : "Simple phrase search, not AI: it knows common requests (beds, baths, price, HOA, home type, city, popular features) and can miss or misread others. Check the filters and adjust if needed."}</p>`;
   n.hidden = false;
+}
+
+/* ---------------- optional features (on when their keys are set in Netlify) ---------------- */
+async function initOptionalFeatures() {
+  let feat = {};
+  try { feat = await (await fetch("/api/features")).json(); } catch { /* off */ }
+  S.features = feat;
+  if (!feat.commute) {
+    if (S.f.commuteQ) setFilters({ commuteQ: "", commuteMin: null, commuteMode: "" });
+    return;
+  }
+  $("#commuteDd").hidden = false;
+  $("#commuteForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    applyCommute($("#commuteQ").value.trim(), Number($("#commuteMin").value), $("#commuteMode").value);
+  });
+  $("#commuteClear").addEventListener("click", () => { $("#commuteQ").value = ""; setFilters({ commuteQ: "", commuteMin: null, commuteMode: "" }); });
+  // A shared link or reload with a commute search: load its area again (cached on the server).
+  if (S.f.commuteQ) applyCommute(S.f.commuteQ, S.f.commuteMin || 30, S.f.commuteMode || "drive", { quiet: true });
+}
+
+async function applyCommute(q, minutes, mode, { quiet = false } = {}) {
+  const note = $("#commuteNote");
+  const setNote = (text, err) => { note.textContent = text; note.classList.toggle("is-error", !!err); };
+  if (q.length < 3) { setNote("Type an address or place.", true); return; }
+  $("#commuteQ").value = q; $("#commuteMin").value = String(minutes); $("#commuteMode").value = mode;
+  setNote("Finding homes within reach…");
+  let r;
+  try {
+    const res = await fetch(`/api/commute?${new URLSearchParams({ q, min: String(minutes), mode })}`);
+    r = await res.json();
+  } catch { r = { error: "The travel-time service didn't answer. Please try again." }; }
+  if (r.error) {
+    setNote(r.error, true);
+    if (quiet) setFilters({ commuteQ: "", commuteMin: null, commuteMode: "" });
+    return;
+  }
+  setNote(`Around ${r.place.label}. Typical travel times without traffic; rush hour can take much longer. Routing by OpenRouteService.`);
+  setCommuteArea(r.rings);
+  drawCommute(r);
+  closeDropdowns();
+  setFilters({ commuteQ: q, commuteMin: minutes, commuteMode: mode, bounds: null });
+  if (commuteLayer) map.fitBounds(commuteLayer.getBounds(), { padding: [20, 20] });
+}
+
+let commuteLayer = null;
+function drawCommute(r) {
+  if (commuteLayer) { commuteLayer.remove(); commuteLayer = null; }
+  if (!r || !map) return;
+  const poly = L.polygon(r.rings.map((ring) => ring.map(([x, y]) => [y, x])), { color: "#0e6b5c", weight: 2, fillOpacity: 0.07, interactive: false });
+  const pin = L.circleMarker([r.place.lat, r.place.lng], { radius: 7, color: "#fff", weight: 2, fillColor: "#0e6b5c", fillOpacity: 1 }).bindTooltip(r.place.label);
+  commuteLayer = L.featureGroup([poly, pin]).addTo(map);
 }
 
 /* ---------------- events ---------------- */

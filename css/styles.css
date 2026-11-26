@@ -999,6 +999,13 @@ body.on-search .globalfoot { display: none; }
 @media (prefers-reduced-motion: reduce) { .nl-spin { animation: none; } }
 
 /* Admin: Reviews | Search insights */
+.dd-commute { width: min(340px, calc(100vw - 32px)); }
+.dd-commute .field input { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.commute-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; font-size: 14px; }
+.commute-row select { margin-left: 4px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.commute-actions { display: flex; gap: 12px; align-items: center; }
+.commute-note { font-size: 12px; margin: 10px 0 0; }
+.commute-note.is-error { color: #b3261e; }
 .admin-switch { max-width: 520px; margin: 4px 0 14px; }
 .rec-src { font-size: 13px; }
 .ins-stats .rec-sub, .ins-stats div span + span { display: block; font-size: 12px; }

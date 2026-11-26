@@ -32,6 +32,10 @@ batch contains.
    Open Topo Data fallback), the listing's flood zone, and a FEMA flood map link for the address.
 4. "Solar potential" section on house listings (Google Solar API via /api/solar/:key). Off until
    GOOGLE_SOLAR_API_KEY is set in Netlify; 30-day cache; SOLAR_MONTHLY_CAP (default 2,000 calls).
+5. "Commute" search menu: homes within 10-60 min by car/bike/walking of a typed place
+   (OpenRouteService via /api/commute, area drawn on the map, kept in the URL). Hidden until
+   ORS_API_KEY is set; 30-day cache; COMMUTE_DAILY_CAP (default 400 calls). /api/features tells
+   the page which optional features are on.
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

@@ -127,6 +127,25 @@
         </div>
       </div>
 
+      <div class="dd" data-dd="commute" id="commuteDd" hidden>
+        <button class="pill" type="button" aria-expanded="false"><span data-label="commute">Commute</span><i class="caret"></i></button>
+        <div class="dd-panel dd-commute" role="dialog" aria-label="Commute time">
+          <form id="commuteForm" autocomplete="off">
+            <label class="field">Work, school or any address
+              <input id="commuteQ" type="text" maxlength="120" placeholder="e.g. Brickell City Centre, Miami" required /></label>
+            <div class="commute-row">
+              <label>Within <select id="commuteMin">
+                <option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option>
+                <option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">60 min</option>
+              </select></label>
+              <label>By <select id="commuteMode"><option value="drive">Car</option><option value="bike">Bike</option><option value="walk">Walking</option></select></label>
+            </div>
+            <div class="commute-actions"><button class="btn" type="submit">Show homes</button><button class="linkbtn" type="button" id="commuteClear">Clear</button></div>
+            <p class="muted commute-note" id="commuteNote">Typical travel times without traffic; rush hour can take much longer. Routing by OpenRouteService.</p>
+          </form>
+        </div>
+      </div>
+
       <button class="pill pill-strong" type="button" id="moreBtn">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
         Filters <span class="count-badge" id="moreCount" hidden></span>

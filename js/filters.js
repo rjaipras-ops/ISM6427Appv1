@@ -64,7 +64,7 @@ const BOOL_KEYS = [
   "impactWindows", "boatDock", "oceanAccess", "golf", "noFloodZone", "cbs", "str",
   "belowArea", "motivated", "hideOverpriced",
 ];
-const NUM_KEYS = ["cutMin", "priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating", "payMax", "payDown", "payRate"];
+const NUM_KEYS = ["commuteMin", "cutMin", "priceMin", "priceMax", "bedsMin", "bathsMin", "sqftMin", "sqftMax", "lotMin", "lotMax", "yearMin", "yearMax", "hoaMax", "domMax", "garageMin", "minRating", "payMax", "payDown", "payRate"];
 
 export function defaults() {
   return {
@@ -80,6 +80,8 @@ export function defaults() {
     impactWindows: false, boatDock: false, oceanAccess: false, golf: false, noFloodZone: false, cbs: false, str: false,
     // Seller signals
     cutMin: null, belowArea: false, motivated: false, hideOverpriced: false,
+    // Commute: homes within commuteMin minutes of commuteQ (the area itself is loaded separately).
+    commuteQ: "", commuteMin: null, commuteMode: "",
     bounds: null,
   };
 }
@@ -97,6 +99,21 @@ export const DRAWER_KEYS = [
 const CANON = { saint: "st", ft: "fort", pt: "port", mt: "mount" };
 const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim()
   .split(" ").map((w) => CANON[w] || w).join(" ");
+
+/* ---------- commute area (set by the page once /api/commute answers) ---------- */
+let commuteRings = null;
+export const setCommuteArea = (rings) => { commuteRings = rings && rings.length ? rings : null; };
+export const commuteArea = () => commuteRings;
+function insideRing(ring, lng, lat) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+export const inCommuteArea = (lat, lng, rings = commuteRings) => !rings || rings.some((r) => insideRing(r, lng, lat));
+export const COMMUTE_MODES = { drive: "drive", bike: "bike ride", walk: "walk" };
 
 // `kwKeys`: listings whose description matched the keyword search on the server (a Set), if any.
 // `motivatedKeys`: listings whose description has motivated-seller wording (a Set), once loaded.
@@ -170,6 +187,7 @@ export function matches(l, f, summary, kwKeys, motivatedKeys) {
     const local = norm(f.keyword.replace(/"/g, "")).split(" ").every((t) => hay.includes(t));
     if (!local && !(kwKeys && kwKeys.has(l.ListingId))) return false;
   }
+  if (f.commuteQ && commuteRings && !inCommuteArea(l.Latitude, l.Longitude)) return false;
   if (f.bounds) {
     const [s, w, n, e] = f.bounds;
     if (l.Latitude < s || l.Latitude > n || l.Longitude < w || l.Longitude > e) return false;
@@ -272,6 +290,7 @@ export function chipsFor(f) {
   if (f.motivated) add("Motivated wording", { motivated: false });
   if (f.hideOverpriced) add("Hiding likely overpriced", { hideOverpriced: false });
   if (f.keyword) add(`Keyword: ${f.keyword}`, { keyword: "" });
+  if (f.commuteQ && f.commuteMin) add(`≤ ${f.commuteMin} min ${COMMUTE_MODES[f.commuteMode] || "drive"} to ${f.commuteQ}`, { commuteQ: "", commuteMin: null, commuteMode: "" });
   if (f.bounds) add("Map area", { bounds: null });
   return c;
 }
