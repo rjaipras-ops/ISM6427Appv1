@@ -36,6 +36,7 @@ import adminReviews from "../netlify/functions/admin-reviews.mjs";
 import adminSettings from "../netlify/functions/admin-settings.mjs";
 import adminRecords from "../netlify/functions/admin-records.mjs";
 import recordsUpload from "../netlify/functions/records-upload.mjs";
+import ratesFn from "../netlify/functions/rates.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const PORT = Number(process.env.PORT || 8888);
@@ -71,6 +72,7 @@ const routes = [
   [/^\/api\/admin\/settings$/, adminSettings],
   [/^\/api\/admin\/records$/, adminRecords],
   [/^\/api\/records\/upload$/, recordsUpload],
+  [/^\/api\/rates$/, ratesFn],
   [/^\/api\/reviews\/([\w-]+)\/(delete|helpful|report)$/, reviewAction, (m) => ({ id: m[1], action: m[2] })],
 ];
 

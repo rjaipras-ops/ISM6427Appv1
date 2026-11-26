@@ -292,6 +292,7 @@ code { background: var(--line-2); padding: 1px 5px; border-radius: 4px; font-siz
 .side-card .btn { width: 100%; margin-top: 8px; }
 .side-card .btn-ghost { width: 100%; }
 .side-card + .side-card { margin-top: 16px; position: static; }
+.calc-rate { font-size: 12px; margin: 8px 0 0; line-height: 1.4; }
 .calc label { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; padding: 4px 0; }
 .calc input { width: 110px; height: 34px; border: 1.5px solid var(--line); border-radius: 6px; padding: 0 8px; text-align: right; }
 .calc .total { font-size: 26px; font-weight: 700; margin: 4px 0 8px; }

@@ -3,7 +3,7 @@ import {
   PRICE_STEPS, SQFT_STEPS, LOT_STEPS, LOT_LABELS, HOME_TYPES, SEGMENTS, DRAWER_KEYS,
   defaults, matches, sortListings, toQuery, fromQuery, chipsFor, shortMoney, cutPct, annotateArea, MOTIVATED_PHRASES,
 } from "./filters.js";
-import { monthlyCost, parseMoney } from "./payment.js";
+import { monthlyCost, parseMoney, PAY_DEFAULTS } from "./payment.js";
 import { taxBillLink, formatPcn, SEARCH_ONLY_TAX_SITES } from "./taxlinks.js";
 import { buildRanges, syncRanges, wireRanges } from "./ranges.js";
 import { taxEstimates } from "./taxes.js";
@@ -58,7 +58,11 @@ init().catch((e) => {
 });
 
 async function init() {
-  const [feed] = await Promise.all([store.loadFeed(), store.initBackend()]);
+  const [feed, , rate] = await Promise.all([store.loadFeed(), store.initBackend(), store.loadRates()]);
+  // Payment estimates use this week's average 30-year rate (Freddie Mac, via FRED) when available.
+  if (rate) { PAY_DEFAULTS.rate = rate.rate30; S.rate = rate; }
+  const payRateInput = document.querySelector('input[name="payRate"]');
+  if (payRateInput) payRateInput.placeholder = String(PAY_DEFAULTS.rate);
   S.user = store.getUser();
   S.summaries = store.getReviewSummaries(S.listings);
   applyFeed(feed);
@@ -854,7 +858,7 @@ function cardHTML(l, { compact = false } = {}) {
       ${compact ? "" : `<button class="save-btn" type="button" data-id="${l.ListingId}" aria-pressed="${saved}" aria-label="${saved ? "Remove from saved" : "Save home"}">${HEART}</button>`}
     </div>
     <div class="card-body">
-      <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}${compact ? "" : `<span class="est-pay" title="Estimated monthly cost: ${S.f.payDown ?? 20}% down, ${S.f.payRate ?? 6.4}% 30-yr, plus est. taxes, insurance and HOA">Est. ${fmt$(monthlyCost(l, { down: S.f.payDown, rate: S.f.payRate }).total)}/mo</span>`}</div>
+      <div class="price">${fmt$(l.ListPrice)}${l.demo.PriceReduced && !compact ? `<s>${fmt$(l.demo.OriginalListPrice)}</s>` : ""}${compact ? "" : `<span class="est-pay" title="Estimated monthly cost: ${S.f.payDown ?? 20}% down, ${S.f.payRate ?? PAY_DEFAULTS.rate}% 30-yr, plus est. taxes, insurance and HOA">Est. ${fmt$(monthlyCost(l, { down: S.f.payDown, rate: S.f.payRate }).total)}/mo</span>`}</div>
       <div class="facts">${factsHTML(l, "card")}${compact ? "" : `<span>${l.PropertyType}</span>`}</div>
       <p class="addr">${esc(l.UnparsedAddress)}</p>
       ${isMls(l) ? `<p class="courtesy">${mlsMark()}<span>Courtesy of ${esc(l.ListOfficeName)}</span></p>` : ""}
@@ -1594,7 +1598,7 @@ function reviewHTML(r) {
 /* ---------------- mortgage calc ---------------- */
 function renderCalc(l) {
   const el = $("#calc");
-  const st = { down: 20, rate: 6.4, years: 30 };
+  const st = { down: PAY_DEFAULTS.down, rate: S.f.payRate ?? PAY_DEFAULTS.rate, years: PAY_DEFAULTS.years };
   const draw = () => {
     const { pi, tax, ins, flood, hoa, total } = monthlyCost(l, { ...st, useListingTax: true });
     const parts = [["Principal & interest", pi, "#0b6e63"], ["Property tax", tax, "#5aa6c9"], ["Home insurance", ins, "#f2a516"], ["Flood insurance", flood, "#7a5af5"], ["HOA", hoa, "#e8563f"]].filter((p) => p[1] > 0);
@@ -1607,7 +1611,8 @@ function renderCalc(l) {
       <label>Down payment (%)<input type="number" min="0" max="100" step="1" value="${st.down}" data-k="down"></label>
       <label>Interest rate (%)<input type="number" min="0" max="20" step="0.05" value="${st.rate}" data-k="rate"></label>
       <label>Loan term (yrs)<input type="number" min="5" max="40" step="5" value="${st.years}" data-k="years"></label>
-    </div>`;
+    </div>
+    ${S.rate ? `<p class="muted calc-rate">Rate: this week's average 30-year fixed rate, ${S.rate.rate30}% (Freddie Mac, week of ${esc(fmtDate(S.rate.asOf))}). Your rate depends on your credit and loan.</p>` : ""}`;
   el.addEventListener("input", (e) => { const k = e.target.dataset.k; if (!k) return; const v = parseFloat(e.target.value); if (Number.isFinite(v)) { st[k] = v; draw(); } });
   draw();
 }

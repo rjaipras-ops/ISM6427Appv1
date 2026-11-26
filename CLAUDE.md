@@ -26,6 +26,8 @@ batch contains.
    (restores record values and tax-bill links lost in the Nov 25 deploy); unit check where the
    county record shows a unit (letter prefixes like Key West's "R1" allowed); Indian River ".0"
    restored when the MLS drops it; MATCH_VERSION 4.
+2. Payment estimates use this week's 30-year mortgage rate (Freddie Mac via FRED, /api/rates),
+   with the rate and week shown under the listing calculator (was a fixed 6.4%).
 
 (Last deploy, Nov 25 2026: tour bar street + city; records links by MLS parcel number;
 /CLAUDE.md and /tests/* blocked on the site.)

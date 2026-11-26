@@ -473,6 +473,15 @@ function decodeIndex(data) {
  * Loads all listings. Returns { mode: "live" | "mock" | "demo", lastSyncTimestamp, version, listings }.
  *  live = BeachesMLS feed, mock = test mode (no Spark token yet), demo = static fallback file.
  */
+/** This week's 30-year mortgage rate ({ rate30, asOf, source, url }), or null if unavailable. */
+export async function loadRates() {
+  try {
+    const r = await fetch("/api/rates", { signal: AbortSignal.timeout(5000) });
+    const j = r.ok ? await r.json() : null;
+    return j?.rate30 > 0 ? j : null;
+  } catch { return null; }
+}
+
 export async function loadFeed() {
   try {
     // "no-cache" revalidates with the server's ETag, so unchanged data isn't re-downloaded.
