@@ -22,7 +22,12 @@ as a question for the owner instead of building it.
 
 ## When agents disagree (debate protocol)
 Use it for visible or compliance-sensitive changes, not for small fixes.
-1. Proposal: the builder (usually ux-designer or ui-designer) states the change and its reasons.
+0. Ideas first (design questions): before anyone critiques, ux-designer and ui-designer each sketch
+   at least three genuinely different solutions on their own, including one that rearranges the
+   parts (move, stack, merge or drop an element) rather than resizing them, and one from the owner's
+   own suggestion if there is one. Don't hand the agents a fixed menu of options: options supplied
+   up front anchor everyone on them. The main session renders the most promising ideas.
+1. Proposal: the builder (usually ux-designer or ui-designer) picks one and states its reasons.
 2. Independent review: each reviewer answers without seeing the other reviewers' answers.
    Answers are PASS, or REQUIRED fixes and OPTIONAL suggestions, each with evidence (a rule,
    a screenshot, a test result, a measurement).
