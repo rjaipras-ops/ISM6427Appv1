@@ -22,11 +22,11 @@ batch contains.
 
 ## Pending for the next deploy
 
-1. Language switch is now a two-sided "English | Español" toggle (current language highlighted)
-   instead of a button naming the other language. On phones the logo shows the icon only (no
-   "iToured" word) so "LoKation Real Estate" stays readable; 320px phones show EN | ES. Switch
-   buttons 32px tall on phones (agent debate, knowledge/debates/2026-11-27-header-language-switch.md).
-   Service worker cache v6.
+1. Language switch is a two-sided toggle (current language highlighted): "English | Español" on
+   tablets and desktop, "EN | ES" on phones (owner's choice), 32px-tall buttons on phones. Phone
+   header is a logo lockup: icon, "iToured" with "LoKation Real Estate" under it on one line, then
+   EN | ES and Sign in (fixes the brokerage name being cut off on 320px phones on the live site).
+   Header check: scripts/qa/header-check.cjs. Service worker cache v6.
 
 (Last deploy, Nov 26 2026: records links follow-up (Monroe, unit check, Indian River);
 FRED mortgage rate; flood & elevation; Spanish version; /.claude, /knowledge, /docs blocked;

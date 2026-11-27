@@ -837,9 +837,6 @@ button.brokerage:hover .broker-firm { text-decoration: underline; }
   .broker-firm { font-size: 13px; white-space: normal; max-width: none; overflow: visible; line-height: 1.15; }
 }
 
-@media (max-width: 380px) {
-  .brand span { display: none; } /* icon only, so the brokerage stays readable */
-}
 
 /* License next to the name (desktop) and a footer on every page */
 .broker-lic { color: var(--ink-3); }
@@ -1130,16 +1127,33 @@ body.on-search .globalfoot { display: none; }
 .lang-toggle button[aria-pressed="true"] { background: var(--brand); color: #fff; cursor: default; }
 .lang-toggle button[aria-pressed="false"]:hover { color: var(--brand-ink); }
 .lang-toggle + .account { margin-left: 8px; }
-/* Phones: keep the switch small so "LoKation Real Estate" stays readable (two lines at most). */
-@media (max-width: 560px) {
-  .lang-toggle { margin-left: 2px; padding: 1px; }
-  .lang-toggle button { padding: 4px 6px; font-size: 11.5px; min-height: 32px; } /* tap target (WCAG 2.5.8: 24px minimum) */
-  .lang-toggle + .account { margin-left: 6px; }
-  .account .btn { padding: 7px 12px; }
-  .topbar { gap: 8px; }
-  /* The full "English | Español" switch needs the room: icon-only logo on phones. */
-  .brand span { display: none; }
-}
 .lang-toggle .lang-short { display: none; }
-/* Smallest phones (320px): short labels so the brokerage name isn't cut off. */
-@media (max-width: 340px) { .lang-toggle .lang-long { display: none; } .lang-toggle .lang-short { display: inline; } }
+
+/* Phones: a logo lockup. The icon on the left, "iToured" with "LoKation Real Estate" under it on one
+   line (the brokerage must stay fully readable: BeachesMLS 20.2.5), then EN | ES and Sign in.
+   Grid placement only; the HTML order is unchanged (the menu is hidden on phones). */
+@media (max-width: 560px) {
+  .topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: auto auto;
+    column-gap: 8px; row-gap: 1px; align-content: center; padding: 0 12px; }
+  .brand { grid-column: 1; grid-row: 1; align-self: end; justify-self: start; padding-left: 40px; min-height: 0; }
+  .brand img { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; }
+  .brand span { display: inline; font-size: 20px; line-height: 1; }
+  .brokerage { grid-column: 1; grid-row: 2; align-self: start; justify-self: start; margin-left: 0; padding: 0 0 0 40px; align-items: flex-start; flex: none; overflow: visible; }
+  .broker-firm { font-size: 12px; line-height: 1.2; white-space: nowrap; max-width: none; overflow: visible; }
+  .lang-toggle { grid-column: 2; grid-row: 1 / 3; align-self: center; margin-left: 0; padding: 1px; }
+  .lang-toggle button { padding: 4px 8px; font-size: 12px; min-height: 32px; } /* tap target (WCAG 2.5.8: 24px minimum) */
+  .lang-toggle .lang-long { display: none; }
+  .lang-toggle .lang-short { display: inline; }
+  .lang-toggle + .account { grid-column: 3; grid-row: 1 / 3; align-self: center; margin-left: 0; }
+  .account .btn { padding: 7px 12px; }
+}
+/* Smallest phones (320px): tighter spacing so everything still fits on one row. */
+@media (max-width: 340px) {
+  .topbar { column-gap: 6px; padding: 0 10px; }
+  .brand { padding-left: 36px; } .brokerage { padding-left: 36px; }
+  .brand img { left: 10px; width: 30px; height: 30px; }
+  .brand span { font-size: 18px; }
+  .broker-firm { font-size: 11.5px; }
+  .lang-toggle button { padding: 4px 6px; }
+  .account .btn { padding: 6px 10px; font-size: 13px; }
+}

@@ -25,3 +25,10 @@ icon-only logo on phones and EN | ES at 320px.
 Adopt B+; reject D. No tie-break needed (MLS > security > usability > looks would support it).
 Follow-ups done: 32px buttons; header check `scripts/qa/header-check.cjs` (12 combinations pass);
 `knowledge/ui-designer/style.md` breakpoints updated.
+
+## Owner's decision (after the debate)
+The owner chose a different option: "EN | ES" on all phones (full words on tablet and desktop), and
+on phones a smaller "iToured" wordmark with "LoKation Real Estate" under it on one line, so the
+wordmark stays and nothing wraps. Checked with scripts/qa/header-check.cjs: 24 combinations
+(English/Spanish, signed out/in, 430/390/360/320/768/1280px) pass. Lesson for next time: offer the
+owner layouts the agents didn't consider (here, stacking the brokerage under the wordmark).
