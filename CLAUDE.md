@@ -22,16 +22,19 @@ batch contains.
 
 ## Pending for the next deploy
 
-1. Language switch is a two-sided toggle (current language highlighted): "English | Español" on
-   tablets and desktop, "EN | ES" on phones (owner's choice), 32px-tall buttons on phones. Phone
-   header is a logo lockup: icon, "iToured" with "LoKation Real Estate" under it on one line, then
-   EN | ES and Sign in (fixes the brokerage name being cut off on 320px phones on the live site).
-   Header check: scripts/qa/header-check.cjs. Service worker cache v6.
+(Nothing yet.)
 
-(Last deploy, Nov 26 2026: records links follow-up (Monroe, unit check, Indian River);
-FRED mortgage rate; flood & elevation; Spanish version; /.claude, /knowledge, /docs blocked;
-admin Leads, listing outreach and Market report tabs; privacy policy update. Solar and commute
-code shipped but stay hidden: the owner chose not to add GOOGLE_SOLAR_API_KEY or ORS_API_KEY.)
+(Last deploy, Nov 27 2026: header language switch (English | Español on tablet/desktop, EN | ES on
+phones) and the phone logo lockup with "LoKation Real Estate" under "iToured".)
+
+## Credits warning
+
+The owner wants to be told when about **60 credits** are left for deploys (4 deploys). Deploys are
+15 credits each, but the account's other usage (functions, bandwidth, form submissions) also uses
+credits, so the real balance is on Netlify (Team settings → Billing / Usage), not in this repo.
+Before each deploy, if the owner has given a recent balance, subtract 15 per deploy since then and
+warn at 60 or below. Deploy log (this billing period, resets monthly):
+- Nov 25 2026, Nov 26 2026, Nov 27 2026 (header switch).
 
 ## Agent team
 
