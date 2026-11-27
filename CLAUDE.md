@@ -22,7 +22,11 @@ batch contains.
 
 ## Pending for the next deploy
 
-(Nothing yet.)
+1. Impossible lot sizes (square feet typed into the MLS acres field, e.g. "43560 acres" for a
+   1-acre lot): 20+ acres at under $1,000 an acre is treated as unknown (js/lotsize.js, about 113
+   live listings). Cards say "Lot size unclear"; the listing page says why and points to the county
+   record; they don't match lot-size filters and sort last; search-engine page titles leave the
+   acreage out. The MLS value is never converted. Listing pages show 1+ acre lots in acres.
 
 (Last deploy, Nov 27 2026: header language switch (English | Español on tablet/desktop, EN | ES on
 phones) and the phone logo lockup with "LoKation Real Estate" under "iToured".)

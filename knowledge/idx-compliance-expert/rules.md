@@ -12,6 +12,7 @@ IDX rules before relying on a detail, and ask the owner when unsure.
 | Seller opted out of internet display (InternetEntireListingDisplayYN = false) | Listing is not shown |
 | Address withheld (InternetAddressDisplayYN = false) | No address, no county record links (they would reveal it) |
 | Automated value estimates next to listings (SEFMLS restriction; broker opt-out under NAR IDX policy) | None shown. Tax estimates and public-record values are labeled "not from BeachesMLS" |
+| Impossible MLS values (lot size typed in the wrong unit) | Not shown and not converted: "Lot size unclear" with a pointer to the county record (js/lotsize.js). Converting the value would change MLS data, so ask BeachesMLS before doing that |
 | Non-MLS content distinguished | Public records, tax estimates, imagery, reviews labeled as not from BeachesMLS |
 
 Open questions are in `open-questions.md`.

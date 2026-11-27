@@ -9,6 +9,7 @@
 // required disclaimer are included; listings with the address withheld are noindex and left out
 // of the sitemap; listings not displayable on the internet never reach the index at all.
 
+import { checkLot } from "../../js/lotsize.js";
 import { readIndex as getIndex, indexTag } from "./store.mjs";
 import { allReviews, statusOf, reviewHomeKey, offList, isOff } from "./reviews.mjs";
 import { getSettings } from "./moderation.mjs";
@@ -94,6 +95,7 @@ export async function findListing(key) {
 const TYPE_SCHEMA = { Condo: "Apartment", Townhouse: "SingleFamilyResidence", "Single Family": "SingleFamilyResidence", "Multi-Family": "House", "Mobile/Manufactured": "House", Land: "Place" };
 
 function describe(l) {
+  checkLot(l);
   const parts = [];
   if (l.BedroomsTotal) parts.push(`${l.BedroomsTotal} bed`);
   if (l.BathroomsTotalInteger) parts.push(`${l.BathroomsTotalInteger} bath`);
@@ -105,6 +107,7 @@ function describe(l) {
 
 /** Full HTML for a listing page: the app's index.html with SEO head tags and a readable summary. */
 export function renderListingPage(appHtml, l, { canonical, reviews = [] }) {
+  checkLot(l); // no impossible lot sizes in titles (square feet typed as acres)
   const lotAcres = l.demo.LotSizeSquareFeet ? +(l.demo.LotSizeSquareFeet / 43560).toFixed(2) : 0;
   const title = l.PropertyType === "Land" || !l.BedroomsTotal
     ? `${l.Address} | ${money(l.ListPrice)} | ${lotAcres ? `${lotAcres} acre ` : ""}land | iToured`

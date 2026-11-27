@@ -1,5 +1,6 @@
 // Data access layer.
 import { homeKey, reviewHomeKey } from "./homekey.js";
+import { checkLot } from "./lotsize.js";
 //
 // Everything the UI needs from a backend goes through this file, so swapping
 // the browser-only demo for real auth + a database (Supabase, Firebase,
@@ -464,6 +465,7 @@ function decodeIndex(data) {
     l.PricePerSqFt = l.LivingArea ? Math.round(l.ListPrice / l.LivingArea) : 0;
     l.demo.OpenHouse = null;
     l.demo.PublicRemarks = null; // loaded with the listing details
+    checkLot(l); // square feet typed as acres: hide the impossible lot size
     const c = fixCoords(Number(l.Latitude), Number(l.Longitude));
     if (!c) return null;
     [l.Latitude, l.Longitude] = c;
@@ -528,7 +530,7 @@ export async function loadListingDetail(key) {
   const res = await fetch(`/api/idx/listing/${encodeURIComponent(key)}`, { cache: "no-cache" });
   if (res.status === 410) return { gone: true };
   if (!res.ok) throw new Error(`Listing details unavailable (${res.status})`);
-  return res.json();
+  return checkLot(await res.json());
 }
 
 /** Public parcel records for an MLS listing: { status, parcel }. */

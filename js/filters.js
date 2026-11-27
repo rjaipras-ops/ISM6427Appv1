@@ -138,6 +138,8 @@ export function matches(l, f, summary, kwKeys, motivatedKeys) {
   if (f.sqftMax != null && l.LivingArea > f.sqftMax) return false;
   // A condo's or townhouse's "lot" in the MLS is usually the whole community's land, so a minimum
   // lot size only makes sense for homes that own their lot.
+  // Unknown or impossible lot sizes (see js/lotsize.js) don't match a lot-size filter.
+  if ((f.lotMin != null || f.lotMax != null) && !d.LotSizeSquareFeet) return false;
   if (f.lotMin != null && (d.LotSizeSquareFeet < f.lotMin || l.PropertyType === "Condo" || l.PropertyType === "Townhouse")) return false;
   if (f.lotMax != null && d.LotSizeSquareFeet > f.lotMax) return false;
   if (f.yearMin != null && d.YearBuilt < f.yearMin) return false;
@@ -207,7 +209,7 @@ export function sortListings(rows, sort, summaries) {
     case "priceDesc": return r.sort((a, b) => b.ListPrice - a.ListPrice);
     case "ppsf": return r.sort((a, b) => a.PricePerSqFt - b.PricePerSqFt);
     case "sqft": return r.sort((a, b) => b.LivingArea - a.LivingArea);
-    case "lot": return r.sort((a, b) => b.demo.LotSizeSquareFeet - a.demo.LotSizeSquareFeet);
+    case "lot": return r.sort((a, b) => (b.demo.LotSizeSquareFeet || 0) - (a.demo.LotSizeSquareFeet || 0)); // unknown last
     case "rating": return r.sort((a, b) => rating(b) - rating(a) || count(b) - count(a));
     case "reviews": return r.sort((a, b) => count(b) - count(a) || rating(b) - rating(a));
     default:

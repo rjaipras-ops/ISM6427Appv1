@@ -913,11 +913,13 @@ document.addEventListener("click", (e) => {
   location.hash = `#/home/${a.dataset.id}`;
 });
 
+// Listing page: 1 acre or more in acres (with square feet), smaller lots in square feet.
+const lotDetail = (sq) => (sq >= 43560 ? `${+(sq / 43560).toFixed(2)} acres (${fmtN(sq)} sqft)` : `${fmtN(sq)} sqft`);
 // Beds/baths/size for homes; lot size for land (and anything without a house on it).
 const lotText = (sq) => !sq ? null : sq >= 21780 ? `<b>${+(sq / 43560).toFixed(sq >= 435600 ? 0 : 2)}</b> acres` : `<b>${fmtN(sq)}</b> sqft lot`;
 function factsHTML(l, where) {
   const lot = lotText(l.demo.LotSizeSquareFeet);
-  if (l.PropertyType === "Land" || (!l.BedroomsTotal && !l.LivingArea)) return lot ? `<span>${lot}</span>` : `<span>Vacant land</span>`;
+  if (l.PropertyType === "Land" || (!l.BedroomsTotal && !l.LivingArea)) return lot ? `<span>${lot}</span>` : `<span>${l.demo.LotSizeListedAcres != null ? "Lot size unclear" : "Vacant land"}</span>`;
   const b = where === "detail" ? ["beds", "baths"] : ["bd", "ba"];
   return `<span><b>${l.BedroomsTotal}</b> ${b[0]}</span><span><b>${l.BathroomsTotalInteger}</b> ${b[1]}</span><span><b>${fmtN(l.LivingArea)}</b> sqft</span>`;
 }
@@ -1083,7 +1085,8 @@ function renderDetail(l) {
   const keyFacts = mls ? [
     ["Property type", l.PropertyType],
     d.YearBuilt && ["Year built", d.YearBuilt],
-    d.LotSizeSquareFeet && ["Lot size", `${fmtN(d.LotSizeSquareFeet)} sqft`],
+    d.LotSizeSquareFeet ? ["Lot size", lotDetail(d.LotSizeSquareFeet)]
+      : d.LotSizeListedAcres != null && ["Lot size", `<span class="lot-unclear">Unclear. The listing says ${fmtN(d.LotSizeListedAcres)} acres, which doesn't fit the price (likely an entry error). Check the county record on this page, or ask the listing agent.</span>`],
     l.PricePerSqFt && ["Price / sqft", fmt$(l.PricePerSqFt)],
     ["HOA", d.AssociationFee ? `${fmt$(d.AssociationFee)}/mo` : "None listed"],
     ["Garage", d.GarageSpaces ? `${d.GarageSpaces} space${d.GarageSpaces > 1 ? "s" : ""}` : "None listed"],

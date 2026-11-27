@@ -92,7 +92,7 @@ export const ES = {
   "No homes match these filters": "Ninguna casa cumple estos filtros", "Try widening the price range or removing a feature.": "Pruebe a ampliar el rango de precio o quitar una característica.",
   "Clear all filters": "Borrar todos los filtros", "No tour reviews yet": "Aún no hay reseñas de visitas", "bd": "hab", "ba": "baños", "sqft": "pies²", "beds": "hab.", "baths": "baños", "· View all": "· Ver todas", "· Enlarge": "· Ampliar", "bed": "hab.", "bath": "baño",
   "Single Family": "Unifamiliar", "Condo": "Condominio", "Townhouse": "Townhouse", "Multi-Family": "Multifamiliar", "Mobile/Manufactured": "Casa móvil/prefabricada",
-  "Land": "Terreno", "Vacant land": "Terreno baldío",
+  "Land": "Terreno", "Vacant land": "Terreno baldío", "Lot size unclear": "Tamaño del lote no claro",
   "Home reviews from people who walked through": "Reseñas de casas de quienes las recorrieron",
   "iToured is a South Florida home search where the reviews come from buyers who toured the home in person. Listing photos are taken to sell; a tour review tells you what they leave out, like water staining, road noise, deferred maintenance or a floor plan that feels different once you're inside.":
     "iToured es un buscador de casas del sur de la Florida donde las reseñas vienen de compradores que visitaron la casa en persona. Las fotos del anuncio están hechas para vender; una reseña de visita le cuenta lo que no muestran, como manchas de humedad, ruido de la calle, mantenimiento atrasado o una distribución que se siente distinta por dentro.",
@@ -230,6 +230,9 @@ export const PATTERNS = [
   [/^(\d+)% above area$/, "$1 % sobre la zona"],
   [/^Courtesy of (.+)$/, "Cortesía de $1"],
   [/^(\d+) days on market$/, "$1 días en el mercado"],
+  [/^Unclear\. The listing says ([\d,.]+) acres, which doesn't fit the price \(likely an entry error\)\. Check the county record on this page, or ask the listing agent\.$/,
+    "No está claro. El anuncio indica $1 acres, lo que no corresponde al precio (probablemente un error de captura). Consulte el registro del condado en esta página o pregunte al agente del anuncio."],
+  [/^([\d.]+) acres \(([\d,]+) sqft\)$/, "$1 acres ($2 pies²)"],
   [/^(\d+)\+ beds$/, "$1+ hab."],
   [/^(\d+)\+ baths$/, "$1+ baños"],
   [/^(\d+)\+ bd$/, "$1+ hab."],
