@@ -1133,7 +1133,7 @@ body.on-search .globalfoot { display: none; }
 /* Phones: keep the switch small so "LoKation Real Estate" stays readable (two lines at most). */
 @media (max-width: 560px) {
   .lang-toggle { margin-left: 2px; padding: 1px; }
-  .lang-toggle button { padding: 4px 6px; font-size: 11.5px; }
+  .lang-toggle button { padding: 4px 6px; font-size: 11.5px; min-height: 32px; } /* tap target (WCAG 2.5.8: 24px minimum) */
   .lang-toggle + .account { margin-left: 6px; }
   .account .btn { padding: 7px 12px; }
   .topbar { gap: 8px; }
